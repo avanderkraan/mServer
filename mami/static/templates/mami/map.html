@@ -79,37 +79,22 @@
     //end base map with molenlayer
 
 
-
-
-    function checkValue() {
-        if (selectedId) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     var selectClick = new ol.interaction.Select({
-        condition: ol.events.condition.click,
-        toggleCondition: checkValue,
-        //style:styleFunction
+        condition: ol.events.condition.click
     });
     var select = selectClick;
 
     // start event on map
     map.addInteraction(select);
     select.on('select', function(e) {
-        //document.getElementById('status').innerHTML = '&nbsp;' +
-        //      e.target.getFeatures().getLength() +
-        //      ' selected features (last operation selected ' + e.selected.length +
-        //      ' and deselected ' + e.deselected.length + ' features)' +
-        //      ' and id: ' + e.selected[0].getId();
-        selectedId = e.selected[0].getId();
-
-        refresh();
-        // TODO: getUpdate is for step 3. the client getUpdates(selectedId);
-        //       not sure yet how this is done, poll local ip addresses through javascript?
-        //       which could be a client (toy-mill) 
+        popup(e);
+        if (e.selected.length > 0) {
+            selectedId = e.selected[e.selected.length - 1].getId();
+            refresh();
+            // TODO: getUpdate is for step 3. the client getUpdates(selectedId);
+            //       not sure yet how this is done, poll local ip addresses through javascript?
+            //       which could be a client (toy-mill) 
+        }
 
     });
     // end event on map

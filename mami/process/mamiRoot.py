@@ -103,7 +103,9 @@ class MamiRoot():
         cherrypy.response.headers["Connection"] = "keep-alive"
         cherrypy.response.headers["Pragma"] = "no-cache"
         if feature_id:
-            return json.dumps(self._get_data().get(feature_id)).encode('utf-8', 'replace')
+            result = self._get_data().get(feature_id)
+            if result:
+                return json.dumps(result).encode('utf-8', 'replace')
         return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
     @cherrypy.expose
