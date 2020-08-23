@@ -1,0 +1,155 @@
+<script>
+
+
+// start styleFunction for features
+function styleFunction(feature, resolution) {
+	var cpm = "0";
+
+	var millImage = new ol.style.Icon({
+		anchor: [0.5, 46],
+		anchorXUnits: 'fraction',
+		anchorYUnits: 'pixels',
+		src: 'static/images/mill.png',
+		opacity: 0.75,
+		// the real size of your icon
+		//size: [10, 10],
+		// the scale factor
+		scale: 0.03
+	});
+
+	var openMillImage = new ol.style.Icon({
+		anchor: [0.5, 46],
+		anchorXUnits: 'fraction',
+		anchorYUnits: 'pixels',
+		src: 'static/images/open_mill.png',
+		opacity: 0.75,
+		// the real size of your icon
+		//size: [10, 10],
+		// the scale factor
+		scale: 0.03
+	});
+
+	var selectedMillImage = new ol.style.Icon({
+		anchor: [0.5, 46],
+		anchorXUnits: 'fraction',
+		anchorYUnits: 'pixels',
+		src: 'static/images/green_mill.png',
+		opacity: 0.75,
+		// the real size of your icon
+		//size: [10, 10],
+		// the scale factor
+		scale: 0.03
+	});
+
+	var workingMillText = new ol.style.Text({
+		font: '18px Calibri,sans-serif',
+		fill: new ol.style.Fill({
+			color: '#ffffff'
+		}),
+		backgroundFill: new ol.style.Fill({
+			color: 'rgba(0, 0, 255, 0.6)'
+		}),
+        padding: [0,5,0,5],
+		text: cpm,
+		offsetX: -20,
+		offsetY: 20
+	});
+
+	var selectedMillText = new ol.style.Text({
+		font: '18px Calibri,sans-serif',
+		fill: new ol.style.Fill({
+			color: '#ffffff'
+		}),
+		backgroundFill: new ol.style.Fill({
+			color: 'rgba(0, 128, 0, 0.6)'
+		}),
+        padding: [0,5,0,5],
+		text: cpm,
+		offsetX: -20,
+		offsetY: 20
+	});
+
+	var validMillText = new ol.style.Text({
+		font: '18px Calibri,sans-serif',
+		fill: new ol.style.Fill({
+			color: '#000000'
+		}),
+		backgroundFill: new ol.style.Fill({
+			color: 'rgba(255, 255, 0, 0.6)'
+		}),
+        padding: [0,5,0,5],
+		text: '-',
+		offsetX: -20,
+		offsetY: 20
+	});
+
+	var workingMillStyle = new ol.style.Style({
+		image: openMillImage, //workingMillImage,
+	    text: workingMillText
+	});
+
+	var selectedMillStyle = new ol.style.Style({
+		image: selectedMillImage, //selectedMillImage,
+	    text: selectedMillText	
+	});
+
+	var validMillStyle = new ol.style.Style({
+		image: millImage, //validMillImage,
+	    text: validMillText	
+	});
+	
+	/*
+	var name = "";
+	var nameText = new ol.style.Text({
+		font: '10px Calibri,sans-serif',
+		fill: new ol.style.Fill({color: '#ffffff'}),
+		stroke: new ol.style.Stroke({
+			color: 'black', width: 2
+		}),
+		text: name,
+		opacity: 0.2,
+		offsetX: 20,
+		offsetY: 20
+	});
+	var nameStyle = new ol.style.Style({
+	    text: nameText
+	});
+    nameText.setText(feature.get('name'));
+    */
+
+	/*
+	var message = "";
+	var messageText = new ol.style.Text({
+		font: '10px Calibri,sans-serif',
+		fill: new ol.style.Fill({color: '#ffffff'}),
+		stroke: new ol.style.Stroke({
+			color: 'black', width: 2
+		}),
+		text: message,
+		opacity: 0.2,
+		offsetX: -20,
+		offsetY: 40
+	});
+	var messageStyle = new ol.style.Style({
+	    text: messageText
+	});
+    messageText.setText(feature.get('message'));
+    */
+
+	if (feature.getId() == selectedId) {
+		selectedMillText.setText(feature.get('cpm'));
+		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1 en geselecteerd
+        return [selectedMillStyle];
+	}
+	else if (feature.getId() in data){
+		workingMillText.setText(feature.get('cpm'));
+		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1
+        return [workingMillStyle];
+	}
+	else {
+		//return [validMillStyle, messageStyle, nameStyle];  // bij molen zonder data maar wel aanwezig in featureSource
+        return [validMillStyle];
+	}
+}
+//end styleFunction for features
+</script>

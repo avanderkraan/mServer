@@ -1,0 +1,144 @@
+<style>
+    .ol-popup {
+        position: absolute;
+        background-color: white;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #cccccc;
+        bottom: 12px;
+        left: -50px;
+        min-width: 280px;
+    }
+    
+    .ol-popup:after,
+    .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+    
+    .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+    }
+    
+    .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+    }
+    
+    .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+    }
+    
+    .ol-popup-closer:after {
+        content: "X";
+    }
+</style>
+
+<script>
+    /**
+     * Elements that make up the popup.
+     */
+    var container = document.getElementById('popup');
+    var content = document.getElementById('popup-content');
+    var closer = document.getElementById('popup-closer');
+
+    /* create a text as content for a popup
+     */
+    var popupText = '';
+
+    /**
+     * Create an overlay to anchor the popup to the map.
+     */
+    var millInfo = new ol.Overlay({
+        element: container,
+        autoPan: true,
+        autoPanAnimation: {
+            duration: 250
+        }
+    });
+
+
+    /**
+     * Add a click handler to hide the popup.
+     * @return {boolean} Don't follow the href.
+     */
+    closer.onclick = function() {
+        millInfo.setPosition(undefined);
+        closer.blur();
+        return false;
+    };
+
+    if (navigator.onLine) {
+        // internet connection available so no imagemap needed
+        document.getElementById("imagemap").style.display = "none";
+
+        map.addOverlay(millInfo);
+        map.on('singleclick', function(evt) {
+            var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+                return feature;
+            });
+            if (feature) {
+                var coord = feature.getGeometry().getCoordinates();
+                var props = feature.getProperties();
+                //console.log("<h2>bvnvb</h2>");
+                //console.log(feature);
+                //content.innerHTML = popupText;
+                // Offset the popup so it points at the middle of the marker not the tip
+                //popup.setOffset([0, -22]);
+                //popup.show(coord, info);
+                var id = feature['id_'];
+
+                if (id != undefined) {
+                    //console.log('c c c' + id);
+
+                    $.getJSON("getDataAsJSON/?feature_id=" + id, function(data) {
+                        console.log('b b b');
+                        console.log(data);
+                        var items = [];
+                        $.each(data, function(key, val) {
+                            popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
+                            console.log(popupText);
+
+                        });
+                    });
+                }
+            }
+            //console.log('a a a');
+            console.log(evt);
+            var coordinate = evt.coordinate;
+            var hdms = ol.coordinate.toStringHDMS(ol.proj.toLonLat(coordinate));
+
+            content.innerHTML = "<div id=\"popup\">\n<ul>\n" + popupText + "\n</ul>\n</div>";
+            //content.innerHTML = popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';
+            //console.log('d d d' + content.innerHTML);
+            millInfo.setPosition(coordinate);
+
+            console.log(id);
+
+
+        });
+    } else {
+        imagemap.addOverlay(millInfo);
+        imagemap.on('singleclick', function(evt) {
+            var coordinate = evt.coordinate;
+            var hdms = ol.coordinate.toStringHDMS(ol.proj.toLonLat(coordinate));
+
+            content.innerHTML = popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';
+            millInfo.setPosition(coordinate);
+        });
+    }
+</script>

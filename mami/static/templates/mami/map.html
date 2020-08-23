@@ -1,0 +1,137 @@
+<script>
+    // ##################### S T A R T    I M A G E #########################
+    // # 
+    // #  Alleen nodig als er geen internet connectie is
+    // #
+    // #  Maakt gebruik van de div imagemap
+    // #
+    // ######################################################################
+    // Map views always need a projection.  Here we just want to map image
+    // coordinates directly to map coordinates, so we create a projection that uses
+    // the image extent in pixels.
+    //var extent = [0, 0, 1024, 968]; // online_communities
+    var extent = [0, 0, 756, 845]; // nederland.png
+    var projection = new ol.proj.Projection({
+        code: 'xkcd-image',
+        units: 'pixels',
+        extent: extent
+    });
+
+    var imageLayer = new ol.layer.Image({
+        source: new ol.source.ImageStatic({
+            attributions: 'a <a href="http://xkcd.com/license.html">xkcd</a>',
+            //url: 'https://imgs.xkcd.com/comics/online_communities.png',
+            url: 'static/images/nederland.png',
+            projection: projection,
+            imageExtent: extent
+        }),
+        opacity: 0.6
+    });
+
+
+    var imagemap = new ol.Map({
+        layers: [
+            imageLayer
+        ],
+        target: 'imagemap',
+        view: new ol.View({
+            projection: projection,
+            center: ol.extent.getCenter(extent),
+            zoom: 1,
+            maxZoom: 8
+        })
+    });
+
+    // ##################### E I N D E   I M A G E ##########################
+    // # 
+    // #  Maakt gebruik van de div imagemap
+    // #
+    // ######################################################################
+
+
+
+    // start base map with molenlayer
+    var molenLayer = new ol.layer.Vector({
+        title: 'molen',
+        opacity: 1,
+        source: new ol.source.Vector({
+            features: []
+        })
+    });
+
+    var mapLayer = new ol.layer.Tile({
+        opacity: 0.8,
+        source: new ol.source.OSM()
+            //source: new.ol.source.OSM(https://maps-cdn.salesboard.biz/styles/klokantech-3d-gl-style/{z}/{x}/{y}.png)
+    });
+
+    var map = new ol.Map({
+        target: 'map',
+        layers: [
+            mapLayer,
+            molenLayer,
+        ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([4.34, 52.0]),
+            zoom: 9
+        })
+    });
+    //end base map with molenlayer
+
+
+
+
+    function checkValue() {
+        if (selectedId) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    var selectClick = new ol.interaction.Select({
+        condition: ol.events.condition.click,
+        toggleCondition: checkValue,
+        //style:styleFunction
+    });
+    var select = selectClick;
+
+    // start event on map
+    map.addInteraction(select);
+    select.on('select', function(e) {
+        //document.getElementById('status').innerHTML = '&nbsp;' +
+        //      e.target.getFeatures().getLength() +
+        //      ' selected features (last operation selected ' + e.selected.length +
+        //      ' and deselected ' + e.deselected.length + ' features)' +
+        //      ' and id: ' + e.selected[0].getId();
+        selectedId = e.selected[0].getId();
+
+        refresh();
+        // TODO: getUpdate is for step 3. the client getUpdates(selectedId);
+        //       not sure yet how this is done, poll local ip addresses through javascript?
+        //       which could be a client (toy-mill) 
+
+    });
+    // end event on map
+
+
+    if (navigator.onLine) {
+        // internet connection available so no imagemap needed
+        document.getElementById("imagemap").style.display = "none";
+
+
+
+    } else {
+        // the map with layers (without a osm-layer) has an image (opaque) overlayed on it
+        document.getElementById("map").style.width = "800px";
+        document.getElementById("map").style.height = "600px";
+        document.getElementById("map").style.position = "absolute";
+        document.getElementById("map").style.top = "0px";
+        document.getElementById("map").style.left = "0px";
+        document.getElementById("imagemap").style.width = "960px";
+        document.getElementById("imagemap").style.height = "540px";
+        document.getElementById("imagemap").style.position = "absolute";
+        document.getElementById("imagemap").style.top = "0px";
+        document.getElementById("imagemap").style.left = "0px";
+    }
+</script>

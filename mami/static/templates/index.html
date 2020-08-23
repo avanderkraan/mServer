@@ -1,0 +1,182 @@
+<%inherit file="base.html"/>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div id="header">header</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-2">
+        <div id="millData">Lijst van molens met enden</div>
+        <div id="clientList"></div>
+        <div id="clientData">
+          <input id="refreshClientList" type="button" onclick="makeClientList()" value="refresh"/>
+          <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
+          <!-- iframes are added here by connectClient -->
+          <!--<iframe id="iframe"></iframe>-->
+        </div>
+      </div>
+      <div class="col-md-10">
+        <div id="imagemap"></div>
+        <div id="map"></div>
+      </div>
+    </div>
+    <!--
+    <div class="row">
+      <div class="col-md-2">
+        <div id="status">status</div>
+      </div>
+      <div class="col--md-10">
+        <div id="data">data</div>
+      </div>
+    </div>
+    -->
+    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+    </div>
+
+
+    <!-- Ook kijken naar ajax i.p.v SSE op de client
+    zie localhost:8080 client_2.html -->
+  <%include file="mami/connectClient.html"/>
+
+  <%include file="mami/map.html"/>
+
+  <%include file="mami/features.html"/>
+
+  <%include file="mami/popup.html"/>
+
+<script>
+
+function showMillData(millData) {
+  millTable = '';
+  millTable += '<table class="table">';
+  millTable += '<thead>';
+  millTable += '    <tr>';
+  millTable += '      <th scope="col">Naam</th>';
+  millTable += '      <th scope="col">Enden</th>';
+  millTable += '    </tr>';
+  millTable += '  </thead>';
+  millTable += '<tbody>';
+  $.each(millData, function() {
+    millTable += '  <tr>';
+    millTable += '    <td>';
+    //console.log(JSON.stringify(millData));
+
+    millTable += '<div id="';
+    millTable += millData['id']['id'];
+    millTable += '" draggable="true" ondragstart="drag(event)">';
+    millTable += millData['id']['name'];
+    millTable += '</div>';
+    millTable += '    </td>';
+    millTable += '    <td>';
+    millTable += millData['id']['cpm'];
+    millTable += '    </td>';
+    millTable += '  </tr>';
+  });
+  millTable += '</tbody>';
+  millTable += '</table>';
+
+  return millTable;
+}
+
+
+function refresh() {
+	console.log("start refresh");
+    // set cpm in all features
+    $.each(featureSource.getFeatures(), function(index, feature) {
+    	var featureId = feature.getId();
+    	var featureData = data[featureId];
+      console.log("refresh " + index + " " + featureId + " " + data[featureId]);
+
+      perMillData = [];  // data per mill
+      if (featureData !== undefined) {
+        feature.set("name", featureData["name"]);
+        feature.set("cpm", featureData["cpm"]);
+        feature.set("message", featureData["message"]);
+        
+        perMillData['id'] = featureId;
+        perMillData['name'] = featureData["name"];
+        perMillData["cpm"] = featureData["cpm"];
+        perMillData['message'] = featureData["message"];
+        millData['id'] = perMillData;
+      }
+    });
+    molenLayer.setSource(featureSource);
+    molenLayer.setStyle(styleFunction);
+    
+    $('#millData').html(showMillData(millData));
+}
+
+// start sse functions
+function getDataSse() {
+	try {
+		dataSource.close();
+	}
+	catch(err) {
+		console.log(err.message);			//console.log("rr " + JSON.stringify(data));
+	}
+
+	try {
+		dataSource = new EventSource("getDataSse/");
+	    dataSource.onmessage = function(event) {
+			console.log(event.data);
+        	data = JSON.parse(event.data);
+			//document.getElementById('data').innerHTML = JSON.stringify(data);
+
+        	refresh();
+	    }
+	}
+	catch (err) {
+		console.log(err.message);
+	}
+}
+
+/* requests the getFeatureDataSse for the selected feature from this server */
+/* TODO: is to be used by step 3. the client */
+/* TODO: is also used by the popup */
+function getUpdates(featureId) {
+	// selectedId = featureId
+	try {
+		singleSource.close();
+	}
+	catch(err) {
+		console.log(err.message);
+	}
+	try {
+	    singleSource = new EventSource("getFeatureDataSse/?feature_id=" + featureId);
+	    singleSource.onmessage = function(event) {
+	        /* for popup: put it on a document.element.id*/
+          document.getElementById(featureId).innerHTML = event.data + "<br>";
+	        //event.data = cpm
+	    };
+	}
+	catch(err) {
+		console.log(err.message);
+	}
+}
+
+// end sse functions
+
+// global variables
+var cpm = '';
+var selectedId = ''; //'nl_03503';
+var data;            // contains featureId and cpm
+var dataSource;      // contains the sse datasource which are all features
+var singleSource;    // contains the selected source which is a single feature
+var millData = {};   // contains a table with mill data
+
+var featureSource = new ol.source.Vector({
+    url: "static/data/features.json",
+    format: new ol.format.GeoJSON(),
+    useSpatialIndex: false
+});
+
+
+// start get data
+getDataSse();
+// end get data
+</script>

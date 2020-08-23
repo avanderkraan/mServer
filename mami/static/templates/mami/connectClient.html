@@ -1,0 +1,76 @@
+<!--<input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
+<iframe id="iframe"></iframe>
+-->
+<script>
+    function pad(num, size) {
+        var s = "000000000" + num;
+        return s.substr(s.length - size);
+    }
+    var clients = {};
+
+    function findClients(number) {
+        var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
+        var urlToCheck = 'http://molen.local';
+        var xhr = new XMLHttpRequest();
+        console.log('UNSENT', xhr.readyState); // readyState will be 0
+        //TODO debug op de Counter heeft even "Access-Control-Allow-Origin", "*" gekregen als test
+        xhr.open('GET', urlToCheck + '/alive/', true);
+        console.log('OPENED', xhr.readyState); // readyState will be 1
+
+        xhr.onprogress = function() {
+            console.log('LOADING', xhr.readyState); // readyState will be 3
+        };
+
+        xhr.onload = function() {
+            console.log('DONE' + number, xhr.readyState); // readyState will be 4
+            clients[pad(number, 4)] = urlToCheck;
+        };
+
+        xhr.send(null);
+    }
+
+
+    for (var i = 0; i < 10; i++) {
+        findClients(i); // document.getElementById("clientList").innerHTML += client + '<br';
+    }
+
+
+    function makeClientList() {
+        document.getElementById("clientList").innerHTML = '';
+        for (var key in clients) {
+            document.getElementById("clientList").innerHTML += clients[key] + '<br>';
+        }
+    }
+
+    function passIPAddress(e) {
+        if (event.key === 'Enter') {
+            var url = 'http://' + e.value;
+            console.log(document.getElementById(e.value));
+            if (document.getElementById(e.value) === null) {
+                var iframe = '<br><iframe id="' + e.value + '" onload="loadIFrame(this)"></iframe>';
+                console.log(iframe);
+                document.getElementById("clientData").innerHTML += iframe;
+
+                //url = "http://localhost:8080/client_2.html";
+
+
+                document.getElementById(e.value).setAttribute("src", url);
+
+
+            }
+            console.log(document.getElementById("clientData").innerHTML);
+        }
+    }
+
+    function loadIFrame(element) {
+        var xId = element.id;
+        var x = document.getElementById(xId).contentWindow;
+
+        //var url = "http://10.0.0.49:9090/getFeatureDataSse?feature_id=nl_03503";
+
+        //var url = "geselecteerde molen uit de lijst molen";
+        console.log(JSON.stringify(url));
+
+        x.postMessage(JSON.stringify(url), "http://" + xId + "/");
+    }
+</script>

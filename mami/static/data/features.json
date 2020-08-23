@@ -1,0 +1,36 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.351280,
+                    52.013996
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "De Roos",
+                "uuid": "88888888-4444-4444-4444-121212121212"
+            },
+            "id": "nl_03503"
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.402017,
+                    52.082935
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "De Salamander",
+                "uuid": "een ander uuid nummer, namelijk die van het device op de salamander"
+            },
+            "id": "nl_12549"
+        }
+    ]
+}
+

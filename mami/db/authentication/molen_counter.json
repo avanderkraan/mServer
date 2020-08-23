@@ -1,0 +1,19 @@
+[{
+        "A0:20:A6:14:85:06": {
+            "key": "uuid",
+            "previous_key": "previous_uuid",
+            "record_change_date": "record_change_date",
+            "ttl": "time_to_live",
+            "end_date": "end_date"
+        }
+    },
+    {
+        "A0:20:A6:14:85:06": {
+            "key": "uuid",
+            "previous_key": "previous_uuid",
+            "record_change_date": "record_change_date",
+            "ttl": "time_to_live",
+            "end_date": "end_date"
+        }
+    }
+]
