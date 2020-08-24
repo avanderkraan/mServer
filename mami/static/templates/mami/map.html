@@ -80,32 +80,42 @@
 
 
     var selectClick = new ol.interaction.Select({
-        condition: ol.events.condition.click
+        condition: ol.events.condition.click,
+        hitTolerance: 3,
+        layers: [molenLayer],
+        style: false
     });
     var select = selectClick;
 
     // start event on map
-    map.addInteraction(select);
-    select.on('select', function(e) {
-        popup(e);
-        if (e.selected.length > 0) {
-            selectedId = e.selected[e.selected.length - 1].getId();
-            refresh();
+
+    //map.addInteraction(select);
+    map.on('click', function(evt) {
+        // Clear previous popup (if exists) and empty global selectedId
+        millInfo.setPosition(undefined);
+        closer.blur();
+        selectedId = "";
+
+        var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+            return feature;
+        }, {
+            hitTolerance: 3
+        });
+        if (feature) {
+            popup(feature);
+            selectedId = feature.getId();
             // TODO: getUpdate is for step 3. the client getUpdates(selectedId);
             //       not sure yet how this is done, poll local ip addresses through javascript?
             //       which could be a client (toy-mill) 
         }
-
+        refresh();
     });
-    // end event on map
 
+    // end event on map
 
     if (navigator.onLine) {
         // internet connection available so no imagemap needed
         document.getElementById("imagemap").style.display = "none";
-
-
-
     } else {
         // the map with layers (without a osm-layer) has an image (opaque) overlayed on it
         document.getElementById("map").style.width = "800px";

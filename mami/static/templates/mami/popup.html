@@ -71,7 +71,6 @@
         }
     });
 
-
     /**
      * Add a click handler to hide the popup.
      * @return {boolean} Don't follow the href.
@@ -79,10 +78,11 @@
     closer.onclick = function() {
         millInfo.setPosition(undefined);
         closer.blur();
+        selectedId = "";
         return false;
     };
 
-    function popup(e) {
+    function popup(feature) {
 
         if (navigator.onLine) {
             // internet connection available so no imagemap needed
@@ -92,34 +92,53 @@
             imagemap.addOverlay(millInfo);
         }
 
-        // Clear previous popup (if exists)
-        millInfo.setPosition(undefined);
-        closer.blur();
-
         // Make new popup
-        console.log(e);
-        if (e.selected.length > 0) {
-            selectedFeature = e.selected[e.selected.length - 1];
-            selectedId = selectedFeature.getId();
-
-            var coordinate = selectedFeature.values_.geometry.flatCoordinates;
+        if (feature) {
+            selectedId = feature.getId();
+            var coordinate = feature.values_.geometry.flatCoordinates;
             millInfo.setPosition(coordinate);
 
-            content.innerHTML = "<div id=\"popup_" + selectedId + "\">" + selectedFeature.values_.name + "</div>";
+            var popupTitle = "<div id=\"popup_" + selectedId + "\" title=\"Click for molendatabase.nl\" style=\"cursor: pointer\" onclick=\"submitForm();\">" + feature.values_.name;
+            var tenbruggencatenummer = "";
+            var numberStart = selectedId.indexOf("_");
+            if (numberStart > -1) {
+                tenbruggencatenummer = selectedId.substring(numberStart + 1);
+                popupTitle += "<span>\n";
+                popupTitle += "<form target=\"_blank\" name=\"molendatabase\" action=\"https://molendatabase.nl/nederland/molens.php\" method=\"post\" enctype=\"application/x-www-form-urlencoded\"><input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\"></form>\n";
+                popupTitle += "</span>\n";
+            }
+            popupTitle += "</div>\n";
+            content.innerHTML = popupTitle;
             if (selectedId != undefined) {
                 $.getJSON("getDataAsJSON/?feature_id=" + selectedId)
                     .done(function(data) {
-                        var popupText = "<ul>";
-                        console.log(data);
+                        var popupText = "<ul style=\"list-style-type:none\">";
                         $.each(data, function(key, val) {
-                            popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
-                            console.log(popupText);
-
+                            switch (key) {
+                                case "isOpen":
+                                    if (val == 0) {
+                                        popupText += "<li id=\"popup_" + key + "\">Nu gesloten</li>\n";
+                                    } else {
+                                        popupText += "<li id=\"popup_" + key + "\">Nu geopend</li>\n";
+                                    }
+                                    break;
+                                case "message":
+                                    if (val == "") {
+                                        popupText += "<li id=\"popup_" + key + "\">Geen nieuws beschikbaar</li>\n";
+                                    } else {
+                                        popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
+                                    }
+                                    break;
+                            }
                         });
                         popupText += "</ul>";
                         content.innerHTML += popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';
                     })
             };
         }
+    }
+
+    function submitForm() {
+        document.molendatabase.submit();
     }
 </script>

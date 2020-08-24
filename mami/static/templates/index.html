@@ -1,37 +1,69 @@
 <%inherit file="base.html"/>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
-        <div id="header">header</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-2">
-        <div id="millData">Lijst van molens met enden</div>
-        <div id="clientList"></div>
-        <div id="clientData">
-          <input id="refreshClientList" type="button" onclick="makeClientList()" value="refresh"/>
-          <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
-          <!-- iframes are added here by connectClient -->
-          <!--<iframe id="iframe"></iframe>-->
+  <div class="container">
+    <div class="row loffset6 rofset6">
+      <div class="col-xs-2 voffset16">
+        <div>
+          <a href=""><img src="static/images/logo.png" width="30"></a>
+        </div>
+        <div class="row loffset6">
+          <h6><small>&copy; 2016 MAMI</small></h6>
         </div>
       </div>
-      <div class="col-md-10">
+      <div class="col-xs-6">
+        <div class="row text-center">
+          <div id="homepage_message"><b><code>&nbsp;</code></b></div>
+        </div>				
+        <div class="row">
+          <a href=""><h2>Draaiende molens</h2></a>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="row pull-right roffset6 voffset4">
+          <span>Donatie van 2 Euro
+            <img src="/static/images/epc-qr.eu_donation_2euro_site_developer.png" height="100">
+          </span>
+        </div>
+        <!--
+        <div class="row voffset12">
+          <select id="languagechoice" class="form-control">
+              <option selected="" value="en">English</option><option value="nl">Nederlands</option>
+          </select>
+        </div>
+        -->
+      </div>
+    </div>
+    <div class="row loffset6 roffset6">
+        <hr>
+    </div>
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-3">
+        <div><h4>Lijst van werkende molens</h4></div>
+        <div id="millData"></div>
+      </div>
+      <div class="col-xs-9">
         <div id="imagemap"></div>
         <div id="map"></div>
       </div>
     </div>
-    <!--
-    <div class="row">
-      <div class="col-md-2">
-        <div id="status">status</div>
-      </div>
-      <div class="col--md-10">
-        <div id="data">data</div>
-      </div>
+    <div class="row loffset6 roffset6">
+      <hr>
     </div>
-    -->
+    <div><!-- TODO enter client mills if available --></div>
+
+
+    <!-- TODO start future use for clients -->
+    <!-- iframes are added here by connectClient -->
+    <!--<iframe id="iframe"></iframe>-->
+    <!-- start client 
+    <div id="clientList"></div>
+    <div id="clientData">
+      <input id="refreshClientList" type="button" onclick="makeClientList()" value="refresh"/>
+      <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
+    </div>
+    end client -->
+
+
     <div id="popup" class="ol-popup">
       <a href="#" id="popup-closer" class="ol-popup-closer"></a>
       <div id="popup-content"></div>
@@ -52,6 +84,9 @@
 <script>
 
 function showMillData(millData) {
+  if (Object.keys(millData).length == 0) {
+    return 'Geen werkende molens beschikbaar';
+  }
   millTable = '';
   millTable += '<table class="table">';
   millTable += '<thead>';
@@ -64,8 +99,6 @@ function showMillData(millData) {
   $.each(millData, function() {
     millTable += '  <tr>';
     millTable += '    <td>';
-    //console.log(JSON.stringify(millData));
-
     millTable += '<div id="';
     millTable += millData['id']['id'];
     millTable += '" draggable="true" ondragstart="drag(event)">';
@@ -85,12 +118,10 @@ function showMillData(millData) {
 
 
 function refresh() {
-	console.log("start refresh");
     // set cpm in all features
     $.each(featureSource.getFeatures(), function(index, feature) {
     	var featureId = feature.getId();
     	var featureData = data[featureId];
-      console.log("refresh " + index + " " + featureId + " " + data[featureId]);
 
       perMillData = [];  // data per mill
       if (featureData !== undefined) {
@@ -117,16 +148,13 @@ function getDataSse() {
 		dataSource.close();
 	}
 	catch(err) {
-		console.log(err.message);			//console.log("rr " + JSON.stringify(data));
+		console.log(err.message);
 	}
 
 	try {
 		dataSource = new EventSource("getDataSse/");
 	    dataSource.onmessage = function(event) {
-			console.log(event.data);
         	data = JSON.parse(event.data);
-			//document.getElementById('data').innerHTML = JSON.stringify(data);
-
         	refresh();
 	    }
 	}
