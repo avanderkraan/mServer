@@ -37,7 +37,7 @@ class MamiRoot():
     @cherrypy.expose
     def _cleancache(self):
         """
-        Should be entered regularly to cleanup cache (=dynamic dictionary)
+        Should be entered regularly to cleanup cache (=dynamic dictionary), using crontab
         using an external program like cron or by this program itself, say every 5 minutes
         """
         now = datetime.now() 

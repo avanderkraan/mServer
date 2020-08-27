@@ -7,7 +7,7 @@
           <a href=""><img src="static/images/logo.png" width="30"></a>
         </div>
         <div class="row loffset6">
-          <h6><small>&copy; 2016 MAMI</small></h6>
+          <h6><small>&copy; 2020 MAMI</small></h6>
         </div>
       </div>
       <div class="col-xs-6">
@@ -55,10 +55,10 @@
     <!-- TODO start future use for clients -->
     <!-- iframes are added here by connectClient -->
     <!--<iframe id="iframe"></iframe>-->
-    <!-- start client 
+    <!-- start client
     <div id="clientList"></div>
     <div id="clientData">
-      <input id="refreshClientList" type="button" onclick="makeClientList()" value="refresh"/>
+      <input id="refreshClientList" type="button" onclick="makeClientList()" value="zoek model molens"/>
       <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
     </div>
     end client -->
@@ -73,7 +73,6 @@
 
     <!-- Ook kijken naar ajax i.p.v SSE op de client
     zie localhost:8080 client_2.html -->
-  <%include file="mami/connectClient.html"/>
 
   <%include file="mami/map.html"/>
 
@@ -155,6 +154,10 @@ function getDataSse() {
 		dataSource = new EventSource("getDataSse/");
 	    dataSource.onmessage = function(event) {
         	data = JSON.parse(event.data);
+          if (Object.keys(data).length == 0) {
+            // cleanup table
+            millData = {};
+          }
         	refresh();
 	    }
 	}
