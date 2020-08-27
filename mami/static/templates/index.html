@@ -55,13 +55,13 @@
     <!-- TODO start future use for clients -->
     <!-- iframes are added here by connectClient -->
     <!--<iframe id="iframe"></iframe>-->
-    <!-- start client
+    <!-- start client -->
     <div id="clientList"></div>
     <div id="clientData">
       <input id="refreshClientList" type="button" onclick="makeClientList()" value="zoek model molens"/>
       <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
     </div>
-    end client -->
+    <!-- end client -->
 
 
     <div id="popup" class="ol-popup">
@@ -73,6 +73,7 @@
 
     <!-- Ook kijken naar ajax i.p.v SSE op de client
     zie localhost:8080 client_2.html -->
+  <%include file="mami/connectClient.html"/>
 
   <%include file="mami/map.html"/>
 
