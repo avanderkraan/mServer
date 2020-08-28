@@ -7,7 +7,6 @@ Created on Jan 11, 2018
 import cherrypy
 import os
 import json
-import uuid
 from datetime import datetime, timedelta
 from mami.io.data import Data
 from mami.process.update import Update
@@ -265,41 +264,25 @@ class MamiRoot():
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 
     @cherrypy.expose
-    def sendUpdate(self, uuid="unknown"):
-        """
-        TODO: This method will be used to send the file after all checks 
-        about a new version are positive
-        """
-        if uuid != cherrypy.session.get('firmware_uuid'):
-            update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-            return update.send_file()
-        else:
-           print('Could not deliver firmware because updateFirmware has to be called first')
-           return
-
-    @cherrypy.expose
     def updateFirmware(self):
         """
         Update the latest firmware
         or return a json formatted result
         """
-        print(cherrypy.request.headers)
-        cherrypy.response.headers["Content-Type"] = "application/json"
         result = {}
         update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-        update_allowed, message_list = update.check_go()
+        update_allowed, message_list = update.check_firmware_file()
         if update_allowed:
-            uuid_key_for_firmware = uuid.uuid4()
-            cherrypy.session['firmware_uuid'] = '%s' % uuid_key_for_firmware
-            result["Message"] = ["OK", "%s" % uuid_key_for_firmware]
+            return update.send_file()
         else:
+            cherrypy.response.headers["Content-Type"] = "application/json"
+            cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
+            cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
+            cherrypy.response.headers["Cache-Control"] = "no-cache"
+            cherrypy.response.headers["Connection"] = "keep-alive"
+            cherrypy.response.headers["Pragma"] = "no-cache"
             result["Message"] = message_list
-        return json.dumps(result).encode('utf-8', 'replace')
-
-        #return "Error tekst can updateFirmware"
-        # update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-        # return update.send_file()
-
+            return json.dumps(result).encode('utf-8', 'replace')
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     getDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     

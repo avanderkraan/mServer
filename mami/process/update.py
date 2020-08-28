@@ -104,9 +104,6 @@ class Update:
         Does all the checks and returns a True or False with a message
         The message consist of tuple with a HTTP status code and a text
         """
-        ok = True
-        message = []
-
         # check if there is a newer version
         if self._check_current_device_version_available() == True:
             if self._check_latest_update() == False:  # no action for update needed
@@ -120,7 +117,6 @@ class Update:
             # just get the latest firmware
             self.requested_firmware = self.firmware_file_list[-1]
             self.filename = os.path.join(self.firmware_path, self.requested_firmware)
-
 
         if self._check_file() == False:
             ok = ok and False
