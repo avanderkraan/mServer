@@ -39,11 +39,6 @@ import json
 class Update:
 
     def __init__(self, firmware_path='', firmware_pattern=r'*.'):
-        #self.db = {}
-        #self.db["18:FE:AA:AA:AA:AA"] = "DOOR-7-g14f53a19"
-        #self.db["18:FE:AA:AA:AA:BB"] = "TEMP-1.0.0"
-
-        #self.device_version = self.db[cherrypy.request.headers["X-Esp8266-Sta-Mac"]]
         self.firmware_path = firmware_path
         self.filename = None            # full path plus filename
         self.requested_firmware = None  # filename for client, =bare name
@@ -104,7 +99,7 @@ class Update:
         firmware_list = [f for f in os.listdir(self.firmware_path) if re.match(self.firmware_pattern, f)]
         return sorted(firmware_list, key=self.make_zero_filled_version)
 
-    def _go(self):
+    def check_go(self):
         """
         Does all the checks and returns a True or False with a message
         The message consist of tuple with a HTTP status code and a text
@@ -113,13 +108,19 @@ class Update:
         message = []
 
         # check if there is a newer version
-        if self._check_device_update_available() == False:
-            ok = ok and False
-            message.append((200, 'You have the latest firmware'))  # 200 OK
-            # TODO: return error/message
+        if self._check_current_device_version_available() == True:
+            if self._check_latest_update() == False:  # no action for update needed
+                ok = ok and False
+                message.append((200, 'You have the latest firmware, no further action needed'))  # 200 OK
+            else:
+                # after checking, get the latest firmware
+                self.requested_firmware = self.firmware_file_list[-1]
+                self.filename = os.path.join(self.firmware_path, self.requested_firmware)
         else:
+            # just get the latest firmware
             self.requested_firmware = self.firmware_file_list[-1]
             self.filename = os.path.join(self.firmware_path, self.requested_firmware)
+
 
         if self._check_file() == False:
             ok = ok and False
@@ -135,7 +136,7 @@ class Update:
 
         if self._check_headers() == False:
             ok = ok and False
-            message.append((403, 'On or more Headers are invalid'))  # 403 Forbidden
+            message.append((403, 'One or more Headers are invalid'))  # 403 Forbidden
 
         return ok, message
 
@@ -145,21 +146,40 @@ class Update:
         """
         return self.filename and os.path.exists(self.filename)
 
-    def _check_device_update_available(self):
+    def _check_latest_update(self):
         """
         Uses self.detected_firmware_version that gives the current firmware version
         self.firmware_file_list gives an ordered. filtered list of firmware that is
         known on the filesystem
         Check if the detected firmware is the last one in the list.
           if so, the detected version is also the latest
+
+        Note: call this nethod only if self._check_current_device_version_available == True
         """
         try:
             if self.firmware_file_list.index(self.detected_firmware_version) + 1 == len(self.firmware_file_list):
-                return False
+                return False  # because no action for update is needed
             else:
                 return True
-        except ValueError:
+        except ValueError as inst:
+            print(inst, ", check if the file is present")
             return False
+
+    def _check_current_device_version_available(self):
+        """
+        Uses self.detected_firmware_version that gives the current firmware version
+        self.firmware_file_list gives an ordered. filtered list of firmware that is
+        known on the filesystem
+        Check if the detected current firmware is present in the list.
+        """
+        try:
+            if self.detected_firmware_version in self.firmware_file_list:
+                return True
+            else:
+                return False
+        except TypeError:
+            return False
+
 
     def _check_header(self, header_name=None, header_value=None):
         if header_name not in cherrypy.request.headers:
@@ -195,9 +215,12 @@ class Update:
         Check to see if this request MAC address is allowed to be handled
         Use this method after check_headers()
         """
-        for item in self.get_molen_counter_db():
-            if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
-                return True
+        try:
+            for item in self.get_molen_counter_db():
+                if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
+                    return True
+        except KeyError:
+            pass
         return False
 
     def md5(self, filename=''):
@@ -213,9 +236,7 @@ class Update:
         Do checks and if they are all passed then send the file
         Otherwise give a usefull message or error
         """
-        all_go, message = self._go()
-        print('b b b', all_go, message)
-        '''
+        all_go, message = self.check_go()
         if all_go:
             cherrypy.response.headers["Content-Type"] = "application/octet-stream"
             cherrypy.response.headers["Content-Disposition"] = "attachment; filename=%s" % self.requested_firmware
@@ -227,6 +248,7 @@ class Update:
                 file_content = file_handler.read()  # read whole file at once, should not give a memory problem
             return file_content
         else:
-            first_message = message[0]
-            raise cherrypy.HTTPError(status=first_message[0], message=first_message[1])
-        '''
+            print('Could not deliver firmware because', message)
+            #first_message = message[0]
+            #raise cherrypy.HTTPError(status=first_message[0], message=first_message[1])
+            return

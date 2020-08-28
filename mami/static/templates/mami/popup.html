@@ -98,7 +98,9 @@
             var coordinate = feature.values_.geometry.flatCoordinates;
             millInfo.setPosition(coordinate);
 
-            var popupTitle = "<div id=\"popup_" + selectedId + "\" title=\"Click for molendatabase.nl\" style=\"cursor: pointer\" onclick=\"submitForm();\">" + feature.values_.name;
+            var popupTitle = "<div id=\"popup_" + selectedId + "\" >";
+            popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\" onclick=\"submitForm();\">" + feature.values_.name + "</span>";
+            popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\"</div>";
             var tenbruggencatenummer = "";
             var numberStart = selectedId.indexOf("_");
             if (numberStart > -1) {
@@ -107,7 +109,7 @@
                 popupTitle += "<form target=\"_blank\" name=\"molendatabase\" action=\"https://molendatabase.nl/nederland/molens.php\" method=\"post\" enctype=\"application/x-www-form-urlencoded\"><input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\"></form>\n";
                 popupTitle += "</span>\n";
             }
-            popupTitle += "</div>\n";
+            //popupTitle += "</div>\n";
             content.innerHTML = popupTitle;
             if (selectedId != undefined) {
                 $.getJSON("getDataAsJSON/?feature_id=" + selectedId)

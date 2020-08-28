@@ -7,9 +7,10 @@ Created on Jan 11, 2018
 import cherrypy
 import os
 import json
+import uuid
 from datetime import datetime, timedelta
 from mami.io.data import Data
-from update import Update
+from mami.process.update import Update
 #from mako import exceptions
 from mami import current_dir
 from mami import module_dir
@@ -46,15 +47,12 @@ class MamiRoot():
         for key in dynamic.keys():
             try:
                 previous_now = dynamic.get(key).get('now')
-                #print ('previous', previous_now)
-                #print ('now', now)
                 if previous_now + delta < now:
                     remove_objects.append(key)
             except Exception as inst:
                 print(inst)
         for entry in remove_objects:
             dynamic.pop(entry)
-        #print('dynamic', dynamic)
 
     @cherrypy.expose
     def default(self):
@@ -234,15 +232,11 @@ class MamiRoot():
         Only POST feeds will be handled
         :return: a response in json format to the feeding device
         """
-        print (cherrypy.request.method)
         if cherrypy.request.method == 'POST':
             cherrypy.response.headers["Content-Type"] = "application/json"
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
-            #print(rawbody)
-            #print()
             unicodebody = rawbody.decode(encoding="utf-8")
-            #print(unicodebody)
             body = json.loads(unicodebody)
             revolutions = body.get('data').get('revolutions')
             rawCounter = body.get('data').get('rawCounter')
@@ -251,7 +245,6 @@ class MamiRoot():
             isOpen = body.get('data').get('isOpen')   
             showData = body.get('data').get('showData')   
             message = body.get('data').get('message')
-            #feature_id = 'nl_03503'  # de Roos
 
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
@@ -271,23 +264,37 @@ class MamiRoot():
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 
-    #@cherrypy.expose
-    # def sendUpdate(self):
+    @cherrypy.expose
+    def sendUpdate(self, uuid="unknown"):
         """
         TODO: This method will be used to send the file after all checks 
         about a new version are positive
         """
-    #    update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-    #    return update.send_file()
+        if uuid != cherrypy.session.get('firmware_uuid'):
+            update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
+            return update.send_file()
+        else:
+           print('Could not deliver firmware because updateFirmware has to be called first')
+           return
 
     @cherrypy.expose
     def updateFirmware(self):
         """
         Update the latest firmware
+        or return a json formatted result
         """
         print(cherrypy.request.headers)
+        cherrypy.response.headers["Content-Type"] = "application/json"
+        result = {}
         update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-        return update.send_file()    
+        update_allowed, message_list = update.check_go()
+        if update_allowed:
+            uuid_key_for_firmware = uuid.uuid4()
+            cherrypy.session['firmware_uuid'] = '%s' % uuid_key_for_firmware
+            result["Message"] = ["OK", "%s" % uuid_key_for_firmware]
+        else:
+            result["Message"] = message_list
+        return json.dumps(result).encode('utf-8', 'replace')
 
         #return "Error tekst can updateFirmware"
         # update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
@@ -297,7 +304,7 @@ class MamiRoot():
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     getDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
     getFeatureDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
-         
+
 if __name__ == '__main__':
     try:
         pass

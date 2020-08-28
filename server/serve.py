@@ -57,6 +57,7 @@ class Server(object):
             mamiLogDict = {}
             mamiLogDict['log.access_file'] = '%s/%s' % (logfiles.log_dir, '/access_mami.log')
             mamiLogDict['log.error_file'] = '%s/%s' % (logfiles.log_dir, '/error_mami.log')
+            
             #root_app.merge({'/mami':mamiLogDict})
         
             root_app.merge({'/':baseLogDict,
