@@ -272,7 +272,7 @@ class MamiRoot():
         result = {}
         update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
         update_allowed, message_list = update.check_go()
-        print('a a a', update_allowed, message_list)
+        #print('a a a', update_allowed, message_list)
         if update_allowed:
             return update.send_file()
         else:
