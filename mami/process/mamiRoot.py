@@ -75,6 +75,22 @@ class MamiRoot():
         """
         It returns the data from all dynamic features
         Every feature has a key with its own properties
+        "features": [{
+            "id": "nl_03503",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.351280,
+                    52.013996
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "De Roos",
+                "uuid": "88888888-4444-4444-4444-121212121212"
+                < more properties from the sender >
+            }
+        }, and so on ...
         """
         data = {}
         for key in dynamic.keys():
@@ -94,6 +110,7 @@ class MamiRoot():
         This method returns data in JSON format
         It returns the data from all dynamic features in sse-format
         Every feature has a key with its own properties
+        @see _get_data(self)
         """
         cherrypy.response.headers["Content-Type"] = "application/json"
         cherrypy.response.headers["Cache-Control"] = "no-cache"
@@ -262,6 +279,23 @@ class MamiRoot():
             return json.dumps({"cpm":enden,"message":message}).encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
+
+    @cherrypy.expose
+    def authenticate_sender(self, mac_address="", key="", previous_key=""):
+        """
+        Authenticates the sender devices using their MAC address
+        "00:00:00:00:00:00": {
+            "key": "88888888-4444-4444-4444-121212121212 (uuid)",
+            "previous_key": "88888888-4444-4444-4444-121212121212 (uuid)",
+            "record_change_date": "yyyymmdd_hhmmss (utc)",
+            "ttl": "nr (days)",
+            "end_date": "yyyymmdd_hhmmss (utc)"
+        }
+        The key is renewed after calling this method and sent back
+        so the calling device can change this value in the devices' settings
+        """
+        sender = Sender(mac_address, key, previous_key)
+        return sender.response()
 
     @cherrypy.expose
     def updateFirmware(self):
