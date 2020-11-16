@@ -257,7 +257,8 @@ class MamiRoot():
             revolutions = body.get('data').get('revolutions')
             rawCounter = body.get('data').get('rawCounter')
             enden = body.get('data').get('viewPulsesPerMinute')
-            uuid = body.get('data').get('deviceKey')   
+            uuid = body.get('data').get('deviceKey')
+            macAddress = body.get('data').get('macAddress')   
             isOpen = body.get('data').get('isOpen')   
             showData = body.get('data').get('showData')   
             message = body.get('data').get('message')
@@ -265,7 +266,7 @@ class MamiRoot():
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
-
+            print(macAddress)
 
             # put feeded data in the dynamic features
             self.set(uuid=uuid,
@@ -276,7 +277,10 @@ class MamiRoot():
                      showData=showData,
                      message=message)
             
-            return json.dumps({"cpm":enden,"message":message}).encode('utf-8', 'replace')
+            return json.dumps({"cpm":enden,
+                               "message":message,
+                               "proposed_uuid": "nu nog niets",
+                               "macAddress": macAddress}).encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 

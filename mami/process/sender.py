@@ -68,6 +68,8 @@ class Sender:
 
 
 if __name__ == "__main__":
+    # A0:20:A6:29:18:13 hoort bij de roos
+    # A0:20:A6:14:85:06 hoort bij salamander
     sender = Sender(mac_address="A0:20:A6:14:85:06", 
                     key="88888888-4444-4444-4444-121212121212",
                     previous_key="88888888-4444-4444-4444-121212121212")
