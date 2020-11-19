@@ -269,7 +269,7 @@ class MamiRoot():
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
-            print(macAddress)
+            #print(macAddress)
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,

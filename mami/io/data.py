@@ -34,7 +34,7 @@ class Data(object):
         self.data = None
         with open(self.filename, 'r') as fh:
             self.data = json.load(fh)
-        print(self.filename)
+        #print(self.filename)
         pass
     
     def get_ids(self):
