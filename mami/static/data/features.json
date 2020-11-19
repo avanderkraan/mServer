@@ -11,7 +11,7 @@
             "type": "Feature",
             "properties": {
                 "name": "De Roos",
-                "uuid": "88888888-4444-4444-4444-121212121212"
+                "mac_address": "A0:20:A6:29:18:13"
             },
             "id": "nl_03503"
         },
@@ -26,7 +26,7 @@
             "type": "Feature",
             "properties": {
                 "name": "De Salamander",
-                "uuid": "een ander uuid nummer, namelijk die van het device op de salamander"
+                "mac_address": "A0:20:A6:14:85:06"
             },
             "id": "nl_12549"
         }

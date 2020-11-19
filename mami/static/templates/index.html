@@ -100,17 +100,17 @@ function showMillData(millData) {
   millTable += '    </tr>';
   millTable += '  </thead>';
   millTable += '<tbody>';
-  $.each(millData, function() {
+  $.each(millData, function(index, featureId) {
     millTable += '  <tr>';
     millTable += '    <td>';
     millTable += '<div id="';
-    millTable += millData['id']['id'];
+    millTable += millData[index]['id'];
     millTable += '" draggable="true" ondragstart="drag(event)">';
-    millTable += millData['id']['name'];
+    millTable += millData[index]['name'];
     millTable += '</div>';
     millTable += '    </td>';
     millTable += '    <td>';
-    millTable += millData['id']['cpm'];
+    millTable += millData[index]['cpm'];
     millTable += '    </td>';
     millTable += '  </tr>';
   });
@@ -123,22 +123,28 @@ function showMillData(millData) {
 
 function refresh() {
     // set cpm in all features
-    $.each(featureSource.getFeatures(), function(index, feature) {
-    	var featureId = feature.getId();
-    	var featureData = data[featureId];
-
-      perMillData = [];  // data per mill
-      if (featureData !== undefined) {
-        feature.set("name", featureData["name"]);
-        feature.set("cpm", featureData["cpm"]);
-        feature.set("message", featureData["message"]);
-        
-        perMillData['id'] = featureId;
-        perMillData['name'] = featureData["name"];
-        perMillData["cpm"] = featureData["cpm"];
-        perMillData['message'] = featureData["message"];
-        millData['id'] = perMillData;
+    senderData = {};
+    for (var i=0; i < Object.keys(data).length; i++) {
+      for (const [key, value] of Object.entries(data[i])) {
+        senderData[key] = value;
       }
+    }
+    $.each(featureSource.getFeatures(), function(index, feature) {
+      var featureId = feature.getId();
+      var featureData = senderData[featureId];
+
+        perMillData = [];  // data per mill
+        if (featureData !== undefined) {
+          feature.set("name", featureData["name"]);
+          feature.set("cpm", featureData["cpm"]);
+          feature.set("message", featureData["message"]);
+          
+          perMillData['id'] = featureId;
+          perMillData['name'] = featureData["name"];
+          perMillData["cpm"] = featureData["cpm"];
+          perMillData['message'] = featureData["message"];
+          millData[featureId] = perMillData;
+        }
     });
     molenLayer.setSource(featureSource);
     molenLayer.setStyle(styleFunction);
@@ -163,7 +169,9 @@ function getDataSse() {
             // cleanup table
             millData = {};
           }
-        	refresh();
+          else {
+       	    refresh();
+          }
 	    }
 	}
 	catch (err) {
@@ -186,6 +194,7 @@ function getUpdates(featureId) {
 	    singleSource = new EventSource("getFeatureDataSse/?feature_id=" + featureId);
 	    singleSource.onmessage = function(event) {
 	        /* for popup: put it on a document.element.id*/
+          /* TODO: event.data is a list of dicts, for each sender a dict is available */
           document.getElementById(featureId).innerHTML = event.data + "<br>";
 	        //event.data = cpm
 	    };
@@ -200,7 +209,8 @@ function getUpdates(featureId) {
 // global variables
 var cpm = '';
 var selectedId = ''; //'nl_03503';
-var data;            // contains featureId and cpm
+var data;            // contains a list of featureId's and cpm's
+var senderData;      // contains featureId and cpm
 var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data

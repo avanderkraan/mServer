@@ -141,7 +141,7 @@ function styleFunction(feature, resolution) {
 		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1 en geselecteerd
         return [selectedMillStyle];
 	}
-	else if (feature.getId() in data){
+	else if (feature.getId() in senderData){
 		workingMillText.setText(feature.get('cpm'));
 		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1
         return [workingMillStyle];

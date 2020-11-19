@@ -87,7 +87,7 @@ class MamiRoot():
             "type": "Feature",
             "properties": {
                 "name": "De Roos",
-                "uuid": "88888888-4444-4444-4444-121212121212"
+                "mac_address": "A0:20:A6:29:18:13"
                 < more properties from the sender >
             }
         }, and so on ...
@@ -133,16 +133,16 @@ class MamiRoot():
         cherrypy.response.headers["Cache-Control"] = "no-cache"
         cherrypy.response.headers["Connection"] = "keep-alive"
         cherrypy.response.headers["Pragma"] = "no-cache"
-        data = '{\n'
         data = 'retry: %s\n' % sse_timeout
         data_dict = self._get_data()
         if data_dict != {}:
+            data += 'data: [\n'
             for item, value in self._get_data().items():
                 data += 'data: {"%s": %s},\n' % (item, json.dumps(value))
             data = data[:-2]
         else:
             data += 'data: {}'
-        data += '\n\n'
+        data += '\ndata: ]\n\n'
         return data
 
     @cherrypy.expose
@@ -185,6 +185,7 @@ class MamiRoot():
 
     # @cherrypy.expose
     def set(self,
+            mac_address=None,
             uuid=None,
             rawCounter=-1,
             cpm=-1,
@@ -199,13 +200,15 @@ class MamiRoot():
         """
         try:
             feature_data = Data()
-            feature = feature_data.get_feature_from_uuid(uuid=uuid)
+            feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
             #feature = feature_data.get_feature(feature_id)
             now = datetime.now()
             feature_id = feature['id']
             #if feature and 'id' in feature.keys() and feature['id'] == feature_id:
             name = feature['properties']['name']
-            dynamic[feature_id] = {'now':now,
+            dynamic[feature_id] = {'mac_address':mac_address,
+                                   'uuid':uuid,
+                                   'now':now,
                                    'name':name,
                                    'rawCounter':rawCounter,
                                    'cpm':cpm,
@@ -214,7 +217,7 @@ class MamiRoot():
                                    'showData':showData,
                                    'message':message}
         except Exception as inst:
-            print('mamiRoot: uuid not found in features.json, in self.set(...)', inst)
+            print(inst, 'mamiRoot: mac_address not found in features.json, in self.set(...)', inst)
             pass
         #print('feature', feature, now, cpm, message)
     
@@ -228,7 +231,7 @@ class MamiRoot():
         result = {}
         try:
             result['cpm'] = dynamic.get(feature_id).get('cpm')
-            # TODO: result['uuid'] = uuid coming from a separate client file
+            # TODO: result['uuid'] = uuid coming from a separate client file (=receiver.json)
             # TODO: make client file (with uuid, end-date)
         except:
             pass
@@ -269,7 +272,8 @@ class MamiRoot():
             print(macAddress)
 
             # put feeded data in the dynamic features
-            self.set(uuid=uuid,
+            self.set(mac_address=macAddress,
+                     uuid=uuid,
                      rawCounter=rawCounter,
                      cpm=enden,
                      revolutions=revolutions,
@@ -333,5 +337,3 @@ if __name__ == '__main__':
     except Exception as inst:
         print(inst)
 
-
-      

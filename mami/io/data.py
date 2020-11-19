@@ -50,6 +50,7 @@ class Data(object):
             pass
         return ids
 
+    '''
     def get_feature_from_uuid(self, uuid=None):
         # search uuid and return the corresponding feature, using the feature_id
         try:
@@ -57,6 +58,18 @@ class Data(object):
             #{'nl_12549': {'name': 'De Salamander'}, 'nl_03503': {'uuid': '88888888-4444-4444-4444-121212121212', 'name': 'De Roos'}}
             for id in ids.keys():
                 if ids[id]['uuid'] == uuid:
+                    return self.get_feature(_id=id) 
+        except:
+            return None
+    '''
+
+    def get_feature_from_mac_address(self, mac_address=None):
+        # search mac_address and return the corresponding feature, using the feature_id
+        try:
+            ids = self.get_ids()
+            #{'nl_12549': {'mac_address': 'A0:20:A6:14:85:06', 'name': 'De Salamander'}, 'nl_03503': {'mac_address': 'A0:20:A6:29:18:13', 'name': 'De Roos'}}
+            for id in ids.keys():
+                if ids[id]['mac_address'] == mac_address:
                     return self.get_feature(_id=id) 
         except:
             return None
