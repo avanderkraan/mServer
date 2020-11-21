@@ -140,9 +140,10 @@ class MamiRoot():
             for item, value in self._get_data().items():
                 data += 'data: {"%s": %s},\n' % (item, json.dumps(value))
             data = data[:-2]
+            data += ']\n'
         else:
             data += 'data: {}'
-        data += '\ndata: ]\n\n'
+        data += '\n\n'
         return data
 
     @cherrypy.expose
