@@ -97,17 +97,24 @@
             selectedId = feature.getId();
             var coordinate = feature.values_.geometry.flatCoordinates;
             millInfo.setPosition(coordinate);
-
-            var popupTitle = "<div id=\"popup_" + selectedId + "\" >";
-            popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\" onclick=\"submitForm();\">" + feature.values_.name + "</span>";
-            popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\"</div>";
-            var tenbruggencatenummer = "";
+            var popupTitle = "";
             var numberStart = selectedId.indexOf("_");
             if (numberStart > -1) {
-                tenbruggencatenummer = selectedId.substring(numberStart + 1);
-                popupTitle += "<span>\n";
-                popupTitle += "<form target=\"_blank\" name=\"molendatabase\" action=\"https://molendatabase.nl/nederland/molens.php\" method=\"post\" enctype=\"application/x-www-form-urlencoded\"><input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\"></form>\n";
+                var tenbruggencatenummer = selectedId.substring(numberStart + 1);
+                popupTitle = "<div id=\"popup_" + selectedId + "\" >";
+                popupTitle += "<form target=\"_blank\"";
+                popupTitle += " id=\"molendatabase_" + selectedId + "\"";
+                popupTitle += " onclick=\"submitForm('" + selectedId + "');\"";
+                popupTitle += " action=\"https://molendatabase.nl/nederland/molen.php\"";
+                popupTitle += " method=\"post\"";
+                popupTitle += " enctype=\"application/x-www-form-urlencoded\"";
+                popupTitle += ">";
+                popupTitle += "<input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\">\n";
+                popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\">";
+                popupTitle += feature.values_.name;
+                popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\"</div>";
                 popupTitle += "</span>\n";
+                popupTitle += "</form>\n";
             }
             //popupTitle += "</div>\n";
             content.innerHTML = popupTitle;
@@ -140,7 +147,11 @@
         }
     }
 
-    function submitForm() {
-        document.molendatabase.submit();
+    function submitForm(selectedFeatureID) {
+        var numberStart = selectedFeatureID.indexOf("_");
+        var tenbruggencatenummer = selectedFeatureID.substring(numberStart + 1);
+        document.getElementById("molendatabase_" + selectedFeatureID).submit();
+        // reload needed to clear cache. Also needs cache control in meta tags in base.html
+        window.location.reload(true);
     }
 </script>
