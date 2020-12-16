@@ -53,6 +53,7 @@ class Update:
                                                             self.device_firmware_version)
                 
         self.firmware_file_list = self._get_ordered_filtered_firmware_list()
+
     def get_molen_counter_db(self):
         """
         Reads a JSON file and convert it to a Python object
@@ -60,7 +61,7 @@ class Update:
         """
         data = {}
         try:
-            with open(os.path.join(authentication_dir, 'molen_counter.json'), encoding='utf-8') as data_file:
+            with open(os.path.join(authentication_dir, 'sender.json'), encoding='utf-8') as data_file:
                 data = json.load(data_file)
         except Exception as inst:
             pass
