@@ -53,6 +53,7 @@ class MamiRoot():
         for entry in remove_objects:
             dynamic.pop(entry)
 
+####################################################################################### 
     @cherrypy.expose
     def default(self):
         '''
@@ -71,6 +72,7 @@ class MamiRoot():
             cherrypy.log('exception', traceback=True)
             return 
 
+####################################################################################### 
     def _get_data(self):
         """
         It returns the data from all dynamic features
@@ -171,11 +173,11 @@ class MamiRoot():
         clients['uuid_from_client'] = 'time_left_before_payment and other data'
         # TODO: for now just made up a dummy dict
 
-        if feature_id and client_id:
-            if client_id in clients.keys():
-                # TODO: authenticate the client by its uuid
-                data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(self._get(feature_id=feature_id)))
-                return data
+        if feature_id and client_id in clients.keys():
+            # TODO: authenticate the client by its uuid
+            #data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(self._get(feature_id=feature_id)))
+            data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(677))
+            return data
         else:
             # wrong parameter, just return 0
             def content():
@@ -246,6 +248,7 @@ class MamiRoot():
         message = self._get(feature_id=feature_id)['message']
         return json.dumps({"cpm":cpm,"message":message}).encode('utf-8', 'replace')
 
+####################################################################################### 
     @cherrypy.expose
     def feed(self):
         """
@@ -306,27 +309,70 @@ class MamiRoot():
         sender = Sender(mac_address, key, previous_key)
         return sender.response()
 
+####################################################################################### 
     @cherrypy.expose
-    def updateFirmware(self):
+    def updateFirmware(self, device=None):
         """
         Update the latest firmware
+        @param device: device can be 'model' or 'sender' or None(default = 'sender')
         or return a json formatted result
         """
-        result = {}
-        update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-        update_allowed, message_list = update.check_go()
-        #print('a a a', update_allowed, message_list)
-        if update_allowed:
-            return update.send_file()
-        else:
+        if device == None or device == 'sender':
+            result = {}
+            update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
+            update_allowed, message_list = update.check_go()
+            #print('a a a', update_allowed, message_list)
+            if update_allowed:
+                return update.send_file()
+            else:
+                cherrypy.response.headers["Content-Type"] = "application/json"
+                cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
+                cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
+                cherrypy.response.headers["Cache-Control"] = "no-cache"
+                cherrypy.response.headers["Connection"] = "keep-alive"
+                cherrypy.response.headers["Pragma"] = "no-cache"
+                result["Message"] = message_list
+                return json.dumps(result).encode('utf-8', 'replace')
+        if device == None or device == 'model':
+            pass
+
+####################################################################################### 
+    @cherrypy.expose
+    def eat(self):
+        """
+        Only POST eats will be handled
+        :return: a response in json format to the eating device
+        """
+        if cherrypy.request.method == 'POST':
             cherrypy.response.headers["Content-Type"] = "application/json"
-            cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-            cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
-            cherrypy.response.headers["Cache-Control"] = "no-cache"
-            cherrypy.response.headers["Connection"] = "keep-alive"
-            cherrypy.response.headers["Pragma"] = "no-cache"
-            result["Message"] = message_list
-            return json.dumps(result).encode('utf-8', 'replace')
+            cl = cherrypy.request.headers['Content-Length']
+            rawbody = cherrypy.request.body.read(int(cl))
+            unicodebody = rawbody.decode(encoding="utf-8")
+            body = json.loads(unicodebody)
+            uuid = body.get('data').get('deviceKey')
+            macAddress = body.get('data').get('macAddress')
+            roleModel = body.get('data').get('roleModel')  
+
+            # TODO: use uuid as the authentication-uuid-key from the device->pSettings
+            # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
+            # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
+            #print(macAddress)
+            if roleModel:
+                print(roleModel, self._get_data())
+                result = self._get_data().get(roleModel) or {}
+                print ('a a a', result)
+                if result or roleModel == 'Free':
+                    result.update({"proposed_uuid": "nu nog niets",
+                                   "macAddress": macAddress})
+                    return json.dumps(result).encode('utf-8', 'replace')
+            #return json.dumps(self._get_data()).encode('utf-8', 'replace')
+
+            #return json.dumps({"proposed_uuid": "nu nog niets",
+            #                   "macAddress": macAddress}).encode('utf-8', 'replace')
+
+        return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
+
+
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     getDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     

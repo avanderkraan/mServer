@@ -36,44 +36,59 @@
       </div>
     </div>
     <div class="row loffset6 roffset6">
+      <div class="col-xs-12">
         <hr>
+      </div>
     </div>
     <div class="row loffset6 roffset6">
-      <div class="col-xs-3">
-        <div><h4>Lijst van werkende molens</h4></div>
-        <div id="millData"></div>
-      </div>
-      <div class="col-xs-9">
+      <div class="col-xs-12">
         <div id="imagemap"></div>
         <div id="map"></div>
       </div>
     </div>
     <div class="row loffset6 roffset6">
-      <hr>
+      <div class="col-xs-12">
+        <div style="font-size:10px;">
+          Disclaimer: Aan de juistheid van gegevens kunnen geen rechten worden ontleend.
+        </div>
+      </div>
     </div>
-    <div style="font-size:10px;">
-      Disclaimer: Aan de juistheid van gegevens kunnen geen rechten worden ontleend.
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-12">
+        <hr>
+      </div>
     </div>
-    <div><!-- TODO enter client mills if available --></div>
+    <div class="row loffset6 roffset6">
 
-
-    <!-- TODO start future use for clients -->
-    <!-- iframes are added here by connectClient -->
-    <!--<iframe id="iframe"></iframe>-->
-    <!-- start client
-    <div id="clientList"></div>
-    <div id="clientData">
-      <input id="refreshClientList" type="button" onclick="makeClientList()" value="zoek model molens"/>
-      <input id="ipInput" placeholder="localhost:8080/client_2.html" type="text" onkeydown="passIPAddress(this)">
+    <div class="col-xs-4">
+      <div><h4>Lijst van werkende molens</h4></div>
+      <div id="millData">geduld...</div>
     </div>
-    end client -->
+    <div class="col-xs-4">
+      <div><h4>Koppel modelmolen(s) in 3 stappen</h4></div>
+      <div>Stap 1. Selecteer een molen uit de lijst van werkende molens</div>
+      <div>Stap 2. Selecteer een model uit de lijst van modellen</div>
+      <div>Stap 3. Bevestig de keuze</div>
+      <div>Gekozen molen: <span id="selectedRoleModel"></span></div>
+      <div>Gekozen model: <span id="selectedModel"></span></div>
+      <div id="selectedRoleModelId" style="display:none;"></div>
+      <div id="selectedModelId" style="display:none;"></div>
+      <div><input id="refreshClientList" type="button" onclick="refreshModelList();" value="refresh model list"/></div>
 
+    </div>
+    <div class="col-xs-4">
+      <div><h4>Lijst van modellen</h4></div>
+      <div id="clientList">geduld...</div>
+    </div>
 
+  </div>
+
+  </div>
     <div id="popup" class="ol-popup">
       <a href="#" id="popup-closer" class="ol-popup-closer"></a>
       <div id="popup-content"></div>
-    </div>
-    </div>
+  </div>
+
 
 
     <!-- Ook kijken naar ajax i.p.v SSE op de client
@@ -84,6 +99,9 @@
   <%include file="mami/features.html"/>
 
   <%include file="mami/popup.html"/>
+
+  <%include file="mami/connectClient.html"/>
+
 
 <script>
 
@@ -104,13 +122,16 @@ function showMillData(millData) {
     millTable += '  <tr>';
     millTable += '    <td>';
     millTable += '<div id="';
-    millTable += millData[index]['id'];
-    millTable += '" draggable="true" ondragstart="drag(event)">';
-    millTable += millData[index]['name'];
+    millTable += millData[index].id;
+    millTable += '"';
+    millTable += ' draggable="true" ondragstart="drag(event);"';
+    millTable += " onclick='setSelectedRoleModel(" + JSON.stringify(featureId) + ");'";
+    millTable += '>';
+    millTable += millData[index].name;
     millTable += '</div>';
     millTable += '    </td>';
     millTable += '    <td>';
-    millTable += millData[index]['cpm'];
+    millTable += millData[index].cpm;
     millTable += '    </td>';
     millTable += '  </tr>';
   });
@@ -133,16 +154,16 @@ function refresh() {
       var featureId = feature.getId();
       var featureData = senderData[featureId];
 
-        perMillData = [];  // data per mill
+        perMillData = {};  // data per mill
         if (featureData !== undefined) {
           feature.set("name", featureData["name"]);
           feature.set("cpm", featureData["cpm"]);
           feature.set("message", featureData["message"]);
           
-          perMillData['id'] = featureId;
-          perMillData['name'] = featureData["name"];
+          perMillData["id"] = featureId;
+          perMillData["name"] = featureData["name"];
           perMillData["cpm"] = featureData["cpm"];
-          perMillData['message'] = featureData["message"];
+          perMillData["message"] = featureData["message"];
           millData[featureId] = perMillData;
         }
     });
@@ -212,6 +233,8 @@ var senderData;      // contains featureId and cpm
 var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
+var clients = {};    // contains a table with model data
+
 
 var featureSource = new ol.source.Vector({
     url: "static/data/features.json",
@@ -223,4 +246,8 @@ var featureSource = new ol.source.Vector({
 // start get data
 getDataSse();
 // end get data
+
+// start get model list
+refreshModelList();
+// end get model list
 </script>
