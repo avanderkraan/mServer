@@ -7,6 +7,7 @@
     function setSelectedModel(selectedModel) {
         document.getElementById("selectedModelId").innerHTML = selectedModel;
         document.getElementById("selectedModel").innerHTML = selectedModel;
+        passIPAddress(selectedModel);
     };
 
     function findLastKnownClient(number) {
@@ -86,8 +87,31 @@
         return modelTable;
     }
 
+    function passIPAddress(urlModel) {
+        //if (event.key === 'Enter') {
+            //var url = 'http://' + e.value;
+            console.log("a a a " + urlModel);
+            //if (document.getElementById(urlModel) === null) {
+                var url = urlModel + "/setRoleModel/?id=" + document.getElementById("selectedRoleModelId").innerHTML;
+
+                var iframe = '<br><iframe id="' + urlModel + '" src="' + url + '" onload="loadIFrame(this)"></iframe>';
+                console.log(iframe);
+                document.getElementById("clientData").innerHTML += iframe;
+
+                //url = "http://localhost:8080/client_2.html";
+
+ 
+                //document.getElementById(urlModel).setAttribute("src", url);
+
+
+            //}
+            //console.log(document.getElementById("clientData").innerHTML);
+        //}
+    }
+
+    /* for drag and drop in a text-box
     function passIPAddress(e) {
-        if (event.key === 'Enter') {
+        //if (event.key === 'Enter') {
             //var url = 'http://' + e.value;
             var url = e.value;
             console.log("a a a " + document.getElementById(e.value));
@@ -105,8 +129,9 @@
 
             }
             console.log(document.getElementById("clientData").innerHTML);
-        }
+        //}
     }
+    */
 
     function loadIFrame(element) {
         document.getElementById("clientData").innerHTML = ""; 
