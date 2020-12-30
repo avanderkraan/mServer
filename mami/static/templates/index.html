@@ -73,12 +73,12 @@
       <div>Gekozen model: <span id="selectedModel"></span></div>
       <div id="selectedRoleModelId" style="display:none;"></div>
       <div id="selectedModelId" style="display:none;"></div>
-      <div><input id="refreshClientList" type="button" onclick="refreshModelList();" value="refresh model list"/></div>
+      <div><input id="refreshModelList" type="button" onclick="refreshModelList();" value="refresh model list"/></div>
 
     </div>
     <div class="col-xs-4">
       <div><h4>Lijst van modellen</h4></div>
-      <div id="clientList">geduld...</div>
+      <div id="modelList">geduld...</div>
     </div>
 
   </div>
@@ -88,12 +88,7 @@
       <a href="#" id="popup-closer" class="ol-popup-closer"></a>
       <div id="popup-content"></div>
   </div>
-  <div id="clientData"></div>
-
-
-
-    <!-- Ook kijken naar ajax i.p.v SSE op de client
-    zie localhost:8080 client_2.html -->
+  <div id="modelSelection"></div>
 
   <%include file="mami/map.html"/>
 
@@ -101,8 +96,7 @@
 
   <%include file="mami/popup.html"/>
 
-  <%include file="mami/connectClient.html"/>
-
+  <%include file="mami/connectModel.html"/>
 
 <script>
 
@@ -200,7 +194,7 @@ function getDataSse() {
 }
 
 /* requests the getFeatureDataSse for the selected feature from this server */
-/* TODO: is to be used by step 3. the client */
+/* TODO: is to be used by step 3. the model */
 /* TODO: is also used by the popup */
 function getUpdates(featureId) {
 	// selectedId = featureId
@@ -234,7 +228,7 @@ var senderData;      // contains featureId and cpm
 var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
-var clients = {};    // contains a table with model data
+var models = {};    // contains a table with model data
 
 
 var featureSource = new ol.source.Vector({

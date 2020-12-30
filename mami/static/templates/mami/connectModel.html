@@ -1,0 +1,106 @@
+<script>
+    function setSelectedRoleModel(selectedMill) {
+        document.getElementById("selectedRoleModelId").innerHTML = selectedMill.id;
+        document.getElementById("selectedRoleModel").innerHTML = selectedMill.name;
+    };
+
+    function setSelectedModel(selectedModel) {
+        document.getElementById("selectedModelId").innerHTML = selectedModel;
+        document.getElementById("selectedModel").innerHTML = selectedModel;
+        passIPAddress(selectedModel);
+    };
+
+    function findLastKnownModel(number) {
+        //var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
+        var urlToCheck = 'http://model';
+        if (number > 1) {
+            urlToCheck = urlToCheck + "-" + number.toString() + ".local";
+        } else {
+            urlToCheck = urlToCheck + ".local";
+        }
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 5000;
+        console.log('UNSENT', xhr.readyState); // readyState will be 0
+        //TODO debug op de Counter heeft even "Access-Control-Allow-Origin", "*" gekregen als test
+        xhr.open('GET', urlToCheck + '/alive/', true);
+        console.log('OPENED', xhr.readyState); // readyState will be 1
+
+        xhr.onprogress = function() {
+            console.log('LOADING', xhr.readyState); // readyState will be 3
+        };
+
+        xhr.onload = function() {
+            console.log('DONE' + number, xhr.readyState); // readyState will be 4
+            //models[pad(number, 4)] = urlToCheck;
+            var response = xhr.responseText;
+            console.log("b b b " + response);
+            if (response.startsWith("model")) {
+
+                number += 1;
+                findLastKnownModel(number);
+                models[response.replace(/\n|\r/g, "")] = urlToCheck;
+                console.log(models);
+            }
+        };
+
+        xhr.send(null);
+    }
+
+    function showModelList() {
+        document.getElementById("modelList").innerHTML = makeModelList();
+    }
+
+    function makeModelList() {
+        if (Object.keys(models).length == 0) {
+            return 'Geen modellen beschikbaar';
+        }
+        modelTable = '';
+        modelTable += '<table class="table">';
+        modelTable += '<thead>';
+        modelTable += '    <tr>';
+        modelTable += '      <th scope="col">Model url</th>';
+        modelTable += '    </tr>';
+        modelTable += '  </thead>';
+        modelTable += '<tbody>';
+        $.each(models, function(index, value) {
+            modelTable += '  <tr>';
+            modelTable += '    <td>';
+            modelTable += '<div id="';
+            modelTable += index;
+            modelTable += '"';
+            modelTable += ' draggable="true" ondragstart="drag(event);"';
+            modelTable += " onclick='setSelectedModel(" + JSON.stringify(value) + ");'";
+            modelTable += '>';
+            modelTable += value;
+            modelTable += '</div>'
+            modelTable += '    </td>';
+            modelTable += '  </tr>';
+        });
+        modelTable += '</tbody>';
+        modelTable += '</table>';
+
+        return modelTable;
+    }
+
+    function passIPAddress(urlModel) {
+        var url = urlModel + "/setRoleModel/?id=" + document.getElementById("selectedRoleModelId").innerHTML;
+        var iframe = '<br><iframe id="' + urlModel + '" src="' + url + '" onload="loadIFrame(this)"></iframe>';
+        document.getElementById("modelSelection").innerHTML += iframe;
+    }
+
+    function loadIFrame(element) {
+        // cleanup directly after IFrame was loaded
+        document.getElementById("modelSelection").innerHTML = ""; 
+    }
+
+    // start get models
+    function refreshModelList() {
+        findLastKnownModel(1);  // starting with the first one
+        console.log("numberOfModelsFound " + numberOfModelsFound);
+        setTimeout(function (){
+        showModelList();
+        }, 1000); // How long do you want the delay to be (in milliseconds)? 
+    }
+    // end get models
+
+</script>
