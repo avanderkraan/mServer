@@ -6,9 +6,13 @@
 
     function setSelectedModel(selectedModel) {
         document.getElementById("selectedModelId").innerHTML = selectedModel;
-        document.getElementById("selectedModel").innerHTML = selectedModel;
-        passIPAddress(selectedModel);
+        document.getElementById("selectedModelUrl").innerHTML = 'http://' + selectedModel + '.local';
     };
+
+    function confirmSelections() {
+        var selectedModelUrl = document.getElementById("selectedModelUrl").innerHTML;
+        passIPAddress(selectedModelUrl);
+    }
 
     function findLastKnownModel(number) {
         //var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
@@ -59,6 +63,7 @@
         modelTable += '<thead>';
         modelTable += '    <tr>';
         modelTable += '      <th scope="col">Model url</th>';
+        modelTable += '      <th scope="col">Molen</th>';
         modelTable += '    </tr>';
         modelTable += '  </thead>';
         modelTable += '<tbody>';
@@ -69,10 +74,16 @@
             modelTable += index;
             modelTable += '"';
             modelTable += ' draggable="true" ondragstart="drag(event);"';
-            modelTable += " onclick='setSelectedModel(" + JSON.stringify(value) + ");'";
+            modelTable += " onclick='setSelectedModel(" + JSON.stringify(index) + ");'";
             modelTable += '>';
             modelTable += value;
             modelTable += '</div>'
+            modelTable += '    </td>';
+            modelTable += '    <td>';
+            modelTable += '      <span id="';
+            modelTable += "connectedTo_";
+            modelTable += index;
+            modelTable += '"';
             modelTable += '    </td>';
             modelTable += '  </tr>';
         });
@@ -84,19 +95,25 @@
 
     function passIPAddress(urlModel) {
         var url = urlModel + "/setRoleModel/?id=" + document.getElementById("selectedRoleModelId").innerHTML;
-        var iframe = '<br><iframe id="' + urlModel + '" src="' + url + '" onload="loadIFrame(this)"></iframe>';
+        var iframe = '<br><iframe id="' + urlModel + '" src="' + url + '" onload="connectModel(this)"></iframe>';
         document.getElementById("modelSelection").innerHTML += iframe;
     }
 
-    function loadIFrame(element) {
+    function connectModel(element) {
         // cleanup directly after IFrame was loaded
         document.getElementById("modelSelection").innerHTML = ""; 
+        // show result in the modelTable
+        document.getElementById("connectedTo_" + document.getElementById("selectedModelId").innerHTML).innerHTML = document.getElementById("selectedRoleModel").innerHTML;
+        // cleanup selected RoleModel and selected model
+        document.getElementById("selectedRoleModelId").innerHTML = "";
+        document.getElementById("selectedRoleModel").innerHTML = "";
+        document.getElementById("selectedModelId").innerHTML = "";
+        document.getElementById("selectedModelUrl").innerHTML = "";
     }
 
     // start get models
     function refreshModelList() {
         findLastKnownModel(1);  // starting with the first one
-        console.log("numberOfModelsFound " + numberOfModelsFound);
         setTimeout(function (){
         showModelList();
         }, 1000); // How long do you want the delay to be (in milliseconds)? 
