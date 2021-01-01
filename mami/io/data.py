@@ -36,6 +36,18 @@ class Data(object):
             self.data = json.load(fh)
         #print(self.filename)
         pass
+
+    def get_all_ids_names(self):
+        my_features = {}
+        try:
+            features = "features" in self.data.keys() and self.data["features"] or []
+            for feature in features:
+                if "id" in feature.keys():
+                    my_features[feature.get("id")] = feature.get("properties").get("name")
+        except:
+            pass
+        return my_features
+
     
     def get_ids(self):
         # returns a dictionary of feature-ids with properties

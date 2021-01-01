@@ -66,8 +66,9 @@ class MamiRoot():
     @cherrypy.expose
     def index(self):
         template = mylookup.get_template('index.html')
-        try:    
-            return template.render_unicode().encode('utf-8', 'replace')
+        try:
+            data = Data()
+            return template.render_unicode(all_mills=data.get_all_ids_names()).encode('utf-8', 'replace')
         except:
             cherrypy.log('exception', traceback=True)
             return 
@@ -358,9 +359,7 @@ class MamiRoot():
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print(macAddress)
             if roleModel:
-                print(roleModel, self._get_data())
                 result = self._get_data().get(roleModel) or {}
-                print ('a a a', result)
                 if result or roleModel == 'Free':
                     result.update({"proposed_uuid": "nu nog niets",
                                    "macAddress": macAddress})

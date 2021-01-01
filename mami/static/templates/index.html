@@ -44,8 +44,8 @@
     
     <div class="row loffset6 roffset6">
       <div class="col-xs-12">
-        <span id="select-tab-map" onclick="selectTab('tab-map');">Kaart met molens</span>
-        <span id="select-tab-models" onclick="selectTab('tab-models');">Koppelen van model molens</span>
+        <span id="select-tab-map" style="font-weight:bold; font-size: 1.2em;" onclick="selectTab('tab-map');">Kaart met molens</span>
+        <span id="select-tab-models" style="font-weight:bold; font-size: 1.2em;" onclick="selectTab('tab-models');">Koppelen van model molens</span>
       </div>
     </div>
     
@@ -56,6 +56,7 @@
           <div id="map"></div>
         </div>
       </div>
+
       <div class="row loffset6 roffset6">
         <div class="col-xs-12">
           <div style="font-size:10px;">
@@ -63,6 +64,14 @@
           </div>
         </div>
       </div>
+
+      <div class="row loffset6 roffset6">
+        <div class="col-xs-6">
+          <div><h4>Lijst van actieve molens</h4></div>
+          <div id="millData">geduld...</div>
+        </div>
+      </div>
+
       <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content"></div>
@@ -70,18 +79,28 @@
     </div>
 
     <div id="tab-models">
+    
       <div class="row loffset6 roffset6">
-
+        <div class="col-xs-12">
+          <hr>
+        </div>
+      </div>
+        
+      <div class="row loffset6 roffset6">
+        <div class="col-xs-12">
+          <div><h3>Koppel modelmolen(s) in 3 stappen</h4></div>
+        </div>
+      </div>
+      <div class="row loffset6 roffset6">
         <div class="col-xs-4">
-          <div><h4>Lijst van molens</h4></div>
-          <div id="millData">geduld...</div>
+          <div>Stap 1. Selecteer een molen</div>
+          <div>Gekozen molen: <span id="selectedRoleModel"></span></div>
         </div>
         <div class="col-xs-4">
-          <div><h4>Koppel modelmolen(s) in 3 stappen</h4></div>
-          <div>Stap 1. Selecteer een molen uit de lijst van werkende molens</div>
-          <div>Gekozen molen: <span id="selectedRoleModel">jhkjkjh</span></div>
-          <div>Stap 2. Selecteer een model uit de lijst van modellen</div>
+          <div>Stap 2. Selecteer een model</div>
           <div>Gekozen model: <span id="selectedModelId"></span></div>
+        </div>
+        <div class="col-xs-4">
           <div>Stap 3. Bevestig de keuze</div>
           <div>
             <div><input id="confirmSelections" type="button" onclick="confirmSelections();" value="OK"/></div>
@@ -92,18 +111,38 @@
           <!-- end hidden -->
 
         </div>
-        <div class="col-xs-4">
-          <div><h4>Lijst van modellen</h4></div>
-          <div><input id="refreshModelList" type="button" onclick="refreshModelList();" value="refresh model list"/></div>
+      </div>
+    
+      <div class="row loffset6 roffset6">
+        <div class="col-xs-12">
+          <hr>
+        </div>
+      </div>
+        
+      <div class="row loffset6 roffset6">
+        <div class="col-xs-6">
+    
+          <div><h4>Lijst van molens</h4></div>
+          <div id="roleModelData"></div>
+        </div>
+        <div class="col-xs-6">
+          <table>
+            <tr>
+              <td>
+                <span><h4>Lijst van modellen&nbsp;</h4></span>
+              </td>
+              <td>
+                <input  id="refreshModelList" type="button" onclick="refreshModelList();" value="ververs model lijst"/>
+              </td>
+              <td>
+                <div id="modelSelection"></div>
+              </td>
+            </tr>
+            <tr>
+          </table>
           <div id="modelList">geduld...</div>
         </div>
 
-      </div>
-
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-4">
-          <div id="modelSelection"></div>
-        </div>
       </div>
 
     </div>
@@ -120,22 +159,73 @@
 
 <script>
 function selectTab(tabId) {
-  console.log(tabId);
   var tabMap = "tab-map";
   var tabModels = "tab-models";
   document.getElementById(tabMap).style.display= "none";
   document.getElementById("select-" + tabMap).style.borderLeft = "none";
   document.getElementById("select-" + tabMap).style.borderRight = "none";
   document.getElementById("select-" + tabMap).style.borderTop = "none";
+  document.getElementById("select-" + tabMap).style.paddingLeft = "15px";
+  document.getElementById("select-" + tabMap).style.paddingRight = "15px";
+  document.getElementById("select-" + tabMap).style.paddingTop = "7px";
   document.getElementById(tabModels).style.display= "none";
   document.getElementById("select-" + tabModels).style.borderLeft = "none";
   document.getElementById("select-" + tabModels).style.borderRight = "none";
   document.getElementById("select-" + tabModels).style.borderTop = "none";
+  document.getElementById("select-" + tabModels).style.paddingLeft = "15px";
+  document.getElementById("select-" + tabModels).style.paddingRight = "15px";
+  document.getElementById("select-" + tabModels).style.paddingTop = "7px";
   document.getElementById(tabId).style.display = "inline";
-  document.getElementById("select-" + tabId).style.borderLeft = "2px solid black";
-  document.getElementById("select-" + tabId).style.borderRight = "2px solid black";
-  document.getElementById("select-" + tabId).style.borderTop = "2px solid black";
+  document.getElementById("select-" + tabId).style.borderLeft = "1px solid black";
+  document.getElementById("select-" + tabId).style.borderRight = "1px solid black";
+  document.getElementById("select-" + tabId).style.borderTop = "1px solid black";
+  document.getElementById("select-" + tabId).style.paddingLeft = "15px";
+  document.getElementById("select-" + tabId).style.paddingRight = "15px";
+  document.getElementById("select-" + tabId).style.paddingTop = "7px";
 }
+
+function showRoleModelList() {
+  var roleModelTable = '';
+  roleModelTable += '<table class="table">';
+  roleModelTable += '<thead>';
+  roleModelTable += '    <tr>';
+  roleModelTable += '      <th scope="col">Naam</th>';
+
+  if (Object.keys(millData).length != 0) {
+        roleModelTable += '<th>';
+        roleModelTable += 'Enden';
+        roleModelTable += '</th>';
+      }
+
+  roleModelTable += '    </tr>';
+  roleModelTable += '  </thead>';
+  roleModelTable += '<tbody>';
+    $.each(${all_mills}, function(id, name) {
+      roleModelTable += '  <tr>';
+      roleModelTable += '    <td>';
+      roleModelTable += '<div id="';
+      roleModelTable += id;
+      roleModelTable += '"';
+      roleModelTable += ' draggable="true" ondragstart="drag(event);"';
+      roleModelTable += " onclick='setSelectedRoleModel(" + JSON.stringify(id) + "," + JSON.stringify(name) + ");'";
+      roleModelTable += '>';
+      roleModelTable += name;
+      roleModelTable += '</div>';
+      roleModelTable += '    </td>';
+
+      if (Object.keys(millData).length != 0) {
+        roleModelTable += '    <td>';
+        roleModelTable += millData[id].cpm;
+        roleModelTable += '    </td>';
+      }
+
+      roleModelTable += '  </tr>';
+    });
+  
+  $('#roleModelData').html(roleModelTable);
+  document.getElementById("confirmSelections").disabled = true;
+}
+
 
 function showMillData(millData) {
   if (Object.keys(millData).length == 0) {
@@ -156,8 +246,6 @@ function showMillData(millData) {
     millTable += '<div id="';
     millTable += millData[index].id;
     millTable += '"';
-    millTable += ' draggable="true" ondragstart="drag(event);"';
-    millTable += " onclick='setSelectedRoleModel(" + JSON.stringify(featureId) + ");'";
     millTable += '>';
     millTable += millData[index].name;
     millTable += '</div>';
@@ -265,7 +353,7 @@ var senderData;      // contains featureId and cpm
 var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
-var models = {};    // contains a table with model data
+var models = {};     // contains a table with model data
 
 
 var featureSource = new ol.source.Vector({
@@ -273,6 +361,12 @@ var featureSource = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
     useSpatialIndex: false
 });
+
+
+
+// start roleModelList using features
+showRoleModelList();
+// end roleModelList using features
 
 // start show tab-map
 selectTab("tab-map");
