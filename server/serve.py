@@ -7,7 +7,7 @@ import cherrypy
 import sys
 import os
 sys.path.append('%s' % os.getcwd())
-# before mounting anything
+# before mounting anything 
 from cherrypy.process.plugins import Daemonizer
 #Daemonizer(cherrypy.engine).subscribe()
 #from server.logfiles import Logfiles

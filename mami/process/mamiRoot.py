@@ -360,10 +360,12 @@ class MamiRoot():
             #print(macAddress)
             if roleModel:
                 result = self._get_data().get(roleModel) or {}
-                if result or roleModel == 'Free':
+                if result or roleModel == 'None':
                     result.update({"proposed_uuid": "nu nog niets",
                                    "macAddress": macAddress})
-                    return json.dumps(result).encode('utf-8', 'replace')
+            #        resultString = json.dumps(result) + '\n'
+            #return resultString.encode('utf-8', 'replace')
+            return json.dumps(result).encode('utf-8', 'replace')
             #return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
             #return json.dumps({"proposed_uuid": "nu nog niets",

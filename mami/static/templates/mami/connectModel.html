@@ -39,7 +39,6 @@
         var xhr = new XMLHttpRequest();
         xhr.timeout = 5000;
         //console.log('UNSENT', xhr.readyState); // readyState will be 0
-        //TODO debug op de Counter heeft even "Access-Control-Allow-Origin", "*" gekregen als test
         xhr.open('GET', urlToCheck + '/alive/', true);
         //console.log('OPENED', xhr.readyState); // readyState will be 1
 
