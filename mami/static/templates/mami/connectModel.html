@@ -126,6 +126,8 @@
 
     // start get models
     function refreshModelList() {
+        // clear global variable models
+        models = {};
         document.getElementById("modelList").innerHTML = "geduld ...";
         findLastKnownModel(1);  // starting with the first one
         setTimeout(function (){

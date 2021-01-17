@@ -14,7 +14,7 @@ from mami.process.update import Update
 from mami import current_dir
 from mami import module_dir
 from mami import cache_delay
-from mami import sse_timeout
+from mami import sse_timeout()
 from mami import firmware_dir
 from mami import firmware_pattern
 
