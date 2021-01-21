@@ -14,7 +14,7 @@ from mami.process.update import Update
 from mami import current_dir
 from mami import module_dir
 from mami import cache_delay
-from mami import sse_timeout()
+from mami import sse_timeout
 from mami import firmware_dir
 from mami import firmware_pattern
 
@@ -235,7 +235,7 @@ class MamiRoot():
         result = {}
         try:
             result['cpm'] = dynamic.get(feature_id).get('cpm')
-            # TODO: result['uuid'] = uuid coming from a separate client file (=receiver.json)
+            # TODO: result['uuid'] = uuid coming from a separate client file (=model.json)
             # TODO: make client file (with uuid, end-date)
         except:
             pass
@@ -274,7 +274,7 @@ class MamiRoot():
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
-            #print(macAddress)
+            #print('sender', macAddress)
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,
@@ -354,15 +354,17 @@ class MamiRoot():
             macAddress = body.get('data').get('macAddress')
             roleModel = body.get('data').get('roleModel')  
 
+            #model = Model()
+            #if macAddress in model.mac_address_list():
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
-            #print(macAddress)
+            #print('receiver',macAddress)
             if roleModel:
                 result = self._get_data().get(roleModel) or {}
                 if result or roleModel == 'None':
                     result.update({"proposed_uuid": "nu nog niets",
-                                   "macAddress": macAddress})
+                                "macAddress": macAddress})
             #        resultString = json.dumps(result) + '\n'
             #return resultString.encode('utf-8', 'replace')
             return json.dumps(result).encode('utf-8', 'replace')
@@ -370,6 +372,8 @@ class MamiRoot():
 
             #return json.dumps({"proposed_uuid": "nu nog niets",
             #                   "macAddress": macAddress}).encode('utf-8', 'replace')
+            #else:
+            #    return '{"Error": "Model not authenticated in model.json"}'.encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 
