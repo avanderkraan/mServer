@@ -10,13 +10,12 @@ import json
 from datetime import datetime, timedelta
 from mami.io.data import Data
 from mami.process.update import Update
+from mami.process.validate import validate_model, validate_role_model
 #from mako import exceptions
 from mami import current_dir
 from mami import module_dir
 from mami import cache_delay
 from mami import sse_timeout
-from mami import firmware_dir
-from mami import firmware_pattern
 
 from mako.lookup import TemplateLookup
 mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates'),
@@ -29,10 +28,15 @@ mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates
                 output_encoding='utf-8', encoding_errors='replace')
 
 dynamic = {}  # holds cpm(counts per minute) data per feature_id with a datetime when the value was set
+mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_cpm
+#mac_address_model = {}   # holds data from model wih mac_address as key
+
 
 class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
+        self.max_feed_down = 10    # max difference to prevent a sudden 0
+        self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
         
     @cherrypy.expose
     def _cleancache(self):
@@ -40,6 +44,7 @@ class MamiRoot():
         Should be entered regularly to cleanup cache (=dynamic dictionary), using crontab
         using an external program like cron or by this program itself, say every 5 minutes
         """
+        # start dynamic dictionary
         now = datetime.now() 
         delta = timedelta(minutes=cache_delay)
         remove_objects = []
@@ -52,10 +57,17 @@ class MamiRoot():
                 print(inst)
         for entry in remove_objects:
             dynamic.pop(entry)
+        # end dynamic dictionary
+
+        # start mac_address_sender dictionary
+        if len(mac_address_sender) > 1500:
+            mac_address_sender = {}  # just empty, it will fill up itself
+        # end mac_address_sender dictionary
+       
 
 ####################################################################################### 
     @cherrypy.expose
-    def default(self):
+    def default(self, *args, **kwargs):
         '''
         redirects all not-defined URLs to root.index
         '''
@@ -221,7 +233,8 @@ class MamiRoot():
                                    'showData':showData,
                                    'message':message}
         except Exception as inst:
-            print(inst, 'mamiRoot: mac_address not found in features.json, in self.set(...)', inst)
+
+            print('most likely, mac_address is None', inst)
             pass
         #print('feature', feature, now, cpm, message)
     
@@ -270,11 +283,39 @@ class MamiRoot():
             isOpen = body.get('data').get('isOpen')   
             showData = body.get('data').get('showData')   
             message = body.get('data').get('message')
+            version = body.get('data').get('version')
 
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print('sender', macAddress)
+            # TODO: with "pushFirmware=esp8266_0.0.9.bin" to push this version
+            # TODO:      "pushFirmware=latest to push the latest
+
+            try:
+                previous_cpm = mac_address_sender.get(macAddress).get("stored_cpm")
+                if (int(enden) > self.max_feed_down) and (previous_cpm - int(enden) > self.max_feed_down):
+                    enden = str(int(previous_cpm - self.max_feed_down))
+
+            except:
+                pass
+            mac_address_sender.update({macAddress:{"stored_cpm":int(enden)}} )
+
+
+            feed_counter = 0
+            try:
+                feed_counter = mac_address_sender.get(macAddress).get("feed_counter")
+                feed_counter += 1
+                if feed_counter > self.max_feed_counter:
+                    # push Update
+                    feed_counter = -1   # means check for update
+                    pass
+            except:
+                pass
+            mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
+
+            #print('version', version)
+
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,
@@ -285,10 +326,11 @@ class MamiRoot():
                      isOpen=isOpen,
                      showData=showData,
                      message=message)
-            
+
             return json.dumps({"cpm":enden,
                                "message":message,
-                               "proposed_uuid": "nu nog niets",
+                               "proposedUUID": "nu nog niets",
+                               "pushFirmware" : feed_counter == -1 and "latest" or "",
                                "macAddress": macAddress}).encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
@@ -309,33 +351,6 @@ class MamiRoot():
         """
         sender = Sender(mac_address, key, previous_key)
         return sender.response()
-
-####################################################################################### 
-    @cherrypy.expose
-    def updateFirmware(self, device=None):
-        """
-        Update the latest firmware
-        @param device: device can be 'model' or 'sender' or None(default = 'sender')
-        or return a json formatted result
-        """
-        if device == None or device == 'sender':
-            result = {}
-            update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern)
-            update_allowed, message_list = update.check_go()
-            #print('a a a', update_allowed, message_list)
-            if update_allowed:
-                return update.send_file()
-            else:
-                cherrypy.response.headers["Content-Type"] = "application/json"
-                cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-                cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
-                cherrypy.response.headers["Cache-Control"] = "no-cache"
-                cherrypy.response.headers["Connection"] = "keep-alive"
-                cherrypy.response.headers["Pragma"] = "no-cache"
-                result["Message"] = message_list
-                return json.dumps(result).encode('utf-8', 'replace')
-        if device == None or device == 'model':
-            pass
 
 ####################################################################################### 
     @cherrypy.expose
@@ -363,17 +378,20 @@ class MamiRoot():
             if roleModel:
                 result = self._get_data().get(roleModel) or {}
                 if result or roleModel == 'None':
-                    result.update({"proposed_uuid": "nu nog niets",
-                                "macAddress": macAddress})
-            #        resultString = json.dumps(result) + '\n'
-            #return resultString.encode('utf-8', 'replace')
-            return json.dumps(result).encode('utf-8', 'replace')
-            #return json.dumps(self._get_data()).encode('utf-8', 'replace')
+                    result.update({"proposedUUID": "nu nog niets",
+                                   "macAddress": macAddress})
+                    print('r r r', result)
+                #        resultString = json.dumps(result) + '\n'
+                #return resultString.encode('utf-8', 'replace')
+                from time import sleep
+                sleep(1)
+                return json.dumps(result).encode('utf-8', 'replace')
+                #return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
-            #return json.dumps({"proposed_uuid": "nu nog niets",
-            #                   "macAddress": macAddress}).encode('utf-8', 'replace')
-            #else:
-            #    return '{"Error": "Model not authenticated in model.json"}'.encode('utf-8', 'replace')
+                #return json.dumps({"proposedUUID": "nu nog niets",
+                #                   "macAddress": macAddress}).encode('utf-8', 'replace')
+            else:
+                return '{"Error": "Model not authenticated in model.json"}'.encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 

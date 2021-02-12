@@ -123,21 +123,21 @@
                     .done(function(data) {
                         var popupText = "<ul style=\"list-style-type:none\">";
                         $.each(data, function(key, val) {
-                            switch (key) {
-                                case "isOpen":
-                                    if (val == 0) {
-                                        popupText += "<li id=\"popup_" + key + "\">Nu gesloten</li>\n";
-                                    } else {
-                                        popupText += "<li id=\"popup_" + key + "\">Nu geopend</li>\n";
-                                    }
-                                    break;
-                                case "message":
-                                    if (val == "") {
-                                        popupText += "<li id=\"popup_" + key + "\">Geen nieuws beschikbaar</li>\n";
-                                    } else {
-                                        popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
-                                    }
-                                    break;
+                            if (key == "isOpen")
+                            {
+                                if (val == 0) {
+                                    popupText += "<li id=\"popup_" + key + "\">Nu gesloten</li>\n";
+                                } else {
+                                    popupText += "<li id=\"popup_" + key + "\">Nu geopend</li>\n";
+                                }
+                            }
+                            if (key ==  "message")
+                            {
+                                if (val == "") {
+                                    popupText += "<li id=\"popup_" + key + "\">Geen nieuws beschikbaar</li>\n";
+                                } else {
+                                    popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
+                                }
                             }
                         });
                         popupText += "</ul>";

@@ -34,34 +34,84 @@ import re
 import hashlib
 import cherrypy
 from mami import authentication_dir
+from mami import firmware_dir
+from mami import firmware_pattern
 import json
 
-class Update:
 
-    def __init__(self, firmware_path='', firmware_pattern=r'*.'):
-        self.firmware_path = firmware_path
-        self.filename = None            # full path plus filename
-        self.requested_firmware = None  # filename for client, =bare name
+class UpdateFirmware:
+    @cherrypy.expose
+    def default(self, *args, **kwargs):
+        '''
+        redirects all not-defined URLs to root.index
+        '''
+        pass
+        newUrl = '%s%s' % (cherrypy.request.script_name, '/updateFirmware')
+        raise cherrypy.HTTPRedirect(newUrl)
+
+    @cherrypy.expose
+    def updateFirmware(self, device=None, version="latest"):
+        """
+        Update the latest firmware
+        @param device: device can be 'model' or 'sender' or None(default = 'sender')
+        or return a json formatted result
+        """
+        if device in ('sender', 'model'):
+            result = {}
+            update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern, device_function=device, requested_version=version)
+            update_allowed, message_list = update.check_go()
+            if update_allowed:
+                print(update.filename)
+                return json.dumps({"nu": "niets"}).encode('utf-8', 'replace')
+                return update.send_file()
+            else:
+                cherrypy.response.headers["Content-Type"] = "application/json"
+                cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
+                cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
+                cherrypy.response.headers["Cache-Control"] = "no-cache"
+                cherrypy.response.headers["Connection"] = "keep-alive"
+                cherrypy.response.headers["Pragma"] = "no-cache"
+                result["Message"] = message_list
+                return json.dumps(result).encode('utf-8', 'replace')
+        else:
+            return json.dumps({"Error": "Device unknown, should be sender or model"}).encode('utf-8', 'replace')
+  
+
+####################################################################################### 
+
+class Update:
+    def __init__(self, firmware_path='', firmware_pattern=r'*.', device_function=None, requested_version="latest"):
+        '''
+        @param device_function: is model or sender and corresponds with the filename
+                                in db/authentication/sender|model
+        '''
+        self.firmware_path = os.path.join(current_dir, device_function, firmware_path)
         self.firmware_pattern = firmware_pattern
+        self.device_function = device_function
+        self.requested_version = requested_version
         self.device_user_agent = cherrypy.request.headers.get('User-Agent')
         self.device_firmware_version = cherrypy.request.headers.get('X-Esp8266-Version')
         self.device_station_mac_address = cherrypy.request.headers.get('X-Esp8266-Sta-Mac')
-        self.detected_firmware_version = None
         if self.device_user_agent:
             user_agent_parts = self.device_user_agent.split('-')
-            self.detected_firmware_version = '%s_%s.bin' % (user_agent_parts[0].lower(),
-                                                            self.device_firmware_version)
-                
-        self.firmware_file_list = self._get_ordered_filtered_firmware_list()
+            if requested_version == "latest":
+                self.detected_firmware_version = '%s_%s.bin' % (user_agent_parts[0].lower(),
+                                                              self.device_firmware_version)
+            else:
+                self.detected_firmware_version = '%s_%s.bin' % (user_agent_parts[0].lower(),
+                                                              self.requested_version)
 
-    def get_molen_counter_db(self):
+        self.firmware_file_list = self._get_ordered_filtered_firmware_list()
+        self.filename = None
+
+    def get_device_db(self):
         """
         Reads a JSON file and convert it to a Python object
         Returns the Python object
         """
         data = {}
         try:
-            with open(os.path.join(authentication_dir, 'sender.json'), encoding='utf-8') as data_file:
+            with open(os.path.join(authentication_dir, '%s.json' % self.device_function), encoding='utf-8') as data_file:
                 data = json.load(data_file)
         except Exception as inst:
             pass
@@ -109,22 +159,25 @@ class Update:
         message = []
         
         # check if there is a newer version
-        if self._check_current_device_version_available() == True:
-            if self._check_latest_update() == False:  # no action for update needed
-                ok = ok and False
-                message.append((200, 'You have the latest firmware, no further action needed'))  # 200 OK
+        if self.requested_version == "latest":
+            if self._check_current_device_version_available() == True:
+                if self._check_latest_update() == False:  # no action for update needed
+                    ok = ok and False
+                    message.append((200, 'You have the latest firmware, no further action needed'))  # 200 OK
+                else:
+                    # after checking, get the latest firmware
+                    self.requested_firmware = self.firmware_file_list[-1]
+                    self.filename = os.path.join(self.firmware_path, self.requested_firmware)
             else:
-                # after checking, get the latest firmware
+                # just get the latest firmware
                 self.requested_firmware = self.firmware_file_list[-1]
                 self.filename = os.path.join(self.firmware_path, self.requested_firmware)
         else:
-            # just get the latest firmware
-            self.requested_firmware = self.firmware_file_list[-1]
-            self.filename = os.path.join(self.firmware_path, self.requested_firmware)
-
+            # see check on "latest" in __init__(self)
+            self.filename = os.path.join(self.firmware_path, self.detected_firmware_version)
         if self._check_file() == False:
             ok = ok and False
-            message.append((404, 'Cannot find latest firmware'))  # 404 Not Found
+            message.append((404, 'Cannot find requested firmware'))  # 404 Not Found
 
         if self._mac_allow_update() == False:
             ok = ok and False
@@ -216,7 +269,7 @@ class Update:
         Use this method after check_headers()
         """
         try:
-            for item in self.get_molen_counter_db():
+            for item in self.get_device_db():
                 if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
                     return True
         except KeyError:

@@ -13,13 +13,12 @@ from cherrypy.process.plugins import Daemonizer
 #from server.logfiles import Logfiles
 from server import current_dir
 from mami.process.mamiRoot import MamiRoot
+from mami.process.update import UpdateFirmware
 
 # 20200328: logfiles uitgezet
 useLog = False
 if useLog:
     from server.logfiles import Logfiles
-
-
 
 class Server(object):
     def __init__(self):
@@ -38,12 +37,18 @@ class Server(object):
 
         root = Root()
         root.mami =  MamiRoot()
+        root.update = UpdateFirmware()
         # configure server and engine
         cherrypy.config.update('%s/%s' % (current_dir, '../settings/server.conf'))
 
         root_app = cherrypy.tree.mount(root,
-                            script_name='/', 
                             config='%s/%s' % (current_dir, '../settings/vhost.conf'))
+        cherrypy.tree.mount(root.mami,
+                            script_name='/', 
+                            config='%s/%s' % (current_dir, '../settings/mami.conf'))
+        cherrypy.tree.mount(root.update,
+                            script_name='/update',
+                            config='%s/%s' % (current_dir, '../settings/update.conf'))
 
         # take care of logfiles
         if useLog:
