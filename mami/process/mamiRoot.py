@@ -289,7 +289,7 @@ class MamiRoot():
             isOpen = body.get('data').get('isOpen')   
             showData = body.get('data').get('showData')   
             message = body.get('data').get('message')
-            version = body.get('data').get('version')
+            version = body.get('data').get('firmwareVersion')
 
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
@@ -315,8 +315,12 @@ class MamiRoot():
                 feed_counter += 1
                 if feed_counter > self.max_feed_counter:
                     # push Update
-                    feed_counter = -1   # means check for update
-                    pass
+                    # only update when cpm == 0
+                    # do this because an update call blocks the device (shortly)
+                    if result.get("cpm") and result.get("cpm") == 0:
+                        feed_counter = -1   # means check for update
+                    else:
+                        feed_counter = 0    # means no check on update
             except:
                 pass
             try:
@@ -337,11 +341,13 @@ class MamiRoot():
                      showData=showData,
                      message=message)
 
-            return json.dumps({"cpm":enden,
-                               "message":message,
-                               "proposedUUID": uuid,  # TODO: change this 
-                               "pushFirmware" : feed_counter == -1 and "latest" or "",
-                               "macAddress": macAddress}).encode('utf-8', 'replace')
+            result = {}
+            result.update({"cpm":enden,
+                           "message":message,
+                           "proposedUUID": uuid,  # TODO: change this 
+                           "pushFirmware" : feed_counter == -1 and "latest" or "",
+                           "macAddress": macAddress})
+            return json.dumps(result).encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
 
@@ -376,6 +382,7 @@ class MamiRoot():
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
             uuid = body.get('data').get('deviceKey')
+            version = body.get('data').get('firmwareVersion')
             macAddress = body.get('data').get('macAddress')
             roleModel = body.get('data').get('roleModel')  
 
@@ -385,25 +392,31 @@ class MamiRoot():
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print('receiver',macAddress)
-            eat_counter = 0
-            try:
-                eat_counter = mac_address_model.get(macAddress).get("eat_counter") or 0
-                eat_counter += 1
-                if eat_counter > self.max_eat_counter:
-                    # push Update
-                    eat_counter = -1   # means check for update
-                    pass
-            except:
-                pass
-            try:
-                mac_address_model[macAddress].update({"eat_counter": eat_counter} )
-            except:
-                mac_address_model.update({macAddress:{"eat_counter": eat_counter}} )
 
             if roleModel:
                 # put all known information about the rolemodel in the response
                 result = deepcopy(self._get_data().get(roleModel) or {})
                 #print('roleModel data:', result)
+
+                eat_counter = 0
+                try:
+                    eat_counter = mac_address_model.get(macAddress).get("eat_counter") or 0
+                    eat_counter += 1
+                    if eat_counter > self.max_eat_counter:
+                        # push Update
+                        # only update when cpm == 0; cpm comes from roleModel
+                        # do this because an update call blocks the device (shortly)
+                        if result.get("cpm") and result.get("cpm") == 0:
+                            eat_counter = -1   # means check for update
+                        else:
+                            eat_counter = 0    # means no check on update
+                except:
+                    pass
+                try:
+                    mac_address_model[macAddress].update({"eat_counter": eat_counter} )
+                except:
+                    mac_address_model.update({macAddress:{"eat_counter": eat_counter}} )
+
                 # overwrite the response uuid and macAddress with model values
                 result.update({"proposedUUID": uuid,  # TODO: change this 
                                "pushFirmware" : eat_counter == -1 and "latest" or "",
