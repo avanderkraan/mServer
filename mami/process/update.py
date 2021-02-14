@@ -33,10 +33,11 @@ import os
 import re
 import hashlib
 import cherrypy
+import json
+from mami import current_dir
 from mami import authentication_dir
 from mami import firmware_dir
 from mami import firmware_pattern
-import json
 
 
 class UpdateFirmware:
@@ -60,9 +61,10 @@ class UpdateFirmware:
             result = {}
             update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern, device_function=device, requested_version=version)
             update_allowed, message_list = update.check_go()
+            #print(update_allowed, message_list)
             if update_allowed:
-                print(update.filename)
-                return json.dumps({"nu": "niets"}).encode('utf-8', 'replace')
+                #print("geen update met bestand", update.filename)
+                #return json.dumps({"nu": "niets"}).encode('utf-8', 'replace')
                 return update.send_file()
             else:
                 cherrypy.response.headers["Content-Type"] = "application/json"
@@ -75,7 +77,7 @@ class UpdateFirmware:
                 return json.dumps(result).encode('utf-8', 'replace')
         else:
             return json.dumps({"Error": "Device unknown, should be sender or model"}).encode('utf-8', 'replace')
-  
+
 
 ####################################################################################### 
 
@@ -85,7 +87,7 @@ class Update:
         @param device_function: is model or sender and corresponds with the filename
                                 in db/authentication/sender|model
         '''
-        self.firmware_path = os.path.join(current_dir, device_function, firmware_path)
+        self.firmware_path = os.path.join(current_dir, firmware_path, device_function)
         self.firmware_pattern = firmware_pattern
         self.device_function = device_function
         self.requested_version = requested_version
@@ -96,10 +98,10 @@ class Update:
             user_agent_parts = self.device_user_agent.split('-')
             if requested_version == "latest":
                 self.detected_firmware_version = '%s_%s.bin' % (user_agent_parts[0].lower(),
-                                                              self.device_firmware_version)
+                                                                self.device_firmware_version)
             else:
                 self.detected_firmware_version = '%s_%s.bin' % (user_agent_parts[0].lower(),
-                                                              self.requested_version)
+                                                                self.requested_version)
 
         self.firmware_file_list = self._get_ordered_filtered_firmware_list()
         self.filename = None
@@ -169,9 +171,13 @@ class Update:
                     self.requested_firmware = self.firmware_file_list[-1]
                     self.filename = os.path.join(self.firmware_path, self.requested_firmware)
             else:
-                # just get the latest firmware
-                self.requested_firmware = self.firmware_file_list[-1]
-                self.filename = os.path.join(self.firmware_path, self.requested_firmware)
+                try:
+                    # just get the latest firmware
+                    self.requested_firmware = self.firmware_file_list[-1]
+                    self.filename = os.path.join(self.firmware_path, self.requested_firmware)
+                except IndexError:
+                    ok = ok and False
+                    message.append((404, 'Cannot find requested firmware'))  # 404 Not Found
         else:
             # see check on "latest" in __init__(self)
             self.filename = os.path.join(self.firmware_path, self.detected_firmware_version)
@@ -215,7 +221,7 @@ class Update:
             else:
                 return True
         except ValueError as inst:
-            print(inst, ", check if the file is present")
+            #print(inst, ", check if the file is present")
             return False
 
     def _check_current_device_version_available(self):

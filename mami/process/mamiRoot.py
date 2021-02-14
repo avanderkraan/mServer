@@ -8,6 +8,7 @@ import cherrypy
 import os
 import json
 from datetime import datetime, timedelta
+from copy import deepcopy
 from mami.io.data import Data
 from mami.process.update import Update
 from mami.process.validate import validate_model, validate_role_model
@@ -29,7 +30,7 @@ mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates
 
 dynamic = {}  # holds cpm(counts per minute) data per feature_id with a datetime when the value was set
 mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_cpm
-#mac_address_model = {}   # holds data from model wih mac_address as key
+mac_address_model = {}   # holds data from model wih mac_address as key
 
 
 class MamiRoot():
@@ -37,7 +38,8 @@ class MamiRoot():
         print ('entered MamiRoot')
         self.max_feed_down = 10    # max difference to prevent a sudden 0
         self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
-        
+        self.max_eat_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
+
     @cherrypy.expose
     def _cleancache(self):
         """
@@ -64,6 +66,10 @@ class MamiRoot():
             mac_address_sender = {}  # just empty, it will fill up itself
         # end mac_address_sender dictionary
        
+        # start mac_address_model dictionary
+        if len(mac_address_model) > 1500:
+            mac_address_model = {}  # just empty, it will fill up itself
+        # end mac_address_model dictionary
 
 ####################################################################################### 
     @cherrypy.expose
@@ -296,15 +302,16 @@ class MamiRoot():
                 previous_cpm = mac_address_sender.get(macAddress).get("stored_cpm")
                 if (int(enden) > self.max_feed_down) and (previous_cpm - int(enden) > self.max_feed_down):
                     enden = str(int(previous_cpm - self.max_feed_down))
-
             except:
                 pass
-            mac_address_sender.update({macAddress:{"stored_cpm":int(enden)}} )
-
+            try: 
+                mac_address_sender[macAddress].update({"stored_cpm":int(enden)} )
+            except:
+                mac_address_sender.update({macAddress:{"stored_cpm":int(enden)}} )
 
             feed_counter = 0
             try:
-                feed_counter = mac_address_sender.get(macAddress).get("feed_counter")
+                feed_counter = mac_address_sender.get(macAddress).get("feed_counter") or 0
                 feed_counter += 1
                 if feed_counter > self.max_feed_counter:
                     # push Update
@@ -312,9 +319,12 @@ class MamiRoot():
                     pass
             except:
                 pass
-            mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
-
-            #print('version', version)
+            try:
+                mac_address_sender[macAddress].update({"feed_counter": feed_counter} )
+            except:
+                mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
+            #print('version', version, feed_counter, enden, uuid)
+            #print(mac_address_sender)
 
 
             # put feeded data in the dynamic features
@@ -329,7 +339,7 @@ class MamiRoot():
 
             return json.dumps({"cpm":enden,
                                "message":message,
-                               "proposedUUID": "nu nog niets",
+                               "proposedUUID": uuid,  # TODO: change this 
                                "pushFirmware" : feed_counter == -1 and "latest" or "",
                                "macAddress": macAddress}).encode('utf-8', 'replace')
 
@@ -375,26 +385,36 @@ class MamiRoot():
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print('receiver',macAddress)
-            if roleModel:
-                result = self._get_data().get(roleModel) or {}
-                if result or roleModel == 'None':
-                    result.update({"proposedUUID": "nu nog niets",
-                                   "macAddress": macAddress})
-                    print('r r r', result)
-                #        resultString = json.dumps(result) + '\n'
-                #return resultString.encode('utf-8', 'replace')
-                from time import sleep
-                sleep(1)
-                return json.dumps(result).encode('utf-8', 'replace')
-                #return json.dumps(self._get_data()).encode('utf-8', 'replace')
+            eat_counter = 0
+            try:
+                eat_counter = mac_address_model.get(macAddress).get("eat_counter") or 0
+                eat_counter += 1
+                if eat_counter > self.max_eat_counter:
+                    # push Update
+                    eat_counter = -1   # means check for update
+                    pass
+            except:
+                pass
+            try:
+                mac_address_model[macAddress].update({"eat_counter": eat_counter} )
+            except:
+                mac_address_model.update({macAddress:{"eat_counter": eat_counter}} )
 
-                #return json.dumps({"proposedUUID": "nu nog niets",
-                #                   "macAddress": macAddress}).encode('utf-8', 'replace')
+            if roleModel:
+                # put all known information about the rolemodel in the response
+                result = deepcopy(self._get_data().get(roleModel) or {})
+                #print('roleModel data:', result)
+                # overwrite the response uuid and macAddress with model values
+                result.update({"proposedUUID": uuid,  # TODO: change this 
+                               "pushFirmware" : eat_counter == -1 and "latest" or "",
+                               "macAddress": macAddress})
+                #print('model data:', result)
+
+                return json.dumps(result).encode('utf-8', 'replace')
             else:
                 return '{"Error": "Model not authenticated in model.json"}'.encode('utf-8', 'replace')
 
         return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
-
 
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
