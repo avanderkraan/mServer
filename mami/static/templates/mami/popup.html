@@ -126,15 +126,15 @@
                             if (key == "isOpen")
                             {
                                 if (val == 0) {
-                                    popupText += "<li id=\"popup_" + key + "\">Nu gesloten</li>\n";
+                                    popupText += "<li id=\"popup_" + key + "\">${now_closed}</li>\n";
                                 } else {
-                                    popupText += "<li id=\"popup_" + key + "\">Nu geopend</li>\n";
+                                    popupText += "<li id=\"popup_" + key + "\">${now_open}</li>\n";
                                 }
                             }
                             if (key ==  "message")
                             {
                                 if (val == "") {
-                                    popupText += "<li id=\"popup_" + key + "\">Geen nieuws beschikbaar</li>\n";
+                                    popupText += "<li id=\"popup_" + key + "\">${no_news}</li>\n";
                                 } else {
                                     popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
                                 }

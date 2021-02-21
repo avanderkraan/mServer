@@ -18,6 +18,8 @@ from mami import module_dir
 from mami import cache_delay
 from mami import sse_timeout
 
+from mami.locale.properties import LocaleHandle
+
 from mako.lookup import TemplateLookup
 mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates'),
                                        '%s%s' % (current_dir, '/static/js'),
@@ -32,6 +34,8 @@ dynamic = {}  # holds cpm(counts per minute) data per feature_id with a datetime
 mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_cpm
 mac_address_model = {}   # holds data from model wih mac_address as key
 
+#    print(section, locale_handle.text.options(section))
+#print (locale_handle.text.get('nl.base', 'title'))
 
 class MamiRoot():
     def __init__(self, media_dir=''):
@@ -39,6 +43,9 @@ class MamiRoot():
         self.max_feed_down = 10    # max difference to prevent a sudden 0
         self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
         self.max_eat_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
+
+    def _get_section(self, template, locale='en'):
+        return '%s.%s' % (locale, template.module_id.split('_')[0])
 
     @cherrypy.expose
     def _cleancache(self):
@@ -82,12 +89,107 @@ class MamiRoot():
         raise cherrypy.HTTPRedirect(newUrl)
 
     @cherrypy.expose
-    def index(self):
+    def index(self, *args, **kwargs):
         template = mylookup.get_template('index.html')
+
+        # start locale stuff
+        locale_handle = LocaleHandle()
+        text = locale_handle.text
+        locale_available = locale_handle.locale_available
+        message = locale_handle.message
+        # end locale stuff
+
+        # start language stuff
+        language = 'en'
+        if 'Accept-language' in cherrypy.request.headers:
+            language = cherrypy.request.headers['Accept-language'][0:2]
+        if 'language' in cherrypy.session.keys():
+            language = cherrypy.session['language']
+        if 'lang' in kwargs:
+            language = kwargs.get('lang')
+        cherrypy.session['language'] = language
+        # setting cherrypy default url in the config
+        text.set('DEFAULT', 'url',cherrypy.url())
+        sectionList = text.sections()
+
+        if not language in sectionList:
+            cherrypy.session['language'] = 'en'
+            language = cherrypy.session['language']
+  
+        language_options = ''
+        for locale_item in locale_available:
+            selected = ''
+            if language == locale_item[0]:
+                selected = 'selected'
+            language_options += '<option %s value="%s">%s</option>' % (selected, locale_item[0], locale_item[1])
+
+        section = self._get_section(template, language)
+        # end language stuff
+
         try:
             data = Data()
-            return template.render_unicode(all_mills=data.get_all_ids_names()).encode('utf-8', 'replace')
-        except:
+            homepage_message = message.get(language, 'homepage_message')
+
+            cpright = text.get(section, 'copyright')
+            title = text.get(section, 'title')
+            donation = text.get(section, 'donation')
+            disclaimer = text.get(section, 'disclaimer')
+            active_mills = text.get(section, 'active_mills')
+            waiting = text.get(section, 'waiting')
+            mill_list = text.get(section, 'mill_list')
+            model_list = text.get(section, 'model_list')
+            refresh_model_list = text.get(section, 'refresh_model_list')
+            ok = text.get(section, 'ok')
+            cancel = text.get(section, 'cancel')
+            mill_map_tab = text.get(section, 'mill_map_tab')
+            link_model_tab = text.get(section, 'link_model_tab')
+            link_steps = text.get(section, 'link_steps')
+            step_1_select_mill = text.get(section, 'step_1_select_mill')
+            choosen_mill = text.get(section, 'choosen_mill')
+            step_2_select_model = text.get(section, 'step_2_select_model')
+            choosen_model = text.get(section, 'choosen_model')
+            step_3_confirmation = text.get(section, 'step_3_confirmation')
+            no_available_mills = text.get(section, 'no_available_mills')
+            no_available_models = text.get(section, 'no_available_models')
+            table_mill_name = text.get(section, 'table_mill_name')
+            table_ends = text.get(section, 'table_ends')
+            table_model_name = text.get(section, 'table_model_name')
+            now_closed = text.get(section, 'now_closed')
+            now_open = text.get(section, 'now_open')
+            no_news = text.get(section, 'no_news')
+
+            return template.render_unicode(language_options = language_options,
+                                           homepage_message = homepage_message,
+                                           all_mills=data.get_all_ids_names(),
+                                           cpright = cpright,
+                                           donation = donation,
+                                           title = title,
+                                           disclaimer = disclaimer,
+                                           active_mills = active_mills,
+                                           waiting = waiting,
+                                           mill_list = mill_list,
+                                           model_list = model_list,
+                                           refresh_model_list = refresh_model_list,
+                                           ok = ok,
+                                           cancel = cancel,
+                                           mill_map_tab = mill_map_tab,
+                                           link_model_tab = link_model_tab,
+                                           link_steps = link_steps,
+                                           step_1_select_mill = step_1_select_mill,
+                                           choosen_mill = choosen_mill,
+                                           step_2_select_model = step_2_select_model,
+                                           choosen_model = choosen_model,
+                                           step_3_confirmation = step_3_confirmation,
+                                           no_available_mills = no_available_mills,
+                                           no_available_models = no_available_models,
+                                           table_mill_name = table_mill_name,
+                                           table_ends = table_ends,
+                                           table_model_name = table_model_name,
+                                           now_closed = now_closed,
+                                           now_open = now_open,
+                                           no_news = no_news).encode('utf-8', 'replace')
+        except Exception as inst:
+            print(inst)
             cherrypy.log('exception', traceback=True)
             return 
 

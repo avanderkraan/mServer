@@ -111,6 +111,38 @@
         refresh();
     });
 
+/* TODO: make cursor pointer type
+// from an example on https://openlayers.org/en/latest/examples/select-hover-features.html
+
+var highlightStyle = new Style({
+  fill: new Fill({
+    color: 'rgba(255,255,255,0.7)',
+  }),
+  stroke: new Stroke({
+    color: '#3399CC',
+    width: 3,
+  }),
+});
+
+map.on('pointermove', function (e) {
+  if (selected !== null) {
+    selected.setStyle(undefined);
+    selected = null;
+  }
+
+  map.forEachFeatureAtPixel(e.pixel, function (f) {
+    selected = f;
+    f.setStyle(highlightStyle);
+    return true;
+  });
+
+  if (selected) {
+    status.innerHTML = '&nbsp;Hovering: ' + selected.get('name');
+  } else {
+    status.innerHTML = '&nbsp;';
+  }
+});
+*/
     // end event on map
 
     if (navigator.onLine) {

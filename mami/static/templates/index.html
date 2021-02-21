@@ -1,40 +1,40 @@
 <%inherit file="base.html"/>
 
   <div class="container">
-    <div class="row loffset6 rofset6">
+    <div class="row loffset6 roffset6">
       <div class="col-xs-2 voffset16">
         <div>
-          <a href=""><img src="static/images/logo.png" width="30"></a>
+          <img src="static/images/logo.png" width="30">
         </div>
         <div class="row loffset6">
-          <h6><small>&copy; 2020 MAMI</small></h6>
+          <h6><small>${cpright}</small></h6>
         </div>
       </div>
-      <div class="col-xs-6">
-        <div class="row text-center">
-          <div id="homepage_message"><b><code>&nbsp;</code></b></div>
-        </div>				
+      <div class="col-xs-5">
         <div class="row">
-          <a href=""><h2>Draaiende molens</h2></a>
+          <h3>${title}</h3>
         </div>
       </div>
-      <div class="col-xs-4">
+      <div class="col-xs-5">
         <div class="row pull-right roffset6 voffset4">
           <!--
-          <span>Donatie van 2 Euro
+          <span>${donation}
           <img src="/static/images/epc-qr.eu_donation_2euro_site_developer.png" height="100">
           </span>
           -->
         </div>
-        <div class="row voffset12">
-          <!--
-          <select id="languagechoice" class="form-control">
-              <option selected="" value="en">English</option><option value="nl">Nederlands</option>
-          </select>
-        -->
-        </div>
+        <div class="row roffset6 voffset16">
+          <select id="languagechoice" class="form-control">${language_options}</select>
+      </div>
       </div>
     </div>
+
+    <div class="row text-center">
+      <div class="col-xs-12">
+        <div id="homepage_message"><b><code style="background:white">${homepage_message}</code></b></div>
+      </div>
+    </div>				
+
     
     <div class="row loffset6 roffset6">
       <div class="col-xs-12">
@@ -44,8 +44,8 @@
     
     <div class="row loffset6 roffset6">
       <div class="col-xs-12">
-        <span id="select-tab-map" style="font-weight:bold; font-size: 1.2em;" onclick="selectTab('tab-map');">Kaart met molens</span>
-        <span id="select-tab-models" style="font-weight:bold; font-size: 1.2em;" onclick="selectTab('tab-models');">Koppelen van model molens</span>
+        <span id="select-tab-map" style="font-weight:bold; font-size: 1.2em; cursor:pointer;" onclick="selectTab('tab-map');">${mill_map_tab}</span>
+        <span id="select-tab-models" style="font-weight:bold; font-size: 1.2em; cursor:pointer;" onclick="selectTab('tab-models');">${link_model_tab}</span>
       </div>
     </div>
     
@@ -60,15 +60,15 @@
       <div class="row loffset6 roffset6">
         <div class="col-xs-12">
           <div style="font-size:10px;">
-            Disclaimer: Aan de juistheid van gegevens kunnen geen rechten worden ontleend.
+            ${disclaimer}
           </div>
         </div>
       </div>
 
       <div class="row loffset6 roffset6">
         <div class="col-xs-6">
-          <div><h4>Lijst van actieve molens</h4></div>
-          <div id="millData">geduld...</div>
+          <div><h4>${active_mills}</h4></div>
+          <div id="millData">${waiting}</div>
         </div>
       </div>
 
@@ -88,22 +88,22 @@
         
       <div class="row loffset6 roffset6">
         <div class="col-xs-12">
-          <div><h3>Koppel modelmolen(s) in 3 stappen</h4></div>
+          <div><h3>${link_steps}</h4></div>
         </div>
       </div>
       <div class="row loffset6 roffset6">
         <div class="col-xs-4">
-          <div>Stap 1. Selecteer een molen</div>
-          <div>Gekozen molen: <span id="selectedRoleModel"></span></div>
+          <div>${step_1_select_mill}</div>
+          <div>${choosen_mill} <span id="selectedRoleModel"></span></div>
         </div>
         <div class="col-xs-4">
-          <div>Stap 2. Selecteer een model</div>
-          <div>Gekozen model: <span id="selectedModelId"></span></div>
+          <div>${step_2_select_model}</div>
+          <div>${choosen_model} <span id="selectedModelId"></span></div>
         </div>
         <div class="col-xs-4">
-          <div>Stap 3. Bevestig de keuze</div>
+          <div>${step_3_confirmation}</div>
           <div>
-            <div><input id="confirmSelections" type="button" onclick="confirmSelections();" value="OK"/></div>
+            <div><input id="confirmSelections" type="button" onclick="confirmSelections();" value="${ok}"/></div>
           </div>
           <!-- start hidden -->
           <div id="selectedRoleModelId" style="display:none;"></div>
@@ -122,17 +122,17 @@
       <div class="row loffset6 roffset6">
         <div class="col-xs-6">
     
-          <div><h4>Lijst van molens</h4></div>
+          <div><h4>${mill_list}</h4></div>
           <div id="roleModelData"></div>
         </div>
         <div class="col-xs-6">
           <table>
             <tr>
               <td>
-                <span><h4>Lijst van modellen&nbsp;</h4></span>
+                <span><h4>${model_list}&nbsp;</h4></span>
               </td>
               <td>
-                <input  id="refreshModelList" type="button" onclick="refreshModelList();" value="ververs model lijst"/>
+                <input  id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
               </td>
               <td>
                 <div id="modelSelection"></div>
@@ -140,7 +140,7 @@
             </tr>
             <tr>
           </table>
-          <div id="modelList">geduld...</div>
+          <div id="modelList">${waiting}</div>
         </div>
 
       </div>
@@ -189,7 +189,7 @@ function showRoleModelList() {
   roleModelTable += '<table class="table">';
   roleModelTable += '<thead>';
   roleModelTable += '    <tr>';
-  roleModelTable += '      <th scope="col">Naam</th>';
+  roleModelTable += '      <th scope="col">${table_model_name}</th>';
 
   if (Object.keys(millData).length != 0) {
         roleModelTable += '<th>';
@@ -229,14 +229,14 @@ function showRoleModelList() {
 
 function showMillData(millData) {
   if (Object.keys(millData).length == 0) {
-    return 'Geen molens beschikbaar';
+    return '${no_available_mills}';
   }
   millTable = '';
   millTable += '<table class="table">';
   millTable += '<thead>';
   millTable += '    <tr>';
-  millTable += '      <th scope="col">Naam</th>';
-  millTable += '      <th scope="col">Enden</th>';
+  millTable += '      <th scope="col">${table_mill_name}</th>';
+  millTable += '      <th scope="col">${table_ends}</th>';
   millTable += '    </tr>';
   millTable += '  </thead>';
   millTable += '<tbody>';
@@ -362,6 +362,19 @@ var featureSource = new ol.source.Vector({
     useSpatialIndex: false
 });
 
+// start language choice
+$('#languagechoice').off('change').on('change', function(event){
+		var choice = $('#languagechoice').val();
+		var newLocation = window.location.href;
+		questionLocation = newLocation.indexOf("?");
+		if (questionLocation > -1) {
+			newLocation = newLocation.split("?")[0];
+		}
+		newLocation = newLocation + "?lang=" + choice;
+    console.log(newLocation);
+		window.location.href = newLocation;
+});
+// end language choice
 
 
 // start roleModelList using features

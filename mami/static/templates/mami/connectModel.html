@@ -69,7 +69,7 @@
 
     function makeModelList() {
         if (Object.keys(models).length == 0) {
-            return 'Geen modellen beschikbaar';
+            return '${no_available_models}';
         }
         modelTable = '';
         modelTable += '<table class="table">';
@@ -128,7 +128,7 @@
     function refreshModelList() {
         // clear global variable models
         models = {};
-        document.getElementById("modelList").innerHTML = "geduld ...";
+        document.getElementById("modelList").innerHTML = "${waiting}";
         findLastKnownModel(1);  // starting with the first one
         setTimeout(function (){
         showModelList();
