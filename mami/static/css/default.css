@@ -25,3 +25,41 @@
 .roffset6 {
     margin-right: 6px;
 }
+
+.selectable {
+    padding-left: 3px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #000;
+}
+
+.selected-rolemodel {
+    padding-left: 3px;
+    border-radius: 4px;
+    cursor: default;
+    background-color: #337ab7;
+    color: #fff;
+}
+
+.selected-model {
+    padding-left: 3px;
+    border-radius: 4px;
+    cursor: default;
+    background-color: #337ab7;
+    color: #fff;
+}
+
+.model-connect {
+    top: -8px;
+    bottom: -8px;
+}
+
+.model-disconnect {
+    top: -8px;
+    bottom: -8px;;
+}
+
+/* Smartphones ----------- */
+@media only screen and (max-width: 760px) {
+    #is-mobile { display: none; }
+}

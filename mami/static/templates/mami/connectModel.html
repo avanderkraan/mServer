@@ -1,32 +1,38 @@
 <script>
-    function showConfirmSelectionsButton() {
-        if ((document.getElementById("selectedRoleModel").innerHTML != "") && 
-             (document.getElementById("selectedModelUrl").innerHTML != "")) {
-            document.getElementById("confirmSelections").disabled = false;
+    function setSelectedModel(id, url) {
+        modelSelectedId = id;
+        modelSelectedUrl = url;
+
+        if (roleModelSelectedName != "") {
+          $('.model').removeClass().addClass('model selectable');
+          $('#nameModel_' + id).removeClass('selectable');
+          $('#nameModel_' + id).addClass('selected-model');
+    
+          $('#connectedTo_' + id).html(roleModelSelectedName);
+          $('#connectedTo_' + id).css({'color':'#999'});
+          $('#confirm_' + id).removeClass('disabled');
+          $('#remove_' + id).addClass('disabled');
         }
-        else {
-            document.getElementById("confirmSelections").disabled = true;
+    }
+
+    function removeSelectedRoleModel(id, url) {
+        $('#connectedTo_' + id).css({'color':'#fff'});
+        $('#nameModel_' + id).removeClass('selected-model');
+        $('#confirm_' + id).addClass('disabled');
+        $('#remove_' + id).addClass('disabled');
+        passIPAddress(url, true);
+    }
+
+    function confirmSelectedRoleModel(id, url) {
+        $('#nameModel_' + id).removeClass('selected-model');
+        $('#confirm_' + id).addClass('disabled');
+        $('#connectedTo_' + id).css({'color':'#000'});
+        if (roleModelSelectedName != '') {
+            $('#remove_' + id).removeClass('disabled');
+            passIPAddress(url);
         }
     }
 
-    function setSelectedRoleModel(selectedMillId, selectedMillName) {
-        document.getElementById("selectedRoleModelId").innerHTML = selectedMillId;
-        document.getElementById("selectedRoleModel").innerHTML = selectedMillName;
-        showConfirmSelectionsButton();
-    };
-
-    function setSelectedModel(selectedModel) {
-        document.getElementById("selectedModelId").innerHTML = selectedModel;
-        document.getElementById("selectedModelUrl").innerHTML = 'http://' + selectedModel + '.local';
-        showConfirmSelectionsButton();
-    };
-
-    function confirmSelections() {
-        if (document.getElementById("selectedModelUrl").innerHTML != undefined) {
-            var selectedModelUrl = document.getElementById("selectedModelUrl").innerHTML;
-            passIPAddress(selectedModelUrl);
-        }
-    }
 
     function findLastKnownModel(number) {
         //var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
@@ -64,41 +70,74 @@
     }
 
     function showModelList() {
-        document.getElementById("modelList").innerHTML = makeModelList();
+        $("#modelList").html(makeModelList());
     }
 
     function makeModelList() {
         if (Object.keys(models).length == 0) {
             return '${no_available_models}';
         }
+        console.log(JSON.stringify(${model_inventory}));
+
         modelTable = '';
         modelTable += '<table class="table">';
         modelTable += '<thead>';
         modelTable += '    <tr>';
-        modelTable += '      <th scope="col">Model url</th>';
-        modelTable += '      <th scope="col">Molen</th>';
+        modelTable += '      <th scope="col">${table_model_name}</th>';
+        modelTable += '      <th scope="col">${table_model_connect}</th>';
+        modelTable += '      <th scope="col">${step_3_confirm}</th>';
         modelTable += '    </tr>';
         modelTable += '  </thead>';
         modelTable += '<tbody>';
         $.each(models, function(index, value) {
+            var selectable = '';
+            
+            selectable = 'model';
+
             modelTable += '  <tr>';
-            modelTable += '    <td>';
-            modelTable += '<div id="';
-            modelTable += index;
-            modelTable += '"';
-            modelTable += ' draggable="true" ondragstart="drag(event);"';
-            modelTable += " onclick='setSelectedModel(" + JSON.stringify(index) + ");'";
+
+            modelTable += '    <td';
+            modelTable += " onclick='setSelectedModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
             modelTable += '>';
-            modelTable += value;
-            modelTable += '</div>'
+            modelTable += '      <div id="';
+            modelTable += 'nameModel_';
+            modelTable += index;
+            modelTable += '" class="';
+            modelTable += selectable;
+            modelTable += '">';
+            modelTable += index;
+            modelTable += '</div>';
+
             modelTable += '    </td>';
+
             modelTable += '    <td>';
-            modelTable += '      <span id="';
-            modelTable += "connectedTo_";
+            modelTable += '      <div id="';
+            modelTable += 'connectedTo_';
+            modelTable += index;
+            modelTable += '">-';
+            modelTable += '</div>';
+            modelTable += '    </td>';
+
+            modelTable += '    <td>';
+            modelTable += '<div class="btn-group" role="group" aria-label="on/off">';
+            modelTable += '<button type="button" class="model-connect btn btn-default disabled"';
+            modelTable += ' id="confirm_';
             modelTable += index;
             modelTable += '"';
+            modelTable += " onclick='confirmSelectedRoleModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
+            modelTable += '>${on}</button>';
+            modelTable += '<button type="button" class="model-disconnect btn btn-default disabled"';
+            modelTable += ' id="remove_';
+            modelTable += index;
+            modelTable += '"';
+            modelTable += " onclick='removeSelectedRoleModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
+            modelTable += '>${off}</button>';
+            modelTable += '</div>';
+
             modelTable += '    </td>';
+
             modelTable += '  </tr>';
+
         });
         modelTable += '</tbody>';
         modelTable += '</table>';
@@ -106,29 +145,30 @@
         return modelTable;
     }
 
-    function passIPAddress(urlModel) {
-        var url = urlModel + "/setRoleModel/?id=" + document.getElementById("selectedRoleModelId").innerHTML;
+    function passIPAddress(urlModel, remove=false) {
+        if (remove == false) {
+            var url = urlModel + "/setRoleModel/?id=" + roleModelSelectedId;
+            $('#connectedTo_' + modelSelectedId).html(roleModelSelectedName);
+        }
+        else {
+            var url = urlModel + "/setRoleModel/?id=None";  // None is default setting for a model
+        }
+        // connect and cleanup selected RoleModel and selected model
+        connectModel();
         var iframe = '<iframe id="' + urlModel + '" src="' + url + '" onload="connectModel(this);" width="1px" height="1px"></iframe>';
-        document.getElementById("modelSelection").innerHTML += iframe;
+        $('#modelSelection').html(iframe);
     }
 
     function connectModel(element) {
         // cleanup directly after IFrame was loaded
-        document.getElementById("modelSelection").innerHTML = ""; 
-        // show result in the modelTable
-        document.getElementById("connectedTo_" + document.getElementById("selectedModelId").innerHTML).innerHTML = document.getElementById("selectedRoleModel").innerHTML;
-        // cleanup selected RoleModel and selected model
-        document.getElementById("selectedRoleModelId").innerHTML = "";
-        document.getElementById("selectedRoleModel").innerHTML = "";
-        document.getElementById("selectedModelId").innerHTML = "";
-        document.getElementById("selectedModelUrl").innerHTML = "";
+        $('#modelSelection').html(''); 
     }
 
     // start get models
     function refreshModelList() {
         // clear global variable models
         models = {};
-        document.getElementById("modelList").innerHTML = "${waiting}";
+        $("#modelList").innerHTML = "${waiting}";
         findLastKnownModel(1);  // starting with the first one
         setTimeout(function (){
         showModelList();

@@ -84,13 +84,7 @@
 
     function popup(feature) {
 
-        if (navigator.onLine) {
-            // internet connection available so no imagemap needed
-            document.getElementById("imagemap").style.display = "none";
-            map.addOverlay(millInfo);
-        } else {
-            imagemap.addOverlay(millInfo);
-        }
+        map.addOverlay(millInfo);
 
         // Make new popup
         if (feature) {

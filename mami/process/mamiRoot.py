@@ -31,6 +31,7 @@ mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates
                 output_encoding='utf-8', encoding_errors='replace')
 
 dynamic = {}  # holds cpm(counts per minute) data per feature_id with a datetime when the value was set
+model_inventory = {}  # holds model mac address as key and rolemodel_id as value
 mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_cpm
 mac_address_model = {}   # holds data from model wih mac_address as key
 
@@ -77,6 +78,8 @@ class MamiRoot():
         if len(mac_address_model) > 1500:
             mac_address_model = {}  # just empty, it will fill up itself
         # end mac_address_model dictionary
+
+        # TODO clean model_inventory?
 
 ####################################################################################### 
     @cherrypy.expose
@@ -127,6 +130,7 @@ class MamiRoot():
         # end language stuff
 
         try:
+            #print (model_inventory) 
             data = Data()
             homepage_message = message.get(language, 'homepage_message')
 
@@ -136,55 +140,58 @@ class MamiRoot():
             disclaimer = text.get(section, 'disclaimer')
             active_mills = text.get(section, 'active_mills')
             waiting = text.get(section, 'waiting')
-            mill_list = text.get(section, 'mill_list')
-            model_list = text.get(section, 'model_list')
             refresh_model_list = text.get(section, 'refresh_model_list')
             ok = text.get(section, 'ok')
             cancel = text.get(section, 'cancel')
+            about_tab = text.get(section, 'about_tab')
             mill_map_tab = text.get(section, 'mill_map_tab')
             link_model_tab = text.get(section, 'link_model_tab')
             link_steps = text.get(section, 'link_steps')
             step_1_select_mill = text.get(section, 'step_1_select_mill')
-            choosen_mill = text.get(section, 'choosen_mill')
             step_2_select_model = text.get(section, 'step_2_select_model')
-            choosen_model = text.get(section, 'choosen_model')
-            step_3_confirmation = text.get(section, 'step_3_confirmation')
+            step_3_confirm = text.get(section, 'step_3_confirm')
+            on = text.get(section, 'on')
+            off = text.get(section, 'off')
             no_available_mills = text.get(section, 'no_available_mills')
             no_available_models = text.get(section, 'no_available_models')
             table_mill_name = text.get(section, 'table_mill_name')
             table_ends = text.get(section, 'table_ends')
             table_model_name = text.get(section, 'table_model_name')
+            table_model_connect = text.get(section, 'table_model_connect')
+            home_text = text.get(section, 'home_text')
             now_closed = text.get(section, 'now_closed')
             now_open = text.get(section, 'now_open')
             no_news = text.get(section, 'no_news')
 
             return template.render_unicode(language_options = language_options,
                                            homepage_message = homepage_message,
-                                           all_mills=data.get_all_ids_names(),
+                                           model_inventory = model_inventory,
+                                           all_mills = data.get_all_ids_properties(),
                                            cpright = cpright,
                                            donation = donation,
                                            title = title,
                                            disclaimer = disclaimer,
                                            active_mills = active_mills,
                                            waiting = waiting,
-                                           mill_list = mill_list,
-                                           model_list = model_list,
                                            refresh_model_list = refresh_model_list,
                                            ok = ok,
                                            cancel = cancel,
+                                           about_tab = about_tab,
                                            mill_map_tab = mill_map_tab,
                                            link_model_tab = link_model_tab,
                                            link_steps = link_steps,
                                            step_1_select_mill = step_1_select_mill,
-                                           choosen_mill = choosen_mill,
                                            step_2_select_model = step_2_select_model,
-                                           choosen_model = choosen_model,
-                                           step_3_confirmation = step_3_confirmation,
+                                           step_3_confirm = step_3_confirm,
+                                           on = on,
+                                           off = off,
                                            no_available_mills = no_available_mills,
                                            no_available_models = no_available_models,
                                            table_mill_name = table_mill_name,
                                            table_ends = table_ends,
                                            table_model_name = table_model_name,
+                                           table_model_connect = table_model_connect,
+                                           home_text = home_text,
                                            now_closed = now_closed,
                                            now_open = now_open,
                                            no_news = no_news).encode('utf-8', 'replace')
@@ -486,7 +493,7 @@ class MamiRoot():
             uuid = body.get('data').get('deviceKey')
             version = body.get('data').get('firmwareVersion')
             macAddress = body.get('data').get('macAddress')
-            roleModel = body.get('data').get('roleModel')  
+            roleModel = body.get('data').get('roleModel') 
 
             #model = Model()
             #if macAddress in model.mac_address_list():
@@ -496,6 +503,9 @@ class MamiRoot():
             #print('receiver',macAddress)
 
             if roleModel:
+                # put roleModel_id and macAddress of model in dictionary
+                model_inventory[macAddress] = roleModel
+
                 # put all known information about the rolemodel in the response
                 result = deepcopy(self._get_data().get(roleModel) or {})
                 #print('roleModel data:', result)

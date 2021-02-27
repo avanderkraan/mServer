@@ -48,6 +48,16 @@ class Data(object):
             pass
         return my_features
 
+    def get_all_ids_properties(self):
+        my_features = {}
+        try:
+            features = "features" in self.data.keys() and self.data["features"] or []
+            for feature in features:
+                if "id" in feature.keys():
+                    my_features[feature.get("id")] = feature.get("properties")
+        except:
+            pass
+        return my_features
     
     def get_ids(self):
         # returns a dictionary of feature-ids with properties

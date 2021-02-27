@@ -1,6 +1,9 @@
 <%inherit file="base.html"/>
 
+
   <div class="container">
+    <span id="is-mobile"><!-- determining resolution in css --></span>
+
     <div class="row loffset6 roffset6">
       <div class="col-xs-2 voffset16">
         <div>
@@ -10,22 +13,10 @@
           <h6><small>${cpright}</small></h6>
         </div>
       </div>
-      <div class="col-xs-5">
-        <div class="row">
-          <h3>${title}</h3>
+      <div class="col-xs-10">
+        <div class="row loffset6">
+          <h2>${title}</h2>
         </div>
-      </div>
-      <div class="col-xs-5">
-        <div class="row pull-right roffset6 voffset4">
-          <!--
-          <span>${donation}
-          <img src="/static/images/epc-qr.eu_donation_2euro_site_developer.png" height="100">
-          </span>
-          -->
-        </div>
-        <div class="row roffset6 voffset16">
-          <select id="languagechoice" class="form-control">${language_options}</select>
-      </div>
       </div>
     </div>
 
@@ -35,7 +26,78 @@
       </div>
     </div>				
 
-    
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-12 voffset16">
+        <ul class="nav nav-pills" id="pills-tab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link" id="pills-about-tab" data-toggle="pill" href="#pills-about" role="tab" aria-controls="pills-about" aria-selected="false">${about_tab}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="pills-map-tab" data-toggle="pill" href="#pills-map" role="tab" aria-controls="pills-map" aria-selected="false">${mill_map_tab}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="pills-link-tab" data-toggle="pill" href="#pills-link" role="tab" aria-controls="pills-link" aria-selected="false">${link_model_tab}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-12">
+        <hr>
+      </div>
+    </div>
+
+    <div class="tab-content" id="pills-tabContent">
+      
+      <div class="tab-pane fade" id="pills-about" role="tabpanel" aria-labelledby="pills-about-tab">
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            <div id="about">${home_text}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade active" id="pills-map" role="tabpanel" aria-labelledby="pills-map-tab">
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            <div id="map"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="pills-link" role="tabpanel" aria-labelledby="pills-link-tab">
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            <div>
+              <h3>${link_steps}</h4>
+            </div>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th scope="col">
+                    ${step_1_select_mill}
+                  </th>
+                  <th scope="col">
+                    ${step_2_select_model}
+                    <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div id="roleModelData">${waiting}</div></td>
+                  <td>
+                    <div id="modelList">${waiting}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row loffset6 roffset6">
       <div class="col-xs-12">
         <hr>
@@ -43,111 +105,46 @@
     </div>
     
     <div class="row loffset6 roffset6">
+      <div class="col-xs-5">
+        <span>${donation}
+          <img src="/static/images/epc-qr.eu_donation_2euro_site_developer.png" height="100">
+        </span>
+      </div>
+      <div class="col-xs-7">
+        <select id="languagechoice" class="form-control">${language_options}</select>
+      </div>
+    </div>
+
+    <div class="row loffset6 roffset6">
       <div class="col-xs-12">
-        <span id="select-tab-map" style="font-weight:bold; font-size: 1.2em; cursor:pointer;" onclick="selectTab('tab-map');">${mill_map_tab}</span>
-        <span id="select-tab-models" style="font-weight:bold; font-size: 1.2em; cursor:pointer;" onclick="selectTab('tab-models');">${link_model_tab}</span>
-      </div>
-    </div>
-    
-    <div id="tab-map">
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-12">
-          <div id="imagemap"></div>
-          <div id="map"></div>
+        <div style="font-size:10px;">
+          ${disclaimer}
         </div>
-      </div>
-
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-12">
-          <div style="font-size:10px;">
-            ${disclaimer}
-          </div>
-        </div>
-      </div>
-
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-6">
-          <div><h4>${active_mills}</h4></div>
-          <div id="millData">${waiting}</div>
-        </div>
-      </div>
-
-      <div id="popup" class="ol-popup">
-        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-        <div id="popup-content"></div>
       </div>
     </div>
 
-    <div id="tab-models">
-    
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-12">
-          <hr>
-        </div>
-      </div>
-        
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-12">
-          <div><h3>${link_steps}</h4></div>
-        </div>
-      </div>
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-4">
-          <div>${step_1_select_mill}</div>
-          <div>${choosen_mill} <span id="selectedRoleModel"></span></div>
-        </div>
-        <div class="col-xs-4">
-          <div>${step_2_select_model}</div>
-          <div>${choosen_model} <span id="selectedModelId"></span></div>
-        </div>
-        <div class="col-xs-4">
-          <div>${step_3_confirmation}</div>
-          <div>
-            <div><input id="confirmSelections" type="button" onclick="confirmSelections();" value="${ok}"/></div>
-          </div>
-          <!-- start hidden -->
-          <div id="selectedRoleModelId" style="display:none;"></div>
-          <div id="selectedModelUrl" style="display:none;"></div>
-          <!-- end hidden -->
-
-        </div>
-      </div>
-    
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-12">
-          <hr>
-        </div>
-      </div>
-        
-      <div class="row loffset6 roffset6">
-        <div class="col-xs-6">
-    
-          <div><h4>${mill_list}</h4></div>
-          <div id="roleModelData"></div>
-        </div>
-        <div class="col-xs-6">
-          <table>
-            <tr>
-              <td>
-                <span><h4>${model_list}&nbsp;</h4></span>
-              </td>
-              <td>
-                <input  id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
-              </td>
-              <td>
-                <div id="modelSelection"></div>
-              </td>
-            </tr>
-            <tr>
-          </table>
-          <div id="modelList">${waiting}</div>
-        </div>
-
-      </div>
-
+    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
     </div>
+
+    <div id="modelSelection"><!--placeholder for iframe--></div>
+
   </div>
 
+  <script>
+  $( document ).ready(function() {      
+    isMobile = false;  // global variable
+    if( $('#is-mobile').css('display')=='none') {
+        isMobile = true;  
+    }
+    
+    // make sure the map is displayed, even with the class fade
+    $('#pills-map-tab').parent().off('mouseup').on('mouseup', function () {
+        $('canvas').css({'display': 'inline'});
+    })
+  });
+  </script>
 
   <%include file="mami/map.html"/>
 
@@ -159,108 +156,69 @@
 
 <script>
 function selectTab(tabId) {
-  var tabMap = "tab-map";
-  var tabModels = "tab-models";
-  document.getElementById(tabMap).style.display= "none";
-  document.getElementById("select-" + tabMap).style.borderLeft = "none";
-  document.getElementById("select-" + tabMap).style.borderRight = "none";
-  document.getElementById("select-" + tabMap).style.borderTop = "none";
-  document.getElementById("select-" + tabMap).style.paddingLeft = "15px";
-  document.getElementById("select-" + tabMap).style.paddingRight = "15px";
-  document.getElementById("select-" + tabMap).style.paddingTop = "7px";
-  document.getElementById(tabModels).style.display= "none";
-  document.getElementById("select-" + tabModels).style.borderLeft = "none";
-  document.getElementById("select-" + tabModels).style.borderRight = "none";
-  document.getElementById("select-" + tabModels).style.borderTop = "none";
-  document.getElementById("select-" + tabModels).style.paddingLeft = "15px";
-  document.getElementById("select-" + tabModels).style.paddingRight = "15px";
-  document.getElementById("select-" + tabModels).style.paddingTop = "7px";
-  document.getElementById(tabId).style.display = "inline";
-  document.getElementById("select-" + tabId).style.borderLeft = "1px solid black";
-  document.getElementById("select-" + tabId).style.borderRight = "1px solid black";
-  document.getElementById("select-" + tabId).style.borderTop = "1px solid black";
-  document.getElementById("select-" + tabId).style.paddingLeft = "15px";
-  document.getElementById("select-" + tabId).style.paddingRight = "15px";
-  document.getElementById("select-" + tabId).style.paddingTop = "7px";
+  // default tab
+  $(tabId).trigger('click');
 }
 
 function showRoleModelList() {
+  // show all available rolemodels (=mills)
   var roleModelTable = '';
+
   roleModelTable += '<table class="table">';
   roleModelTable += '<thead>';
   roleModelTable += '    <tr>';
   roleModelTable += '      <th scope="col">${table_model_name}</th>';
-
-  if (Object.keys(millData).length != 0) {
-        roleModelTable += '<th>';
-        roleModelTable += 'Enden';
-        roleModelTable += '</th>';
-      }
-
+  roleModelTable += '      <th scope="col">${table_ends}</th>';
   roleModelTable += '    </tr>';
   roleModelTable += '  </thead>';
   roleModelTable += '<tbody>';
-    $.each(${all_mills}, function(id, name) {
-      roleModelTable += '  <tr>';
-      roleModelTable += '    <td>';
-      roleModelTable += '<div id="';
-      roleModelTable += id;
-      roleModelTable += '"';
-      roleModelTable += ' draggable="true" ondragstart="drag(event);"';
-      roleModelTable += " onclick='setSelectedRoleModel(" + JSON.stringify(id) + "," + JSON.stringify(name) + ");'";
+  $.each(${all_mills}, function(id, property) {
+    var selectable = '';
+    if (property['mac_address'] != '') {
+      selectable = 'rolemodel selectable';
+
+      roleModelTable += '  <tr';
+
+      if (selectable != '') {
+        roleModelTable += " onclick='setSelectedRoleModel(" + JSON.stringify(id) + "," + JSON.stringify(property) + ");'";
+      }
+
       roleModelTable += '>';
-      roleModelTable += name;
+
+      roleModelTable += '    <td>';
+      roleModelTable += '<div id="nameRoleModel_';
+      roleModelTable += id;
+      roleModelTable += '" class="';
+      roleModelTable += selectable;
+      roleModelTable += '">';
+      roleModelTable += property['name'];
+      roleModelTable += '</div>';
+      roleModelTable += '    </td>';
+      
+      roleModelTable += '    <td>';
+      roleModelTable += '<div id="cpmRoleModel_';
+      roleModelTable += id;
+      roleModelTable += '" class="';
+      //roleModelTable += selectable;
+      roleModelTable += '">';
       roleModelTable += '</div>';
       roleModelTable += '    </td>';
 
-      if (Object.keys(millData).length != 0) {
-        roleModelTable += '    <td>';
-        roleModelTable += millData[id].cpm;
-        roleModelTable += '    </td>';
-      }
-
       roleModelTable += '  </tr>';
-    });
-  
-  $('#roleModelData').html(roleModelTable);
-  document.getElementById("confirmSelections").disabled = true;
-}
-
-
-function showMillData(millData) {
-  if (Object.keys(millData).length == 0) {
-    return '${no_available_mills}';
-  }
-  millTable = '';
-  millTable += '<table class="table">';
-  millTable += '<thead>';
-  millTable += '    <tr>';
-  millTable += '      <th scope="col">${table_mill_name}</th>';
-  millTable += '      <th scope="col">${table_ends}</th>';
-  millTable += '    </tr>';
-  millTable += '  </thead>';
-  millTable += '<tbody>';
-  $.each(millData, function(index, featureId) {
-    millTable += '  <tr>';
-    millTable += '    <td>';
-    millTable += '<div id="';
-    millTable += millData[index].id;
-    millTable += '"';
-    millTable += '>';
-    millTable += millData[index].name;
-    millTable += '</div>';
-    millTable += '    </td>';
-    millTable += '    <td>';
-    millTable += millData[index].cpm;
-    millTable += '    </td>';
-    millTable += '  </tr>';
+    }
   });
-  millTable += '</tbody>';
-  millTable += '</table>';
+  roleModelTable += '  </tbody>';
+  roleModelTable += '</table>';
 
-  return millTable;
+
+  $('#roleModelData').html(roleModelTable);
 }
 
+function showRoleModelListData() {
+  $.each(millData, function(id, property) {
+    $('#cpmRoleModel_' + id).html(property['cpm']);
+  });
+}
 
 function refresh() {
     // set cpm in all features
@@ -290,7 +248,7 @@ function refresh() {
     molenLayer.setSource(featureSource);
     molenLayer.setStyle(styleFunction);
     
-    $('#millData').html(showMillData(millData));
+    showRoleModelListData();
 }
 
 // start sse functions
@@ -334,7 +292,7 @@ function getUpdates(featureId) {
 	    singleSource.onmessage = function(event) {
 	        /* for popup: put it on a document.element.id*/
           /* TODO: event.data is a list of dicts, for each sender a dict is available */
-          document.getElementById(featureId).innerHTML = event.data + "<br>";
+          $('#' + featureId).html(event.data + "<br>");
 	        //event.data = cpm
 	    };
 	}
@@ -354,7 +312,11 @@ var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
 var models = {};     // contains a table with model data
-
+var isMobile = false;// used for presentation mobile/screen
+var roleModelSelectedId = "";    // contains id of selected roleModel
+var roleModelSelectedName = "";  // contains name of selected roleModel
+var modelSelectedId = "";        // contains id of selected model
+var modelSelectedUrl = "";       // contains url of selected model
 
 var featureSource = new ol.source.Vector({
     url: "static/data/features.json",
@@ -371,23 +333,34 @@ $('#languagechoice').off('change').on('change', function(event){
 			newLocation = newLocation.split("?")[0];
 		}
 		newLocation = newLocation + "?lang=" + choice;
-    console.log(newLocation);
 		window.location.href = newLocation;
 });
 // end language choice
 
+// start roleModel selection
+function setSelectedRoleModel(id, property) {
+    roleModelSelectedId = id;
+    roleModelSelectedName = property["name"];
+    $('.rolemodel').removeClass().addClass('rolemodel selectable');
+    $('#nameRoleModel_' + id).removeClass('selectable');
+    $('#nameRoleModel_' + id).addClass('selected-rolemodel');
+    $('#cpmRoleModel_' + id).removeClass('selectable');
+
+    $('.model').removeClass().addClass('model selectable');
+}
+// end roleModel selection
 
 // start roleModelList using features
 showRoleModelList();
 // end roleModelList using features
 
-// start show tab-map
-selectTab("tab-map");
-// end show tab-map
-
 // start get data
 getDataSse();
 // end get data
+
+// start show tab-map
+selectTab('#pills-link-tab');
+// end show tab-map
 
 // start get model list
 refreshModelList();
