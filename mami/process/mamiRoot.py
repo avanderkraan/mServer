@@ -162,6 +162,7 @@ class MamiRoot():
             now_closed = text.get(section, 'now_closed')
             now_open = text.get(section, 'now_open')
             no_news = text.get(section, 'no_news')
+            goto_link_models = text.get(section, 'goto_link_models')
 
             return template.render_unicode(language_options = language_options,
                                            homepage_message = homepage_message,
@@ -194,7 +195,8 @@ class MamiRoot():
                                            home_text = home_text,
                                            now_closed = now_closed,
                                            now_open = now_open,
-                                           no_news = no_news).encode('utf-8', 'replace')
+                                           no_news = no_news,
+                                           goto_link_models = goto_link_models).encode('utf-8', 'replace')
         except Exception as inst:
             print(inst)
             cherrypy.log('exception', traceback=True)
@@ -456,9 +458,14 @@ class MamiRoot():
                            "proposedUUID": uuid,  # TODO: change this 
                            "pushFirmware" : feed_counter == -1 and "latest" or "",
                            "macAddress": macAddress})
-            return json.dumps(result).encode('utf-8', 'replace')
 
-        return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
+            result_string = json.dumps(result)
+            cherrypy.response.headers["Content-Length"] = len(result_string)
+            return result_string.encode('utf-8', 'replace')
+
+        result_string = '{"Error": "Request method should be POST"}'
+        cherrypy.response.headers["Content-Length"] = len(result_string)
+        return result_string.encode('utf-8', 'replace')
 
     @cherrypy.expose
     def authenticate_sender(self, mac_address="", key="", previous_key=""):
@@ -486,6 +493,7 @@ class MamiRoot():
         """
         if cherrypy.request.method == 'POST':
             cherrypy.response.headers["Content-Type"] = "application/json"
+
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
             unicodebody = rawbody.decode(encoding="utf-8")
@@ -534,12 +542,17 @@ class MamiRoot():
                                "pushFirmware" : eat_counter == -1 and "latest" or "",
                                "macAddress": macAddress})
                 #print('model data:', result)
-
-                return json.dumps(result).encode('utf-8', 'replace')
+                result_string = json.dumps(result)
+                cherrypy.response.headers["Content-Length"] = len(result_string)
+                return result_string.encode('utf-8', 'replace')
             else:
-                return '{"Error": "Model not authenticated in model.json"}'.encode('utf-8', 'replace')
+                result_string = '{"Error": "Role model not found"}'
+                cherrypy.response.headers["Content-Length"] = len(result_string)
+                return result_string.encode('utf-8', 'replace')
 
-        return '{"Error": "Request method should be POST"}'.encode('utf-8', 'replace')
+        result_string = '{"Error": "Request method should be POST"}'
+        cherrypy.response.headers["Content-Length"] = len(result_string)
+        return result_string.encode('utf-8', 'replace')
 
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}

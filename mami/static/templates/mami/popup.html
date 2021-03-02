@@ -134,6 +134,18 @@
                                 }
                             }
                         });
+
+                        
+                        popupText += '<li>';
+                        var property = {};
+                        property['name'] = feature.values_.name;
+                        popupText += '<span class="selectable"';
+                        popupText +=  " onclick='setSelectedRoleModel(" + JSON.stringify(selectedId) + "," + JSON.stringify(property) + ");'$('#pills-link-tab').trigger();";
+                        popupText += '">';
+                        popupText += '${goto_link_models}';
+                        popupText += '</span>';
+                        popupText += '</li>';      
+
                         popupText += "</ul>";
                         content.innerHTML += popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';
                     })
@@ -144,7 +156,7 @@
     function submitForm(selectedFeatureID) {
         var numberStart = selectedFeatureID.indexOf("_");
         var tenbruggencatenummer = selectedFeatureID.substring(numberStart + 1);
-        document.getElementById("molendatabase_" + selectedFeatureID).submit();
+        $('#molendatabase_' + selectedFeatureID).submit();
         // reload needed to clear cache. Also needs cache control in meta tags in base.html
         window.location.reload(true);
     }

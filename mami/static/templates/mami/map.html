@@ -14,15 +14,39 @@
             //source: new.ol.source.OSM(https://maps-cdn.salesboard.biz/styles/klokantech-3d-gl-style/{z}/{x}/{y}.png)
     });
 
+    var longitude;
+    var lattitude;
+    var zoom;
+    try{
+      longitude = storedLogitude;
+    }
+    catch {
+      longitude = 4.34;
+    }
+    try{
+      lattitude = storedLattitude;
+    }
+    catch {
+      lattitude = 52.0;
+    }
+    try{
+      zoom = storedZoom;
+    }
+    catch {
+      zoom = 7;
+    }
+
     var map = new ol.Map({
         target: 'map',
         layers: [
             mapLayer,
             molenLayer,
         ],
+
         view: new ol.View({
-            center: ol.proj.fromLonLat([4.34, 52.0]),
-            zoom: 9
+            // values stored in browser cookies
+            center: ol.proj.fromLonLat([longitude, lattitude]),
+            zoom: zoom
         })
     });
     //end base map with molenlayer

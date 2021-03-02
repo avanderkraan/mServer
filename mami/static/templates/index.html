@@ -304,6 +304,10 @@ function getUpdates(featureId) {
 // end sse functions
 
 // global variables
+var storedLogitude = 4.34;
+var storedLattitude = 52.0;
+var storedZoom = 7;
+
 var cpm = '';
 var selectedId = ''; //'nl_03503';
 var data;            // contains a list of featureId's and cpm's
@@ -339,6 +343,11 @@ $('#languagechoice').off('change').on('change', function(event){
 
 // start roleModel selection
 function setSelectedRoleModel(id, property) {
+    // start from popup.html
+    if (!$('#pill-link-tab').parent().active) {
+      selectTab('#pills-link-tab');
+    }
+    // end start from popup.html
     roleModelSelectedId = id;
     roleModelSelectedName = property["name"];
     $('.rolemodel').removeClass().addClass('rolemodel selectable');
@@ -359,7 +368,7 @@ getDataSse();
 // end get data
 
 // start show tab-map
-selectTab('#pills-link-tab');
+selectTab('#pills-map-tab');
 // end show tab-map
 
 // start get model list
