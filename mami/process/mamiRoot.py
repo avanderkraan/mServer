@@ -42,8 +42,8 @@ class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
         self.max_feed_down = 10    # max difference to prevent a sudden 0
-        self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
-        self.max_eat_counter = 12 * 60 # with every 5 sec request, check every 1 hour is an update is nessecary
+        self.max_feed_counter = 12 * 60 # with every 3 sec request, check every 1 hour if an update is nessecary
+        self.max_eat_counter = 12 * 60 # with every 5 sec request, check every 1 hour if an update is nessecary
 
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
@@ -147,6 +147,7 @@ class MamiRoot():
             mill_map_tab = text.get(section, 'mill_map_tab')
             link_model_tab = text.get(section, 'link_model_tab')
             link_steps = text.get(section, 'link_steps')
+            link_model_explanation = text.get(section, "link_model_explanation")
             step_1_select_mill = text.get(section, 'step_1_select_mill')
             step_2_select_model = text.get(section, 'step_2_select_model')
             step_3_confirm = text.get(section, 'step_3_confirm')
@@ -181,6 +182,7 @@ class MamiRoot():
                                            mill_map_tab = mill_map_tab,
                                            link_model_tab = link_model_tab,
                                            link_steps = link_steps,
+                                           link_model_explanation = link_model_explanation,
                                            step_1_select_mill = step_1_select_mill,
                                            step_2_select_model = step_2_select_model,
                                            step_3_confirm = step_3_confirm,
@@ -428,7 +430,7 @@ class MamiRoot():
                     # push Update
                     # only update when cpm == 0
                     # do this because an update call blocks the device (shortly)
-                    if result.get("cpm") and result.get("cpm") == 0:
+                    if enden and enden == "0":
                         feed_counter = -1   # means check for update
                     else:
                         feed_counter = 0    # means no check on update
@@ -458,6 +460,8 @@ class MamiRoot():
                            "proposedUUID": uuid,  # TODO: change this 
                            "pushFirmware" : feed_counter == -1 and "latest" or "",
                            "macAddress": macAddress})
+
+            #print(result)
 
             result_string = json.dumps(result)
             cherrypy.response.headers["Content-Length"] = len(result_string)
@@ -526,7 +530,8 @@ class MamiRoot():
                         # push Update
                         # only update when cpm == 0; cpm comes from roleModel
                         # do this because an update call blocks the device (shortly)
-                        if result.get("cpm") and result.get("cpm") == 0:
+                        # if no role model is choosen, the value will be "None"
+                        if result.get("cpm") and result.get("cpm") == "0" or roleModel == "None":
                             eat_counter = -1   # means check for update
                         else:
                             eat_counter = 0    # means no check on update
