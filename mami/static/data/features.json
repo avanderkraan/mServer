@@ -27,7 +27,7 @@
             "type": "Feature",
             "properties": {
                 "name": "(Tweemanspolder) Nr.3",
-                "mac_address": ""
+                "mac_address": "84:CC:A8:A3:09:11"
             },
             "id": "nl_00935"
         },
@@ -45,6 +45,21 @@
                 "mac_address": "A0:20:A6:14:85:06"
             },
             "id": "nl_12549"
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.497779,
+                    52.053169
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "De Hoop",
+                "mac_address": "84:CC:A8:A0:FE:2D"
+            },
+            "id": "nl_00937"
         }
     ]
 }
