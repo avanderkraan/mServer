@@ -137,18 +137,18 @@ function styleFunction(feature, resolution) {
     */
 
 	if (feature.getId() == selectedId) {
-		selectedMillText.setText(feature.get('cpm'));
+		selectedMillText.setText(feature.get('cpm') || '0');
 		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1 en geselecteerd
         return [selectedMillStyle];
 	}
 	else if (feature.getId() in senderData){
-		workingMillText.setText(feature.get('cpm'));
+		workingMillText.setText(feature.get('cpm') || '0');
 		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1
         return [workingMillStyle];
 	}
 	else {
 		//return [validMillStyle, messageStyle, nameStyle];  // bij molen zonder data maar wel aanwezig in featureSource
-        return [validMillStyle];
+		return [validMillStyle];
 	}
 }
 //end styleFunction for features

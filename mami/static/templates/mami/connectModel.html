@@ -43,9 +43,9 @@
             urlToCheck = urlToCheck + ".local";
         }
         var xhr = new XMLHttpRequest();
-        xhr.timeout = 5000;
+        xhr.timeout = 1000;
         //console.log('UNSENT', xhr.readyState); // readyState will be 0
-        xhr.open('GET', urlToCheck + '/alive/', true);
+        xhr.open('GET', urlToCheck + '/_mdns/', true);
         //console.log('OPENED', xhr.readyState); // readyState will be 1
 
         xhr.onprogress = function() {
@@ -54,7 +54,6 @@
 
         xhr.onload = function() {
             //console.log('DONE' + number, xhr.readyState); // readyState will be 4
-            //models[pad(number, 4)] = urlToCheck;
             var response = xhr.responseText;
             //console.log("DONE " + response);
             if (response.startsWith("model")) {
@@ -66,15 +65,96 @@
             }
         };
 
+        xhr.onerror = function() {
+            // do nothing
+        };
+
+        xhr.send(null);
+    }
+
+    function findLocalModelsIP(number, myip) {
+        // and remember the jqXHR object for this request
+        var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
+
+        urlToCheck = urlToCheck + number.toString() + '/_ip/';
+        var xhr = $.ajax({url: urlToCheck,
+                            timeout: 1000} )
+        .done(function() {
+            //alert( "success" );
+            var response = xhr.responseText;
+                console.log("DONE " + response);
+                if (response.startsWith("model")) {
+                    var result = response.replace(/\n|\r/g, "").split('_')
+
+                    modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
+                }
+                //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
+
+        })
+        .fail(function() {
+            //alert( "error" );
+            //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
+        })
+        .always(function() {
+            //alert( "complete" );
+        });
+    }
+
+    function findIPs() {
+        // search for loacl ip addresses since mdns devices
+        //   do not appear with this os/browser combination
+        var urlToCheck = window.location.href;
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 1000;
+        //console.log('UNSENT', xhr.readyState); // readyState will be 0
+        xhr.open('GET', urlToCheck + 'myip/', true);
+        //console.log('OPENED', xhr.readyState); // readyState will be 1
+
+        xhr.onprogress = function() {
+            //console.log('LOADING', xhr.readyState); // readyState will be 3
+        };
+
+        xhr.onload = function() {
+            //console.log('DONE', xhr.readyState); // readyState will be 4
+            var response = xhr.responseText;
+
+            for (var i=1; i < 256; i++) {
+                findLocalModelsIP(i, response);
+            }
+            
+        };
+
+        xhr.onerror = function() {
+            // do nothing
+        };
+
         xhr.send(null);
     }
 
     function showModelList() {
-        $("#modelList").html(makeModelList());
+        //models = {};
+        if (Object.keys(models).length == 0) {
+            $("#modelList").html('${no_mdns}');
+            $('#modelListPercentage').html('');
+
+            // if mdns doesn't give result, let user fill in ipaddresses
+            findIPs();
+            setTimeout(function (){
+                showModelIPList();
+            }, 3000); // How long do you want the delay to be (in milliseconds)?
+        }
+        else {
+            $("#modelList").html(makeModelList(models));
+        }
     }
 
-    function makeModelList() {
-        if (Object.keys(models).length == 0) {
+    function showModelIPList() {
+        $("#modelList").html(makeModelList(modelIPs));
+        $('#modelListPercentage').html('');
+    }
+
+    function makeModelList(modelsAvailable) {
+        if (Object.keys(modelsAvailable).length == 0) {
             return '${no_available_models}';
         }
         //console.log(JSON.stringify(${model_inventory}));
@@ -89,7 +169,7 @@
         modelTable += '    </tr>';
         modelTable += '  </thead>';
         modelTable += '<tbody>';
-        $.each(models, function(index, value) {
+        $.each(modelsAvailable, function(index, value) {
             var selectable = '';
             
             selectable = 'model';
@@ -164,15 +244,22 @@
         $('#modelSelection').html(''); 
     }
 
+
+    function makeModelIPList() {
+        var modelIPList = $("#modelIPList").html();
+    }
+
     // start get models
     function refreshModelList() {
         // clear global variable models
         models = {};
-        $("#modelList").innerHTML = "${waiting}";
+        modelIPs = {};
+        $("#modelList").html("${waiting}");
+        $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
-        setTimeout(function (){
-        showModelList();
-        }, 1000); // How long do you want the delay to be (in milliseconds)? 
+        setTimeout(function () {
+            showModelList();
+        }, 1000); // How long do you want the delay to be (in milliseconds)?
     }
     // end get models
 

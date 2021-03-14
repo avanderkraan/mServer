@@ -49,6 +49,13 @@ class MamiRoot():
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
     @cherrypy.expose
+    def myip(self):
+        try:
+            return cherrypy.request.headers.get('Remote-Addr')
+        except:
+            return ''
+
+    @cherrypy.expose
     def _cleancache(self):
         """
         Should be entered regularly to cleanup cache (=dynamic dictionary), using crontab
@@ -140,6 +147,7 @@ class MamiRoot():
             disclaimer = text.get(section, 'disclaimer')
             active_mills = text.get(section, 'active_mills')
             waiting = text.get(section, 'waiting')
+            no_mdns = text.get(section, 'no_mdns')
             refresh_model_list = text.get(section, 'refresh_model_list')
             ok = text.get(section, 'ok')
             cancel = text.get(section, 'cancel')
@@ -175,6 +183,7 @@ class MamiRoot():
                                            disclaimer = disclaimer,
                                            active_mills = active_mills,
                                            waiting = waiting,
+                                           no_mdns = no_mdns,
                                            refresh_model_list = refresh_model_list,
                                            ok = ok,
                                            cancel = cancel,

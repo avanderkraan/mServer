@@ -5,15 +5,10 @@ Created on Feb 16, 2021
 '''
 import configparser
 import os
-try:  # for testing this module in main
-    from mami import current_dir
-    properties_dir = path.join(current_dir, '..')
-except:
-    properties_dir = os.path.dirname(os.path.abspath(__file__))
-    properties_dir = os.path.join(properties_dir, '..', '..')
 
+from mami import current_dir
+properties_dir = os.path.join(current_dir, 'locale', 'content')
 from configparser import ConfigParser
-
 
 class LocaleHandle:
     '''
@@ -23,9 +18,9 @@ class LocaleHandle:
     '''
     def __init__(self):
 
-        self.locale_properties_file = os.path.join(properties_dir, 'settings', 'locale', 'locale.properties')
-        self.text_properties_file = os.path.join(properties_dir, 'settings', 'locale', 'text.properties')
-        self.message_properties_file = os.path.join(properties_dir, 'settings', 'locale', 'message.properties')
+        self.locale_properties_file = os.path.join(properties_dir, 'locale.properties')
+        self.text_properties_file = os.path.join(properties_dir, 'text.properties')
+        self.message_properties_file = os.path.join(properties_dir, 'message.properties')
         self.locale_available = {}  # contains the available locales
         self.read_locale()    # get available locales
 

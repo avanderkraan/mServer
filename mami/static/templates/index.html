@@ -90,7 +90,7 @@
                 <tr>
                   <td><div id="roleModelData">${waiting}</div></td>
                   <td>
-                    <div id="modelList">${waiting}</div>
+                    <span id="modelList">${waiting}></span><span id="modelListPercentage"></span>
                   </td>
                 </tr>
               </tbody>
@@ -320,6 +320,7 @@ var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
 var models = {};     // contains a table with model data
+var modelIPs = {};   // contains a table with model ip addresses, given by the user   
 var isMobile = false;// used for presentation mobile/screen
 var roleModelSelectedId = "";    // contains id of selected roleModel
 var roleModelSelectedName = "";  // contains name of selected roleModel
@@ -363,19 +364,21 @@ function setSelectedRoleModel(id, property) {
 }
 // end roleModel selection
 
-// start roleModelList using features
-showRoleModelList();
-// end roleModelList using features
+// start show tab-map
+selectTab('#pills-map-tab');
+//selectTab('#pills-link-tab');
+// end show tab-map
 
 // start get data
 getDataSse();
 // end get data
 
-// start show tab-map
-selectTab('#pills-map-tab');
-// end show tab-map
+// start roleModelList using features
+showRoleModelList();
+// end roleModelList using features
 
 // start get model list
 refreshModelList();
 // end get model list
+
 </script>
