@@ -90,12 +90,14 @@
             </div>
 
             <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
-
+<!--
             <span id="modelSearchTime_less" class="glyphicon glyphicon-minus"></span>
             &nbsp;&nbsp;
             <span id="modelSearchTime">{Zoektijd}</span>
             &nbsp;&nbsp;
             <span id="modelSearchTime_more" class="glyphicon glyphicon-plus"></span>
+
+-->
             <br>
             <span id="modelList"></span><span id="modelListPercentage"></span>
 
@@ -171,7 +173,7 @@
     // end get model list
 
     // listen to click events for setModelIPSearchTimeout
-    setModelIPSearchTimeout();
+    //setModelIPSearchTimeout();
 
     unit = getStored("unit") || toggleUnit();
     showUnit();
@@ -284,7 +286,6 @@ var searchIPTimeout = 400;   // starting searchTimeout in milliseconds for findi
 
 var modelAndSavedRoleModel = {}; // contains the model as key and the saved roleModel id as value
 var modelMDNSSearchTimeout = 1000; // timeout for searching using mDNS in milliseconds
-var modelIPSearchTimeout = 2000; // timeout for searching by IP address in milliseconds
 var isMobile = false;// used for presentation mobile/screen
 
 var maxIndependentSpeedInRPM = 60; // arbitrary max speed in revolutions per minute
@@ -330,6 +331,8 @@ $('#languagechoice').off('change').on('change', function(event){
 		window.location.href = newLocation;
 });
 // end language choice
+
+/*
 function showModelTimeoutHTML() {
   var showTimeoutInSeconds = Math.round(modelIPSearchTimeout / 1000);
 
@@ -358,5 +361,6 @@ function setModelIPSearchTimeout() {
   });
 }
 // end set search timeout
+*/
 
 </script>

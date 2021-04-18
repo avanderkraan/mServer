@@ -36,20 +36,13 @@
     }
 
     function showModelList() {
-        models = {}; // mmm
+        //models = {}; // remove remark to test IP-search over mDNS search
         if (Object.keys(models).length == 0) {
             $("#modelList").html('${no_mdns}');
             $('#modelListPercentage').html('');
 
-            // if mdns doesn't give result, let user fill in ipaddresses
-            for (var i=1; i < 256; i++) {
-                checkIPs[i] = false;  // prepare to use in findIPs
-            }
+            // showModelIPList is called after leaving the recursive processIPResponse in connectModel.html
             findIPs();
-            
-            //setTimeout(function (){
-            //    showModelIPList();
-            //}, 0); // How long do you want the delay to be (in milliseconds)?
         }
         else {
             $("#modelList").html(makeModelList(models));

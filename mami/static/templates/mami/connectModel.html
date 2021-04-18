@@ -33,7 +33,7 @@
                 models[modelAndRoleModel[0]] = urlToCheck;
                 modelAndSavedRoleModel[modelAndRoleModel[0]] = modelAndRoleModel[1].replace("<","").replace(">","");
 
-                console.log(models);
+                //console.log(models);
             }
         };
 
@@ -101,7 +101,6 @@
                     var result = modelAndRoleModel[0].split('_');  // model and ip
                     modelAndSavedRoleModel[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = modelAndRoleModel[1].replace("<","").replace(">","");
                     modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
-                    //console.log(number + 'a a a ' + mySearchIPTimeout + ' ' + response);
                 }
             };
 
@@ -133,6 +132,10 @@
         };
 
         xhr.onload = function() {
+            // checkIPs is used within processIPResponse
+            for (var i=1; i < 256; i++) {
+                checkIPs[i] = false;
+            }
             var response = xhr.responseText;
             processIPResponse(0, response, searchIPTimeout);
         };
@@ -148,12 +151,6 @@
     }
 
     function processIPResponse(counter, response, mySearchIPTimeout) {
-        if (counter == 0) {
-            for (var i=1; i < 256; i++) {
-                checkIPs[i] = false;
-            }
-        }
-
         var allTrue = true;
         for (var i=1; i < 256; i++) {
             allTrue = allTrue && checkIPs[i];
@@ -161,9 +158,6 @@
                 break;
             }
         }
-
-
-        //var counterMax = 3;
 
         //var mySetTimeout ;
         //var searchIPTimeout = 1000;
@@ -183,7 +177,19 @@
                     clearTimeout(mySetTimeout[i]);
                 }
                 showModelIPList();
-                return;
+                // show known values
+                $.each(modelAndSavedRoleModel, function(index, value) {
+                    if (modelAndSavedRoleModel[index] == "independent") {
+                        selectStandAlone(index, modelIPs[index]);
+                    }
+                    else {
+                        //setSelectedModel(roleModelId, roleModelProperty, modelId, modelUrl)
+                        // roleModelProperty is not needed here
+                        setSelectedModel(modelAndSavedRoleModel[index], null, index, modelIPs[index]);
+                    }
+                });
+
+                return;   // leave recursive processIPResponse
             }
             //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
 
@@ -227,9 +233,11 @@
         $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
         
+        var mDNSTimeout = 500;
+        // if there is no response via mDNS within this time, a search though IP is performed
         setTimeout(function () {
             showModelList();    
-        }, 0); // How long do you want the delay to be (in milliseconds)?
+        }, mDNSTimeout); // How long do you want the delay to be (in milliseconds)?
         
     }
     // end get models
