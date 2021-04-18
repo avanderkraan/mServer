@@ -1,39 +1,4 @@
 <script>
-    function setSelectedModel(id, url) {
-        modelSelectedId = id;
-        modelSelectedUrl = url;
-
-        if (roleModelSelectedName != "") {
-          $('.model').removeClass().addClass('model selectable');
-          $('#nameModel_' + id).removeClass('selectable');
-          $('#nameModel_' + id).addClass('selected-model');
-    
-          $('#connectedTo_' + id).html(roleModelSelectedName);
-          $('#connectedTo_' + id).css({'color':'#999'});
-          $('#confirm_' + id).removeClass('disabled');
-          $('#remove_' + id).addClass('disabled');
-        }
-    }
-
-    function removeSelectedRoleModel(id, url) {
-        $('#connectedTo_' + id).css({'color':'#fff'});
-        $('#nameModel_' + id).removeClass('selected-model');
-        $('#confirm_' + id).addClass('disabled');
-        $('#remove_' + id).addClass('disabled');
-        passIPAddress(url, true);
-    }
-
-    function confirmSelectedRoleModel(id, url) {
-        $('#nameModel_' + id).removeClass('selected-model');
-        $('#confirm_' + id).addClass('disabled');
-        $('#connectedTo_' + id).css({'color':'#000'});
-        if (roleModelSelectedName != '') {
-            $('#remove_' + id).removeClass('disabled');
-            passIPAddress(url);
-        }
-    }
-
-
     function findLastKnownModel(number) {
         //var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
         var urlToCheck = 'http://model';
@@ -43,7 +8,7 @@
             urlToCheck = urlToCheck + ".local";
         }
         var xhr = new XMLHttpRequest();
-        xhr.timeout = 1000;
+        xhr.timeout = modelMDNSSearchTimeout;
         //console.log('UNSENT', xhr.readyState); // readyState will be 0
         xhr.open('GET', urlToCheck + '/_mdns/', true);
         //console.log('OPENED', xhr.readyState); // readyState will be 1
@@ -58,10 +23,17 @@
             //console.log("DONE " + response);
             if (response.startsWith("model")) {
 
+                response = response.replace(/\n|\r/g, "");
+                var modelAndRoleModel = response.split('<');
+                if (number == 1) {
+                    modelAndRoleModel[0] += "-1";  // to match names gotten by the IP method
+                }
                 number += 1;
                 findLastKnownModel(number);
-                models[response.replace(/\n|\r/g, "")] = urlToCheck;
-                //console.log(models);
+                models[modelAndRoleModel[0]] = urlToCheck;
+                modelAndSavedRoleModel[modelAndRoleModel[0]] = modelAndRoleModel[1].replace("<","").replace(">","");
+
+                console.log(models);
             }
         };
 
@@ -72,175 +44,171 @@
         xhr.send(null);
     }
 
+    /*
     function findLocalModelsIP(number, myip) {
         // and remember the jqXHR object for this request
         var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
 
         urlToCheck = urlToCheck + number.toString() + '/_ip/';
         var xhr = $.ajax({url: urlToCheck,
-                            timeout: 1000} )
+                            timeout: modelIPSearchTimeout} )
         .done(function() {
             //alert( "success" );
             var response = xhr.responseText;
-                console.log("DONE " + response);
+                //console.log("DONE " + response);
                 if (response.startsWith("model")) {
-                    var result = response.replace(/\n|\r/g, "").split('_')
-
+                    response = response.replace(/\n|\r/g, "");
+                    var modelAndRoleModel = response.split('<');
+                    var result = modelAndRoleModel[0].split('_');  // model and ip
+                    modelAndSavedRoleModel[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = modelAndRoleModel[1].replace("<","").replace(">","");
                     modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
                 }
                 //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
 
         })
         .fail(function() {
-            //alert( "error" );
+            alert( "error" );
             //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
         })
         .always(function() {
             //alert( "complete" );
+            // sort on name
         });
+    }
+    */
+
+    //var searchIPTimeout = 300;  // milliseconds
+
+    function findLocalModelsIP(number, myip, mySearchIPTimeout, myCheckIP) {
+        if (myCheckIP == false) {
+            // default true, only with timeout set to false, so next time increase timeout
+            checkIPs[number] = true;
+            var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
+
+            urlToCheck = urlToCheck + number.toString() + '/_ip/';
+
+            // and remember the jqXHR object for this request
+            var xhr = new XMLHttpRequest();
+            xhr.setTimeout = mySearchIPTimeout;
+
+            xhr.open('GET', urlToCheck, true);
+
+            xhr.onload = function() {
+                var response = xhr.responseText;
+                if (response.startsWith("model")) {
+                    response = response.replace(/\n|\r/g, "");
+                    var modelAndRoleModel = response.split('<');
+                    var result = modelAndRoleModel[0].split('_');  // model and ip
+                    modelAndSavedRoleModel[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = modelAndRoleModel[1].replace("<","").replace(">","");
+                    modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
+                    //console.log(number + 'a a a ' + mySearchIPTimeout + ' ' + response);
+                }
+            };
+
+            xhr.onerror = function() {
+            };
+            xhr.onprogress = function() {
+            };
+            xhr.ontimeout = function() {
+                checkIPs[number] = false;
+            };
+
+            xhr.send(null);
+
+        }
+        if (number == 255) {
+            return;
+        }
     }
 
     function findIPs() {
-        // search for loacl ip addresses since mdns devices
+        // search for local ip addresses since mdns devices
         //   do not appear with this os/browser combination
+        //   by using the ip address where the browser is active
         var urlToCheck = window.location.href;
         var xhr = new XMLHttpRequest();
-        xhr.timeout = 1000;
-        //console.log('UNSENT', xhr.readyState); // readyState will be 0
         xhr.open('GET', urlToCheck + 'myip/', true);
-        //console.log('OPENED', xhr.readyState); // readyState will be 1
 
         xhr.onprogress = function() {
-            //console.log('LOADING', xhr.readyState); // readyState will be 3
         };
 
         xhr.onload = function() {
-            //console.log('DONE', xhr.readyState); // readyState will be 4
             var response = xhr.responseText;
+            processIPResponse(0, response, searchIPTimeout);
+        };
 
-            for (var i=1; i < 256; i++) {
-                findLocalModelsIP(i, response);
-            }
-            
+        xhr.ontimeout = function() {
         };
 
         xhr.onerror = function() {
-            // do nothing
         };
 
         xhr.send(null);
+
     }
 
-    function showModelList() {
-        //models = {};
-        if (Object.keys(models).length == 0) {
-            $("#modelList").html('${no_mdns}');
-            $('#modelListPercentage').html('');
+    function processIPResponse(counter, response, mySearchIPTimeout) {
+        if (counter == 0) {
+            for (var i=1; i < 256; i++) {
+                checkIPs[i] = false;
+            }
+        }
 
-            // if mdns doesn't give result, let user fill in ipaddresses
-            findIPs();
-            setTimeout(function (){
+        var allTrue = true;
+        for (var i=1; i < 256; i++) {
+            allTrue = allTrue && checkIPs[i];
+            if (allTrue == false) {
+                break;
+            }
+        }
+
+
+        //var counterMax = 3;
+
+        //var mySetTimeout ;
+        //var searchIPTimeout = 1000;
+        for (var i=1; i < 256; i++) {
+            findLocalModelsIP(i, response, mySearchIPTimeout, checkIPs[i]);
+        }
+
+        mySetTimeout[counter] = setTimeout(function() {
+            //mySearchIPTimeout = (counter+1) * 4 * 1000;
+            //showModelIPList();
+            //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
+            if ((counter > 5) || (allTrue == true)) {
+            //setTimeout(function (){
+            //},mySearchIPTimeout);
+
+                for (var i=0; i<mySetTimeout.length;i++) {
+                    clearTimeout(mySetTimeout[i]);
+                }
                 showModelIPList();
-            }, 3000); // How long do you want the delay to be (in milliseconds)?
-        }
-        else {
-            $("#modelList").html(makeModelList(models));
-        }
+                return;
+            }
+            //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
+
+            processIPResponse(counter + 1, response, (counter+2) * mySearchIPTimeout);
+
+
+        }, mySearchIPTimeout);
     }
 
-    function showModelIPList() {
-        $("#modelList").html(makeModelList(modelIPs));
-        $('#modelListPercentage').html('');
-    }
-
-    function makeModelList(modelsAvailable) {
-        if (Object.keys(modelsAvailable).length == 0) {
-            return '${no_available_models}';
-        }
-        //console.log(JSON.stringify(${model_inventory}));
-
-        modelTable = '';
-        modelTable += '<table class="table">';
-        modelTable += '<thead>';
-        modelTable += '    <tr>';
-        modelTable += '      <th scope="col">${table_model_name}</th>';
-        modelTable += '      <th scope="col">${table_model_connect}</th>';
-        modelTable += '      <th scope="col">${step_3_confirm}</th>';
-        modelTable += '    </tr>';
-        modelTable += '  </thead>';
-        modelTable += '<tbody>';
-        $.each(modelsAvailable, function(index, value) {
-            var selectable = '';
-            
-            selectable = 'model';
-
-            modelTable += '  <tr>';
-
-            modelTable += '    <td';
-            modelTable += " onclick='setSelectedModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
-            modelTable += '>';
-            modelTable += '      <div id="';
-            modelTable += 'nameModel_';
-            modelTable += index;
-            modelTable += '" class="';
-            modelTable += selectable;
-            modelTable += '">';
-            modelTable += index;
-            modelTable += '</div>';
-
-            modelTable += '    </td>';
-
-            modelTable += '    <td>';
-            modelTable += '      <div id="';
-            modelTable += 'connectedTo_';
-            modelTable += index;
-            modelTable += '">-';
-            modelTable += '</div>';
-            modelTable += '    </td>';
-
-            modelTable += '    <td>';
-            modelTable += '<div class="btn-group" role="group" aria-label="on/off">';
-            modelTable += '<button type="button" class="model-connect btn btn-default disabled"';
-            modelTable += ' id="confirm_';
-            modelTable += index;
-            modelTable += '"';
-            modelTable += " onclick='confirmSelectedRoleModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
-            modelTable += '>${on}</button>';
-            modelTable += '<button type="button" class="model-disconnect btn btn-default disabled"';
-            modelTable += ' id="remove_';
-            modelTable += index;
-            modelTable += '"';
-            modelTable += " onclick='removeSelectedRoleModel(" + JSON.stringify(index) + "," + JSON.stringify(value) + ");'";
-            modelTable += '>${off}</button>';
-            modelTable += '</div>';
-
-            modelTable += '    </td>';
-
-            modelTable += '  </tr>';
-
-        });
-        modelTable += '</tbody>';
-        modelTable += '</table>';
-
-        return modelTable;
-    }
-
-    function passIPAddress(urlModel, remove=false) {
-        if (remove == false) {
-            var url = urlModel + "/setRoleModel/?id=" + roleModelSelectedId;
-            $('#connectedTo_' + modelSelectedId).html(roleModelSelectedName);
-        }
-        else {
-            var url = urlModel + "/setRoleModel/?id=None";  // None is default setting for a model
+    function passIPAddress(modelId, modelUrl, roleModelId, standalone=false) {
+        var url = "";
+        url = modelUrl + "/setRoleModel/?id=" + roleModelId;
+        if (standalone == true) {  // only a standalone model gives the speed value
+            // from rpm to rph (model expects rph)
+            // with 4 blades divide by 4
+            url += "&speed=" + independentSpeed[modelId] * 60 / 4;
         }
         // connect and cleanup selected RoleModel and selected model
-        connectModel();
-        var iframe = '<iframe id="' + urlModel + '" src="' + url + '" onload="connectModel(this);" width="1px" height="1px"></iframe>';
+        connectModel();  // cleanup connected model if needed
+        var iframe = '<iframe id="' + modelUrl + '" src="' + url + '" onload="connectModel(this);" width="1px" height="1px"></iframe>';
         $('#modelSelection').html(iframe);
     }
 
     function connectModel(element) {
-        // cleanup directly after IFrame was loaded
+        // cleanup connected model directly after IFrame was loaded
         $('#modelSelection').html(''); 
     }
 
@@ -252,14 +220,17 @@
     // start get models
     function refreshModelList() {
         // clear global variable models
+        $("#refreshModelList").attr("disabled", true);
         models = {};
         modelIPs = {};
         $("#modelList").html("${waiting}");
         $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
+        
         setTimeout(function () {
-            showModelList();
-        }, 1000); // How long do you want the delay to be (in milliseconds)?
+            showModelList();    
+        }, 0); // How long do you want the delay to be (in milliseconds)?
+        
     }
     // end get models
 

@@ -56,10 +56,101 @@
 
 .model-disconnect {
     top: -8px;
-    bottom: -8px;;
+    bottom: -8px;
 }
+
+#roleModelModal {
+    width: 460px;
+}
+
+#roleModel_result_panel {
+    width: 400px;
+}
+
+.modal-dialog {
+    width: 440px;
+}
+
+.modal-content {
+    width: 440px;
+}
+
+.list-group{
+    max-height: 300px;
+    max-width: 380px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rpmEnds:hover {
+    cursor: pointer;
+}
+
+#map {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 20%;
+    height: 400px;
+    width: 600px;
+  }
+  
+#rpmEnds_map {
+    position: absolute;
+    top: 10px;
+    left: 55px;
+    width: 70px;
+    height: 45px;
+    background: ghostwhite;
+    border-left: 5px solid lightsteelblue;
+    box-sizing: border-box;
+    padding-left: 4px;
+  }
 
 /* Smartphones ----------- */
 @media only screen and (max-width: 760px) {
     #is-mobile { display: none; }
+
+    #roleModelModal {
+        width: 360px;
+    }
+
+    #roleModel_result_panel {
+        width: 300px;
+    }
+
+    .modal-dialog {
+        width: 340px;
+    }
+  
+    .modal-content {
+        width: 340px;
+    }
+    
+    .list-group{
+        max-height: 300px;
+        max-width: 280px;
+        margin-bottom: 10px;
+        overflow:scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #map {
+        height: 300px;
+        width: 300px;
+    }
+
+    #rpmEnds_map {
+        position: absolute;
+        top: 10px;
+        left: 65px;
+        width: 70px;
+        height: 45px;
+        background: ghostwhite;
+        border-left: 5px solid lightsteelblue;
+        box-sizing: border-box;
+        padding-left: 4px;
+      }
+    
 }

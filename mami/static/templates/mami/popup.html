@@ -110,41 +110,15 @@
                 popupTitle += "</span>\n";
                 popupTitle += "</form>\n";
             }
-            //popupTitle += "</div>\n";
-            content.innerHTML = popupTitle;
+            content.innerHTML = "${molendatabase}" + "<br>" + popupTitle;
+
             if (selectedId != undefined) {
-                $.getJSON("getDataAsJSON/?feature_id=" + selectedId)
+                $.getJSON("get_data_as_json/?feature_id=" + selectedId)
                     .done(function(data) {
                         var popupText = "<ul style=\"list-style-type:none\">";
                         $.each(data, function(key, val) {
-                            if (key == "isOpen")
-                            {
-                                if (val == 0) {
-                                    popupText += "<li id=\"popup_" + key + "\">${now_closed}</li>\n";
-                                } else {
-                                    popupText += "<li id=\"popup_" + key + "\">${now_open}</li>\n";
-                                }
-                            }
-                            if (key ==  "message")
-                            {
-                                if (val == "") {
-                                    popupText += "<li id=\"popup_" + key + "\">${no_news}</li>\n";
-                                } else {
-                                    popupText += "<li id=\"popup_" + key + "\">" + val + "</li>\n";
-                                }
-                            }
+                            // data: name, bpm, nr_blades
                         });
-
-                        
-                        popupText += '<li>';
-                        var property = {};
-                        property['name'] = feature.values_.name;
-                        popupText += '<span class="selectable"';
-                        popupText +=  " onclick='setSelectedRoleModel(" + JSON.stringify(selectedId) + "," + JSON.stringify(property) + ");'$('#pills-link-tab').trigger();";
-                        popupText += '">';
-                        popupText += '${goto_link_models}';
-                        popupText += '</span>';
-                        popupText += '</li>';      
 
                         popupText += "</ul>";
                         content.innerHTML += popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';

@@ -7,7 +7,9 @@
     <div class="row loffset6 roffset6">
       <div class="col-xs-2 voffset16">
         <div>
-          <img src="static/images/logo.png" width="30">
+          <a href="/">
+            <img id="logo" src="static/images/logo.png" width="30"/>
+          </a>
         </div>
         <div class="row loffset6">
           <h6><small>${cpright}</small></h6>
@@ -36,6 +38,9 @@
             <a class="nav-link" id="pills-map-tab" data-toggle="pill" href="#pills-map" role="tab" aria-controls="pills-map" aria-selected="false">${mill_map_tab}</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" id="pills-table-tab" data-toggle="pill" href="#pills-table" role="tab" aria-controls="pills-table" aria-selected="false">${mill_table_map}</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" id="pills-link-tab" data-toggle="pill" href="#pills-link" role="tab" aria-controls="pills-link" aria-selected="false">${link_model_tab}</a>
           </li>
         </ul>
@@ -62,6 +67,15 @@
         <div class="row loffset6 roffset6">
           <div class="col-xs-12">
             <div id="map"></div>
+            <div id="rpmEnds_map" style="cursor:pointer;" onclick="toggleUnit();"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade active" id="pills-table" role="tabpanel" aria-labelledby="pills-table-tab">
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            <div id="roleModelData">${waiting}</div>
           </div>
         </div>
       </div>
@@ -74,27 +88,17 @@
               <br>
               ${link_model_explanation}
             </div>
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th scope="col">
-                    ${step_1_select_mill}
-                  </th>
-                  <th scope="col">
-                    ${step_2_select_model}
-                    <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><div id="roleModelData">${waiting}</div></td>
-                  <td>
-                    <span id="modelList">${waiting}></span><span id="modelListPercentage"></span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+            <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
+
+            <span id="modelSearchTime_less" class="glyphicon glyphicon-minus"></span>
+            &nbsp;&nbsp;
+            <span id="modelSearchTime">{Zoektijd}</span>
+            &nbsp;&nbsp;
+            <span id="modelSearchTime_more" class="glyphicon glyphicon-plus"></span>
+            <br>
+            <span id="modelList"></span><span id="modelListPercentage"></span>
+
           </div>
         </div>
       </div>
@@ -142,11 +146,37 @@
     if( $('#is-mobile').css('display')=='none') {
         isMobile = true;  
     }
-    
+
     // make sure the map is displayed, even with the class fade
     $('#pills-map-tab').parent().off('mouseup').on('mouseup', function () {
         $('canvas').css({'display': 'inline'});
     })
+
+    // start show tab-map
+    selectTab('#pills-map-tab');
+    //selectTab('#pills-table-tab');
+    // end show tab-map
+
+    // start get data
+    get_data_via_sse();
+    // end get data
+
+    // start roleModelList using features
+    showRoleModelList();
+    // end roleModelList using features
+
+    // start get model list
+    // remarked to save time and network traffic while searching for models
+    //refreshModelList();
+    // end get model list
+
+    // listen to click events for setModelIPSearchTimeout
+    setModelIPSearchTimeout();
+
+    unit = getStored("unit") || toggleUnit();
+    showUnit();
+
+
   });
   </script>
 
@@ -156,6 +186,10 @@
 
   <%include file="mami/popup.html"/>
 
+  <%include file="mami/rolemodel.html"/>
+
+  <%include file="mami/model.html"/>
+
   <%include file="mami/connectModel.html"/>
 
 <script>
@@ -164,68 +198,8 @@ function selectTab(tabId) {
   $(tabId).trigger('click');
 }
 
-function showRoleModelList() {
-  // show all available rolemodels (=mills)
-  var roleModelTable = '';
-
-  roleModelTable += '<table class="table">';
-  roleModelTable += '<thead>';
-  roleModelTable += '    <tr>';
-  roleModelTable += '      <th scope="col">${table_model_name}</th>';
-  roleModelTable += '      <th scope="col">${table_ends}</th>';
-  roleModelTable += '    </tr>';
-  roleModelTable += '  </thead>';
-  roleModelTable += '<tbody>';
-  $.each(${all_mills}, function(id, property) {
-    var selectable = '';
-    if (property['mac_address'] != '') {
-      selectable = 'rolemodel selectable';
-
-      roleModelTable += '  <tr';
-
-      if (selectable != '') {
-        roleModelTable += " onclick='setSelectedRoleModel(" + JSON.stringify(id) + "," + JSON.stringify(property) + ");'";
-      }
-
-      roleModelTable += '>';
-
-      roleModelTable += '    <td>';
-      roleModelTable += '<div id="nameRoleModel_';
-      roleModelTable += id;
-      roleModelTable += '" class="';
-      roleModelTable += selectable;
-      roleModelTable += '">';
-      roleModelTable += property['name'];
-      roleModelTable += '</div>';
-      roleModelTable += '    </td>';
-      
-      roleModelTable += '    <td>';
-      roleModelTable += '<div id="cpmRoleModel_';
-      roleModelTable += id;
-      roleModelTable += '" class="';
-      //roleModelTable += selectable;
-      roleModelTable += '">';
-      roleModelTable += '</div>';
-      roleModelTable += '    </td>';
-
-      roleModelTable += '  </tr>';
-    }
-  });
-  roleModelTable += '  </tbody>';
-  roleModelTable += '</table>';
-
-
-  $('#roleModelData').html(roleModelTable);
-}
-
-function showRoleModelListData() {
-  $.each(millData, function(id, property) {
-    $('#cpmRoleModel_' + id).html(property['cpm']);
-  });
-}
-
 function refresh() {
-    // set cpm in all features
+    // set bpm in all features
     senderData = {};
     for (var i=0; i < Object.keys(data).length; i++) {
       for (const [key, value] of Object.entries(data[i])) {
@@ -239,13 +213,16 @@ function refresh() {
         perMillData = {};  // data per mill
         if (featureData !== undefined) {
           feature.set("name", featureData["name"]);
-          feature.set("cpm", featureData["cpm"]);
-          feature.set("message", featureData["message"]);
+          feature.set("rph", featureData["rph"]);
+          feature.set("blades", featureData["blades"]);
+          //feature.set("message", featureData["message"]);
           
           perMillData["id"] = featureId;
           perMillData["name"] = featureData["name"];
-          perMillData["cpm"] = featureData["cpm"];
-          perMillData["message"] = featureData["message"];
+          //perMillData["bpm"] = featureData["bpm"];
+          perMillData["rph"] = featureData["rph"]
+          perMillData["blades"] = featureData["blades"]
+          //perMillData["message"] = featureData["message"];
           millData[featureId] = perMillData;
         }
     });
@@ -256,7 +233,7 @@ function refresh() {
 }
 
 // start sse functions
-function getDataSse() {
+function get_data_via_sse() {
 	try {
 		dataSource.close();
 	}
@@ -265,7 +242,7 @@ function getDataSse() {
 	}
 
 	try {
-		dataSource = new EventSource("getDataSse/");
+		dataSource = new EventSource("get_data_via_sse/");
 	    dataSource.onmessage = function(event) {
         	data = JSON.parse(event.data);
           if (Object.keys(data).length == 0) {
@@ -273,65 +250,73 @@ function getDataSse() {
             millData = {};
           }
        	  refresh();
+          if (unit == "rpm") {
+            $("#rpmEnds_map").html("${unit_text}<br/>${table_rpm}").css("pointer-events","auto");;
+          }
+          if (unit == "end") {
+            $("#rpmEnds_map").html("${unit_text}<br/>${table_ends}").css("pointer-events","auto");;
+          }
 	    }
 	}
 	catch (err) {
 		console.log(err.message);
 	}
 }
-
-/* requests the getFeatureDataSse for the selected feature from this server */
-/* TODO: is to be used by step 3. the model */
-/* TODO: is also used by the popup */
-function getUpdates(featureId) {
-	// selectedId = featureId
-	try {
-		singleSource.close();
-	}
-	catch(err) {
-		console.log(err.message);
-	}
-	try {
-	    singleSource = new EventSource("getFeatureDataSse/?feature_id=" + featureId);
-	    singleSource.onmessage = function(event) {
-	        /* for popup: put it on a document.element.id*/
-          /* TODO: event.data is a list of dicts, for each sender a dict is available */
-          $('#' + featureId).html(event.data + "<br>");
-	        //event.data = cpm
-	    };
-	}
-	catch(err) {
-		console.log(err.message);
-	}
-}
-
 // end sse functions
 
 // global variables
-var storedLogitude = 4.34;
+var storedLongitude = 4.34;
 var storedLattitude = 52.0;
 var storedZoom = 7;
 
-var cpm = '';
+var unit = '';       // contains the unit ('end' or 'rpm')
 var selectedId = ''; //'nl_03503';
-var data;            // contains a list of featureId's and cpm's
-var senderData;      // contains featureId and cpm
+var data;            // contains a list of featureId's and bpm's
+var senderData;      // contains featureId and bpm
 var dataSource;      // contains the sse datasource which are all features
 var singleSource;    // contains the selected source which is a single feature
 var millData = {};   // contains a table with mill data
 var models = {};     // contains a table with model data
 var modelIPs = {};   // contains a table with model ip addresses, given by the user   
+var checkIPs = {};   // contains the checked ips
+var mySetTimeout = {};       // contains the setTimeout object while checking IPs
+var searchIPTimeout = 400;   // starting searchTimeout in milliseconds for finding IPs
+
+var modelAndSavedRoleModel = {}; // contains the model as key and the saved roleModel id as value
+var modelMDNSSearchTimeout = 1000; // timeout for searching using mDNS in milliseconds
+var modelIPSearchTimeout = 2000; // timeout for searching by IP address in milliseconds
 var isMobile = false;// used for presentation mobile/screen
-var roleModelSelectedId = "";    // contains id of selected roleModel
-var roleModelSelectedName = "";  // contains name of selected roleModel
-var modelSelectedId = "";        // contains id of selected model
-var modelSelectedUrl = "";       // contains url of selected model
+
+var maxIndependentSpeedInRPM = 60; // arbitrary max speed in revolutions per minute
+var independentSpeed = {};         // contains the speed per modelName for a stand alone model
+var allMills = ${all_mills};       // contains all mills from the features
+var filteredMillsList = {};        // contains mills after a search entry
 
 var featureSource = new ol.source.Vector({
     url: "static/data/features.json",
     format: new ol.format.GeoJSON(),
     useSpatialIndex: false
 });
+
+function store(key, value) {
+  if (typeof(Storage) !== "undefined") {
+    localStorage.setItem(key, value);
+  } else {
+    // Sorry! No Web Storage support..
+  }
+}
+
+function getStored(key) {
+  if (typeof(Storage) !== "undefined") {
+    return localStorage.getItem(key);
+  } else {
+    // Sorry! No Web Storage support..
+  }
+} 
+
+store("Longitude", storedLongitude);
+store("Lattitude", storedLattitude);
+store("Zoom", storedZoom);
 
 // start language choice
 $('#languagechoice').off('change').on('change', function(event){
@@ -345,40 +330,33 @@ $('#languagechoice').off('change').on('change', function(event){
 		window.location.href = newLocation;
 });
 // end language choice
+function showModelTimeoutHTML() {
+  var showTimeoutInSeconds = Math.round(modelIPSearchTimeout / 1000);
 
-// start roleModel selection
-function setSelectedRoleModel(id, property) {
-    // start from popup.html
-    if (!$('#pill-link-tab').parent().active) {
-      selectTab('#pills-link-tab');
-    }
-    // end start from popup.html
-    roleModelSelectedId = id;
-    roleModelSelectedName = property["name"];
-    $('.rolemodel').removeClass().addClass('rolemodel selectable');
-    $('#nameRoleModel_' + id).removeClass('selectable');
-    $('#nameRoleModel_' + id).addClass('selected-rolemodel');
-    $('#cpmRoleModel_' + id).removeClass('selectable');
-
-    $('.model').removeClass().addClass('model selectable');
+  if (isNaN(showTimeoutInSeconds)) {
+    modelIPSearchTimeout = 2000;
+    showTimeoutInSeconds = 2;
+  }
+  $("#modelSearchTime").html("{zoektijd} " + showTimeoutInSeconds.toString());
 }
-// end roleModel selection
 
-// start show tab-map
-selectTab('#pills-map-tab');
-//selectTab('#pills-link-tab');
-// end show tab-map
-
-// start get data
-getDataSse();
-// end get data
-
-// start roleModelList using features
-showRoleModelList();
-// end roleModelList using features
-
-// start get model list
-refreshModelList();
-// end get model list
+// start set search timeout
+function setModelIPSearchTimeout() {
+  $('#modelSearchTime_more').off('click').on('click', function() {
+    modelIPSearchTimeout += 1000;
+    if (modelIPSearchTimeout > 10000) {
+      modelIPSearchTimeout = 10000;
+    }
+    showModelTimeoutHTML();
+  });
+  $('#modelSearchTime_less').off('click').on('click', function() {
+    modelIPSearchTimeout -= 1000;
+    if (modelIPSearchTimeout < 1000) {
+      modelIPSearchTimeout = 1000;
+    }
+    showModelTimeoutHTML();
+  });
+}
+// end set search timeout
 
 </script>

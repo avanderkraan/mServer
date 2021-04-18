@@ -30,9 +30,9 @@ mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates
                 module_directory=module_dir, collection_size=500,
                 output_encoding='utf-8', encoding_errors='replace')
 
-dynamic = {}  # holds cpm(counts per minute) data per feature_id with a datetime when the value was set
+dynamic = {}  # holds bpm(blades per minute) data per feature_id with a datetime when the value was set
 model_inventory = {}  # holds model mac address as key and rolemodel_id as value
-mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_cpm
+mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_bpm
 mac_address_model = {}   # holds data from model wih mac_address as key
 
 #    print(section, locale_handle.text.options(section))
@@ -41,15 +41,20 @@ mac_address_model = {}   # holds data from model wih mac_address as key
 class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
-        self.max_feed_down = 10    # max difference to prevent a sudden 0
+        self.max_delta = 60             # max difference of rph to prevent a sudden 0
         self.max_feed_counter = 12 * 60 # with every 3 sec request, check every 1 hour if an update is nessecary
-        self.max_eat_counter = 12 * 60 # with every 5 sec request, check every 1 hour if an update is nessecary
+        self.max_eat_counter = 12 * 60  # with every 5 sec request, check every 1 hour if an update is nessecary
 
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
     @cherrypy.expose
     def myip(self):
+        """
+        Returns the IP address of the caller
+        Purpose: The browser is part of a local network and
+                 this gives a clue to find models in the same network
+        """
         try:
             return cherrypy.request.headers.get('Remote-Addr')
         except:
@@ -145,34 +150,39 @@ class MamiRoot():
             title = text.get(section, 'title')
             donation = text.get(section, 'donation')
             disclaimer = text.get(section, 'disclaimer')
+            unit_text = text.get(section, "unit_text")
             active_mills = text.get(section, 'active_mills')
             waiting = text.get(section, 'waiting')
             no_mdns = text.get(section, 'no_mdns')
             refresh_model_list = text.get(section, 'refresh_model_list')
+            selected_rolemodel = text.get(section, 'selected_rolemodel')
             ok = text.get(section, 'ok')
             cancel = text.get(section, 'cancel')
             about_tab = text.get(section, 'about_tab')
             mill_map_tab = text.get(section, 'mill_map_tab')
+            mill_table_map = text.get(section, 'mill_table_map')
             link_model_tab = text.get(section, 'link_model_tab')
             link_steps = text.get(section, 'link_steps')
             link_model_explanation = text.get(section, "link_model_explanation")
-            step_1_select_mill = text.get(section, 'step_1_select_mill')
-            step_2_select_model = text.get(section, 'step_2_select_model')
-            step_3_confirm = text.get(section, 'step_3_confirm')
-            on = text.get(section, 'on')
             off = text.get(section, 'off')
+            close_button = text.get(section, 'close_button')
+            connect_button = text.get(section, 'connect_button')
+            connect = text.get(section, 'connect')
+            by_selecting = text.get(section, 'by_selecting')
+            search = text.get(section, 'search')
+            speed_buttons = text.get(section, 'speed_buttons')
+            choice_button = text.get(section, 'choice_button')
+            stand_alone_button = text.get(section, 'stand_alone_button')
+            independent = text.get(section, 'independent')
             no_available_mills = text.get(section, 'no_available_mills')
             no_available_models = text.get(section, 'no_available_models')
             table_mill_name = text.get(section, 'table_mill_name')
             table_ends = text.get(section, 'table_ends')
+            table_rpm = text.get(section, 'table_rpm')
             table_model_name = text.get(section, 'table_model_name')
             table_model_connect = text.get(section, 'table_model_connect')
             home_text = text.get(section, 'home_text')
-            now_closed = text.get(section, 'now_closed')
-            now_open = text.get(section, 'now_open')
-            no_news = text.get(section, 'no_news')
-            goto_link_models = text.get(section, 'goto_link_models')
-
+            molendatabase = text.get(section, 'molendatabase')
             return template.render_unicode(language_options = language_options,
                                            homepage_message = homepage_message,
                                            model_inventory = model_inventory,
@@ -181,33 +191,40 @@ class MamiRoot():
                                            donation = donation,
                                            title = title,
                                            disclaimer = disclaimer,
+                                           unit_text = unit_text,
                                            active_mills = active_mills,
                                            waiting = waiting,
                                            no_mdns = no_mdns,
                                            refresh_model_list = refresh_model_list,
+                                           selected_rolemodel = selected_rolemodel,
                                            ok = ok,
                                            cancel = cancel,
                                            about_tab = about_tab,
                                            mill_map_tab = mill_map_tab,
+                                           mill_table_map = mill_table_map,
                                            link_model_tab = link_model_tab,
                                            link_steps = link_steps,
                                            link_model_explanation = link_model_explanation,
-                                           step_1_select_mill = step_1_select_mill,
-                                           step_2_select_model = step_2_select_model,
-                                           step_3_confirm = step_3_confirm,
-                                           on = on,
                                            off = off,
+                                           close_button = close_button,
+                                           connect_button = connect_button,
+                                           connect = connect,
+                                           by_selecting = by_selecting,
+                                           search = search,
+                                           speed_buttons = speed_buttons,
+                                           choice_button = choice_button,
+                                           stand_alone_button = stand_alone_button, 
+                                           independent = independent,
                                            no_available_mills = no_available_mills,
                                            no_available_models = no_available_models,
                                            table_mill_name = table_mill_name,
                                            table_ends = table_ends,
+                                           table_rpm = table_rpm,
                                            table_model_name = table_model_name,
                                            table_model_connect = table_model_connect,
                                            home_text = home_text,
-                                           now_closed = now_closed,
-                                           now_open = now_open,
-                                           no_news = no_news,
-                                           goto_link_models = goto_link_models).encode('utf-8', 'replace')
+                                           molendatabase = molendatabase
+                                           ).encode('utf-8', 'replace')
         except Exception as inst:
             print(inst)
             cherrypy.log('exception', traceback=True)
@@ -239,19 +256,16 @@ class MamiRoot():
         for key in dynamic.keys():
             data[key] = {}
             data[key]["name"] = dynamic.get(key).get('name')
-            if dynamic.get(key).get('showData') == "1":
-                data[key]["rawCounter"] = dynamic.get(key).get('rawCounter')
-                data[key]["cpm"] = dynamic.get(key).get('cpm')
-                data[key]["revolutions"] = dynamic.get(key).get('revolutions')
-                data[key]["isOpen"] = dynamic.get(key).get('isOpen')
-                data[key]["message"] = dynamic.get(key).get('message')
+            #data[key]["bpm"] = dynamic.get(key).get('bpm')
+            data[key]["rph"] = dynamic.get(key).get('rph')
+            data[key]["blades"] = dynamic.get(key).get('blades')
+            data[key]["revolutions"] = dynamic.get(key).get('revolutions')
         return data
 
     @cherrypy.expose
-    def getDataAsJSON(self, feature_id=None):
+    def get_data_as_json(self, feature_id=None):
         """
-        This method returns data in JSON format
-        It returns the data from all dynamic features in sse-format
+        This method returns data in JSON format, called from popup.html
         Every feature has a key with its own properties
         @see _get_data(self)
         """
@@ -266,11 +280,12 @@ class MamiRoot():
         return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
     @cherrypy.expose
-    def getDataSse(self):
+    def get_data_via_sse(self):
         """
         This method is an eventsource, called from index.html
         It returns the data from all dynamic features in sse-format
         Every feature has a key with its own properties
+        @see _get_data(self)
         """
         cherrypy.response.headers["Content-Type"] = "text/event-stream;charset=utf-8"
         cherrypy.response.headers["Cache-Control"] = "no-cache"
@@ -289,54 +304,18 @@ class MamiRoot():
         data += '\n\n'
         return data
 
-    @cherrypy.expose
-    def getFeatureDataSse(self, feature_id=None, client_id=None):
-        """
-        This method is an eventsource called from the index.html file
-        This method written to do step 3 of the process
-        1. Collect data through Counter (done with the method: feed)
-        2. Show the data in de server (done with the method: getDataSSe)
-        3. dispatch data of a single feature to a client (e.g. a mill-toy with motor)
-        It gives a curated amount of data to the webserver
-        TODO: authentication of the clients, should be done in a POST request from the client
-              if that is possible with sse calls
-        This method calls self._get(...)
-        """
-        cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-        cherrypy.response.headers["Access-Control-Allow-Methods"] = "POST"
-        cherrypy.response.headers["Content-Type"] = "text/event-stream;charset=utf-8"
-        cherrypy.response.headers["Cache-Control"] = "no-cache"
-        cherrypy.response.headers["Connection"] = "keep-alive"
-        cherrypy.response.headers["Pragma"] = "no-cache"
-
-        # TODO: make client-table to allow clients
-        clients = {}
-        clients['uuid_from_client'] = 'time_left_before_payment and other data'
-        # TODO: for now just made up a dummy dict
-
-        if feature_id and client_id in clients.keys():
-            # TODO: authenticate the client by its uuid
-            #data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(self._get(feature_id=feature_id)))
-            data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(677))
-            return data
-        else:
-            # wrong parameter, just return 0
-            def content():
-                #data = 'retry: 200\ndata: ' + str( self.prog_output) + '\n\n'
-                data = 'retry: %s\ndata: %s\n\n' % (sse_timeout, str(-1))
-                return data
-            return content()
-
     # @cherrypy.expose
     def set(self,
             mac_address=None,
             uuid=None,
-            rawCounter=-1,
-            cpm=-1,
+            #rawCounter=-1,
+            #bpm=-1,
+            rph=-1,
+            blades=-1,
             revolutions=-1,
-            isOpen=False,
-            showData=False,
-            message=''
+            #isOpen=False,
+            #showData=False,
+            #message=''
             ):
         """
         This method is called to feed the dynamic features with data
@@ -354,18 +333,23 @@ class MamiRoot():
                                    'uuid':uuid,
                                    'now':now,
                                    'name':name,
-                                   'rawCounter':rawCounter,
-                                   'cpm':cpm,
-                                   'revolutions':revolutions,
-                                   'isOpen':isOpen,
-                                   'showData':showData,
-                                   'message':message}
+                                   #'rawCounter':rawCounter,
+                                   #'bpm':bpm,
+                                   'rph':rph,
+                                   'blades':blades,
+                                   'revolutions':revolutions
+                                   #'isOpen':isOpen,
+                                   #'showData':showData,
+                                   #'message':message
+                                   }
         except Exception as inst:
 
             print('most likely, mac_address is None', inst)
             pass
-        #print('feature', feature, now, cpm, message)
+        #print('feature', feature, now, bpm, message)
     
+    
+    '''
     def _get(self, feature_id=None):
         """
         Curates the data nessecary for the client
@@ -375,7 +359,8 @@ class MamiRoot():
         """
         result = {}
         try:
-            result['cpm'] = dynamic.get(feature_id).get('cpm')
+            result['bpm'] = dynamic.get(feature_id).get('bpm')
+            result['rph'] = dynamic.get(feature_id).get('rph')
             # TODO: result['uuid'] = uuid coming from a separate client file (=model.json)
             # TODO: make client file (with uuid, end-date)
         except:
@@ -386,33 +371,45 @@ class MamiRoot():
     def get(self, feature_id=None):
         # get is used by the javascript in index.html to show the value with openstreetmap
         cherrypy.response.headers["Content-Type"] = "application/json"
-        cpm = self._get(feature_id=feature_id)['cpm']
-        message = self._get(feature_id=feature_id)['message']
-        return json.dumps({"cpm":cpm,"message":message}).encode('utf-8', 'replace')
-
+        bpm = self._get(feature_id=feature_id)['bpm']
+        #message = self._get(feature_id=feature_id)['message']
+        #return json.dumps({"bpm":bpm,"message":message}).encode('utf-8', 'replace')
+        return json.dumps({"bpm":bpm,"rph":rph}).encode('utf-8', 'replace')
+    '''
 ####################################################################################### 
     @cherrypy.expose
     def feed(self):
         """
         Only POST feeds will be handled
+        incoming bpm, blades per minute is recalculated, 
+           using parameter b (number of blades) to rph (revolutions per hour)
         :return: a response in json format to the feeding device
+
         """
         if cherrypy.request.method == 'POST':
             cherrypy.response.headers["Content-Type"] = "application/json"
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
+            #print(rawbody)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
-            revolutions = body.get('data').get('revolutions')
-            rawCounter = body.get('data').get('rawCounter')
-            enden = body.get('data').get('viewPulsesPerMinute')
-            uuid = body.get('data').get('deviceKey')
-            macAddress = body.get('data').get('macAddress')   
-            isOpen = body.get('data').get('isOpen')   
-            showData = body.get('data').get('showData')   
-            message = body.get('data').get('message')
-            version = body.get('data').get('firmwareVersion')
+            revolutions = body.get('data').get('r')  # revolutions of the axis with blades
+            #rawCounter = body.get('data').get('rawCounter')
+            bpm = body.get('data').get('bpm')        # enden, bladesPerMinute, viewPulsesPerMinute
+            uuid = body.get('data').get('key')       # deviceKey
+            macAddress = body.get('data').get('mac') # macAddress   
+            #isOpen = body.get('data').get('isOpen')   
+            #showData = body.get('data').get('showData')   
+            #message = body.get('data').get('message')
+            version = body.get('data').get('v')      # firmwareVersion
+            blades = body.get('data').get('b')       # number of blades
 
+            # rph is needed for the models, revolutions per hour, to get a big enough number
+            rph = None
+            try:
+                rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
+            except:
+                pass
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
@@ -421,15 +418,16 @@ class MamiRoot():
             # TODO:      "pushFirmware=latest to push the latest
 
             try:
-                previous_cpm = mac_address_sender.get(macAddress).get("stored_cpm")
-                if (int(enden) > self.max_feed_down) and (previous_cpm - int(enden) > self.max_feed_down):
-                    enden = str(int(previous_cpm - self.max_feed_down))
+                previous_rph = mac_address_sender.get(macAddress).get("stored_rph")
+                if (int(rph) == 0) and (previous_rph > self.max_delta):
+                    rph = str(int(previous_rph - self.max_delta))
             except:
                 pass
             try: 
-                mac_address_sender[macAddress].update({"stored_cpm":int(enden)} )
+                mac_address_sender[macAddress].update({"stored_rph":int(rph)} )
             except:
-                mac_address_sender.update({macAddress:{"stored_cpm":int(enden)}} )
+                if rph != None:
+                    mac_address_sender.update({macAddress:{"stored_rph":int(rph)}} )
 
             feed_counter = 0
             try:
@@ -437,9 +435,9 @@ class MamiRoot():
                 feed_counter += 1
                 if feed_counter > self.max_feed_counter:
                     # push Update
-                    # only update when cpm == 0
+                    # only update when bpm == 0
                     # do this because an update call blocks the device (shortly)
-                    if enden and enden == "0":
+                    if rph and rph == "0":
                         feed_counter = -1   # means check for update
                     else:
                         feed_counter = 0    # means no check on update
@@ -449,28 +447,34 @@ class MamiRoot():
                 mac_address_sender[macAddress].update({"feed_counter": feed_counter} )
             except:
                 mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
-            #print('version', version, feed_counter, enden, uuid)
+            #print('version', version, feed_counter, bpm, uuid)
             #print(mac_address_sender)
 
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,
                      uuid=uuid,
-                     rawCounter=rawCounter,
-                     cpm=enden,
+                     #rawCounter=rawCounter,
+                     #bpm=bpm,
+                     rph=rph,
+                     blades=blades,
                      revolutions=revolutions,
-                     isOpen=isOpen,
-                     showData=showData,
-                     message=message)
+                     #isOpen=isOpen,
+                     #showData=showData,
+                     #message=message
+                     )
 
             result = {}
-            result.update({"cpm":enden,
+            '''
+            result.update({"bpm":bpm,
                            "message":message,
                            "proposedUUID": uuid,  # TODO: change this 
                            "pushFirmware" : feed_counter == -1 and "latest" or "",
                            "macAddress": macAddress})
-
-            #print(result)
+            '''
+            result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
+                           "pFv" : "" # TODO feed_counter == -1 and "latest" or ""
+                           })
 
             result_string = json.dumps(result)
             cherrypy.response.headers["Content-Length"] = len(result_string)
@@ -509,12 +513,13 @@ class MamiRoot():
 
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
+            print(rawbody, cl)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
-            uuid = body.get('data').get('deviceKey')
-            version = body.get('data').get('firmwareVersion')
-            macAddress = body.get('data').get('macAddress')
-            roleModel = body.get('data').get('roleModel') 
+            uuid = body.get('data').get('key')        # deviceKey
+            version = body.get('data').get('v')       # firmwareVersion
+            macAddress = body.get('data').get('mac')  # macAddress
+            roleModel = body.get('data').get('rM')    # roleModel 
 
             #model = Model()
             #if macAddress in model.mac_address_list():
@@ -530,6 +535,10 @@ class MamiRoot():
                 # put all known information about the rolemodel in the response
                 result = deepcopy(self._get_data().get(roleModel) or {})
                 #print('roleModel data:', result)
+                
+                # set a zero value if rolemodel doesn't give any data (about the speed)
+                if result.get("rph") == None and roleModel != "independent":
+                    result.update({"rph": " 0"})
 
                 eat_counter = 0
                 try:
@@ -537,10 +546,10 @@ class MamiRoot():
                     eat_counter += 1
                     if eat_counter > self.max_eat_counter:
                         # push Update
-                        # only update when cpm == 0; cpm comes from roleModel
+                        # only update when bpm == 0; bpm comes from roleModel
                         # do this because an update call blocks the device (shortly)
                         # if no role model is choosen, the value will be "None"
-                        if result.get("cpm") and result.get("cpm") == "0" or roleModel == "None":
+                        if result.get("rph") and result.get("rph") == "0" or roleModel == "None":
                             eat_counter = -1   # means check for update
                         else:
                             eat_counter = 0    # means no check on update
@@ -552,10 +561,10 @@ class MamiRoot():
                     mac_address_model.update({macAddress:{"eat_counter": eat_counter}} )
 
                 # overwrite the response uuid and macAddress with model values
-                result.update({"proposedUUID": uuid,  # TODO: change this 
-                               "pushFirmware" : eat_counter == -1 and "latest" or "",
-                               "macAddress": macAddress})
-                #print('model data:', result)
+                result.update({"pKey": uuid,  # TODO: change this 
+                               "pFv" : "" # TODO eat_counter == -1 and "latest" or ""
+                               })
+                print('model data:', result)
                 result_string = json.dumps(result)
                 cherrypy.response.headers["Content-Length"] = len(result_string)
                 return result_string.encode('utf-8', 'replace')
@@ -570,8 +579,7 @@ class MamiRoot():
 
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
-    getDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
-    getFeatureDataSse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
+    get_data_via_sse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
 
 if __name__ == '__main__':
     try:

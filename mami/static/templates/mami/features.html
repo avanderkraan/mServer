@@ -1,9 +1,19 @@
 <script>
-
+function getValue(feature) {
+    var value = Math.round(parseInt(feature.get('rph') * parseInt(feature.get('blades')) / 60));
+    if (unit == 'rpm') {
+      var value = Math.round(parseInt(feature.get('rph')) / 60);  // == ends
+    }
+    value = value.toString();
+	if (isNaN(value)) {
+		value="0";
+	} 
+	return value;
+}
 
 // start styleFunction for features
 function styleFunction(feature, resolution) {
-	var cpm = "0";
+	var value = "0";
 
 	var millImage = new ol.style.Icon({
 		anchor: [0.5, 46],
@@ -50,7 +60,7 @@ function styleFunction(feature, resolution) {
 			color: 'rgba(0, 0, 255, 0.6)'
 		}),
         padding: [0,5,0,5],
-		text: cpm,
+		text: value,
 		offsetX: -20,
 		offsetY: 20
 	});
@@ -64,7 +74,7 @@ function styleFunction(feature, resolution) {
 			color: 'rgba(0, 128, 0, 0.6)'
 		}),
         padding: [0,5,0,5],
-		text: cpm,
+		text: value,
 		offsetX: -20,
 		offsetY: 20
 	});
@@ -137,13 +147,13 @@ function styleFunction(feature, resolution) {
     */
 
 	if (feature.getId() == selectedId) {
-		selectedMillText.setText(feature.get('cpm') || '0');
-		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1 en geselecteerd
+		selectedMillText.setText(getValue(feature));
+		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1 en geselecteerd
         return [selectedMillStyle];
 	}
 	else if (feature.getId() in senderData){
-		workingMillText.setText(feature.get('cpm') || '0');
-		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met cpm > -1
+		workingMillText.setText(getValue(feature));
+		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1
         return [workingMillStyle];
 	}
 	else {

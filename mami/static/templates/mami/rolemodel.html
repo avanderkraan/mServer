@@ -1,0 +1,172 @@
+<script>
+function showRoleModelList() {
+  // show all available rolemodels (=mills)
+  var roleModelTable = '';
+
+  roleModelTable += '<table class="table">';
+  roleModelTable += '<thead>';
+  roleModelTable += '    <tr>';
+  roleModelTable += '      <th scope="col">${table_model_name}</th>';
+  roleModelTable += '      <th scope="col"><div id="rpmEnds_roleModel" style="cursor:pointer;" onclick="toggleUnit();"></div></th>';
+  //roleModelTable += '      <th scope="col"><input type="button" class="rpmEnds" value="${table_ends}"/></th>';
+  roleModelTable += '    </tr>';
+  roleModelTable += '  </thead>';
+  roleModelTable += '<tbody>';
+  
+  $.each(allMills, function(id, property) {
+    var selectable = '';
+    if (property['mac_address'] != '') {
+      roleModelTable += '  <tr';
+      roleModelTable += '>';
+
+      roleModelTable += '    <td>';
+      roleModelTable += '<div id="nameRoleModel_';
+      roleModelTable += id;
+      roleModelTable += '" class="';
+      roleModelTable += selectable;
+      roleModelTable += '">';
+      roleModelTable += property['name'];
+      roleModelTable += '</div>';
+      roleModelTable += '    </td>';
+      
+      roleModelTable += '    <td>';
+      roleModelTable += '<div id="bpmRoleModel_';
+      roleModelTable += id;
+      roleModelTable += '" class="';
+      roleModelTable += '">';
+      roleModelTable += '-</div>';
+      roleModelTable += '    </td>';
+
+      roleModelTable += '  </tr>';
+    }
+  });
+  roleModelTable += '  </tbody>';
+  roleModelTable += '</table>';
+
+  $('#roleModelData').html(roleModelTable);
+}
+
+function showFilteredRoleModelList(_millList, modelIndex, modelUrl) {
+  var roleModelList = '';
+  roleModelList += '<li class="list-group-item">';
+  roleModelList += '<span>${table_model_name}</span>';
+  roleModelList += '<span id="rpmEnds_rolemodel_modal" style="cursor:pointer;float:right;" onclick="toggleUnit();">${waiting}</span>';
+  roleModelList += '</li>'
+  $.each(_millList, function(id, property) {
+      var selectable = '';
+      if (property['mac_address'] != '') {
+        selectable = 'rolemodel selectable';
+        roleModelList += '    <li class="list-group-item">';
+
+        roleModelList += '<span id="nameRoleModel_modal_';
+        roleModelList += id;
+        roleModelList += '"';
+        roleModelList += " onclick='setSelectedModel(" + JSON.stringify(id) + "," + JSON.stringify(property) + "," + JSON.stringify(modelIndex) + "," + JSON.stringify(modelUrl) + ");'";
+
+        roleModelList += ' class="';
+        roleModelList += selectable;
+        roleModelList += '">';
+        roleModelList += property['name'];
+        roleModelList += '</span>';
+
+
+        roleModelList += '<span style="float:right;" id="bpmRoleModel_modal_';
+        roleModelList += id;
+        roleModelList += '">';
+        roleModelList += '</span>';
+
+        roleModelList += '    </li>';
+        }
+    });
+    return roleModelList;
+  }
+
+
+function selectRoleModel(modelIndex, modelUrl) {
+    var roleModelList = '';
+    roleModelList += '<div class="panel panel-primary" id="roleModel_result_panel">';
+    roleModelList += '<div class="panel-heading"><h3 class="panel-title">';
+
+    roleModelList += '<input id="search_rolemodel_modal" placeholder="${search}" value=""';
+    roleModelList += " onkeyup='preSelect(" + JSON.stringify(modelIndex) + "," + JSON.stringify(modelUrl) + ");'";
+    roleModelList += ' >';
+    roleModelList += '</h3>';
+    roleModelList += '</div>';
+    roleModelList += '<div class="panel-body">';
+    roleModelList += '  <ul id="roleModelList_modal" class="list-group">';
+
+    roleModelList += showFilteredRoleModelList(allMills, modelIndex, modelUrl);
+
+    roleModelList += '  </ul>';
+    roleModelList += '  </div>';
+    roleModelList += '</div>';
+
+    $('#modal-body_' + modelIndex).html(roleModelList);
+}
+
+function preSelect(modelIndex, modelUrl) {
+  filteredMillsList = {};
+  $('#search_rolemodel_modal').css({"color": "#000"});
+  $.each(allMills, function filterResult(key, value) {
+    if (value.name.toLowerCase().indexOf($('#search_rolemodel_modal').val().toLowerCase()) > -1) { 
+      filteredMillsList[key] = value;
+    };
+  });
+  $('#roleModelList_modal').html(showFilteredRoleModelList(filteredMillsList, modelIndex, modelUrl));
+}
+
+function showRoleModelListData() {
+  $.each(millData, function(id, property) {
+    var value = Math.round(parseInt(property['rph'] * parseInt(property['blades']) / 60));
+    if (unit == 'rpm') {
+      var value = Math.round(parseInt(property['rph']) / 60);  // == ends
+    }
+    value = value.toString();
+    $('#bpmRoleModel_' + id).html(value);        // in rolemodel.html
+    $('#bpmRoleModel_modal_' + id).html(value);  // in model.html
+    $('.bpmRoleModel_model_' + id).html(value);  // in model.html
+  });
+  showUnit();
+}
+
+// start roleModel selection
+function setSelectedRoleModel(id, property) {
+    $('.rolemodel').removeClass().addClass('rolemodel selectable');
+    $('#nameRoleModel_' + id).removeClass('selectable');
+    $('#nameRoleModel_' + id).addClass('selected-rolemodel');
+    $('#bpmRoleModel_' + id).removeClass('selectable');
+
+    $('.model').removeClass().addClass('model selectable');
+}
+// end roleModel selection
+
+function showUnit() {
+  if (unit == "rpm") {
+      $("#rpmEnds_roleModel").html("${table_rpm}");
+      $("#rpmEnds_rolemodel_modal").html("${table_rpm}");
+      $("#rpmEnds_map").html("${unit_text}<br/>...").css("pointer-events","none");
+    }
+  if (unit == "end") {
+      $("#rpmEnds_roleModel").html("${table_ends}");
+      $("#rpmEnds_rolemodel_modal").html("${table_ends}");
+      $("#rpmEnds_map").html("${unit_text}<br/>...").css("pointer-events","none");
+    }
+}
+
+function toggleUnit() {
+  // use global variable unit
+  console.log(unit);
+    if (unit == "end") {
+      unit = "rpm";
+    }
+    else if (unit == "rpm") {
+      unit = "end";
+    }
+    else {  // default
+      unit = "end";
+    }
+    store("unit", unit);
+    showRoleModelListData();
+    showUnit();
+}
+</script>
