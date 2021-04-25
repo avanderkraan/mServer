@@ -417,7 +417,7 @@ class MamiRoot():
             if version == None:
                 version = body.get('data').get('firmwareVersion')
             if uuid == None:
-                version = body.get('data').get('deviceKey')
+                uuid = body.get('data').get('deviceKey')
             if macAddress == None:
                 macAddress = body.get('data').get('macAddress')
 
@@ -490,7 +490,7 @@ class MamiRoot():
                 #        "A0:20:A6:29:18:13": { "comment": "de Roos",
                 #        "84:CC:A8:A0:FE:2D": { "comment": "de Hoop, Zoetermeer",
                 
-                backwards_compatible_list = ("84:CC:A8:A0:FE:2D", "A0:20:A6:29:18:13", "84:CC:A8:A0:FE:2D")
+                backwards_compatible_list = ("84:CC:A8:A0:FE:2D", "84:CC:A8:A0:FE:2D")
                 if macAddress in backwards_compatible_list:
                     feed_counter = 0  # skip update to new version
 
