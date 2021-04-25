@@ -42,7 +42,7 @@ class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
-        self.max_feed_counter = 12 # with every 3 sec request, check every 1 hour if an update is nessecary
+        self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour if an update is nessecary
         self.max_eat_counter = 12 * 60  # with every 5 sec request, check every 1 hour if an update is nessecary
 
     def _get_section(self, template, locale='en'):
@@ -484,8 +484,16 @@ class MamiRoot():
                      )
 
             result = {}
-            
+
             if backwards_compatibility_on == True:
+                #        "84:CC:A8:A3:09:11": { "comment": "(Tweemanspolder) Nr.3",
+                #        "A0:20:A6:29:18:13": { "comment": "de Roos",
+                #        "84:CC:A8:A0:FE:2D": { "comment": "de Hoop, Zoetermeer",
+                
+                backwards_compatible_list = ("84:CC:A8:A0:FE:2D", "A0:20:A6:29:18:13", "84:CC:A8:A0:FE:2D")
+                if macAddress in backwards_compatible_list:
+                    feed_counter = 0  # skip update to new version
+
                 result.update({"bpm":bpm,
                             #"message":message,
                             "proposedUUID": uuid,  # TODO: change this 
@@ -582,9 +590,9 @@ class MamiRoot():
 
                 # overwrite the response uuid and macAddress with model values
                 result.update({"pKey": uuid,  # TODO: change this 
-                               "pFv" : "" # TODO eat_counter == -1 and "latest" or ""
+                               "pFv" : eat_counter == -1 and "latest" or ""
                                })
-                print('model data:', result)
+                #print('model data:', result)
                 result_string = json.dumps(result)
                 cherrypy.response.headers["Content-Length"] = len(result_string)
                 return result_string.encode('utf-8', 'replace')
