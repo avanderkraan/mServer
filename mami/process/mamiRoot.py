@@ -42,7 +42,7 @@ class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
-        self.max_feed_counter = 12 * 60 # with every 3 sec request, check every 1 hour if an update is nessecary
+        self.max_feed_counter = 12 # with every 3 sec request, check every 1 hour if an update is nessecary
         self.max_eat_counter = 12 * 60  # with every 5 sec request, check every 1 hour if an update is nessecary
 
     def _get_section(self, template, locale='en'):
@@ -390,7 +390,7 @@ class MamiRoot():
             cherrypy.response.headers["Content-Type"] = "application/json"
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
-            #print(rawbody)
+            print(rawbody)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
             revolutions = body.get('data').get('r')  # revolutions of the axis with blades
@@ -404,12 +404,31 @@ class MamiRoot():
             version = body.get('data').get('v')      # firmwareVersion
             blades = body.get('data').get('b')       # number of blades
 
+            #backwards compatible for sender 0.1.2 and before
+            #{"data": {"revolutions":"0","rawCounter":"6","viewPulsesPerMinute":"0","firmwareVersion":"0.1.2",
+            # "deviceKey":"88888888-4444-4444-4444-121212121212","macAddress":"A0:20:A6:14:85:06","isOpen":"1","showData":"1","message":""}}'
+            backwards_compatibility_on = False
+            if revolutions == None:
+                revolutions = body.get('data').get('revolutions')
+            if bpm == None:
+                bpm = body.get('data').get('viewPulsesPerMinute')
+                blades = 4  # default
+                backwards_compatibility_on = True
+            if version == None:
+                version = body.get('data').get('firmwareVersion')
+            if uuid == None:
+                version = body.get('data').get('deviceKey')
+            if macAddress == None:
+                macAddress = body.get('data').get('macAddress')
+
             # rph is needed for the models, revolutions per hour, to get a big enough number
             rph = None
             try:
                 rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
             except:
                 pass
+
+
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
@@ -465,16 +484,17 @@ class MamiRoot():
                      )
 
             result = {}
-            '''
-            result.update({"bpm":bpm,
-                           "message":message,
-                           "proposedUUID": uuid,  # TODO: change this 
-                           "pushFirmware" : feed_counter == -1 and "latest" or "",
-                           "macAddress": macAddress})
-            '''
-            result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
-                           "pFv" : "" # TODO feed_counter == -1 and "latest" or ""
-                           })
+            
+            if backwards_compatibility_on == True:
+                result.update({"bpm":bpm,
+                            #"message":message,
+                            "proposedUUID": uuid,  # TODO: change this 
+                            "pushFirmware" : feed_counter == -1 and "latest" or "",
+                            "macAddress": macAddress})
+            else:
+                result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
+                            "pFv" : feed_counter == -1 and "latest" or ""
+                            })
 
             result_string = json.dumps(result)
             cherrypy.response.headers["Content-Length"] = len(result_string)
