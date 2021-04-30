@@ -83,6 +83,7 @@ function showFilteredRoleModelList(_millList, modelIndex, modelUrl) {
 
 
 function selectRoleModel(modelIndex, modelUrl) {
+  console.log('a a a' + JSON.stringify(modelIndex) + "," + JSON.stringify(modelUrl));
     var roleModelList = '';
     roleModelList += '<div class="panel panel-primary" id="roleModel_result_panel">';
     roleModelList += '<div class="panel-heading"><h3 class="panel-title">';
@@ -155,7 +156,7 @@ function showUnit() {
 
 function toggleUnit() {
   // use global variable unit
-  console.log(unit);
+  //console.log(unit);
     if (unit == "end") {
       unit = "rpm";
     }

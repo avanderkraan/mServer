@@ -24,14 +24,29 @@
             if (response.startsWith("model")) {
 
                 response = response.replace(/\n|\r/g, "");
+                //var modelAndRoleModel = response.split('<');
+
                 var modelAndRoleModel = response.split('<');
+                var savedRoleModelOnModel = "";
+                var modelName = "";
+                if (response.indexOf('<') > -1) {
+                    modelAndRoleModel = response.split('<');
+                    savedRoleModelOnModel = modelAndRoleModel[1].replace("<","").replace(">","");
+                    modelName = modelAndRoleModel[0];
+                }
+                else {
+                    savedRoleModelOnModel = "";  // model has no saved rolemodel
+                    modelName = response;
+                }
                 if (number == 1) {
-                    modelAndRoleModel[0] += "-1";  // to match names gotten by the IP method
+                    modelName += "-1";  // to match mdns names with names gotten using the IP method
                 }
                 number += 1;
+  
+
                 findLastKnownModel(number);
-                models[modelAndRoleModel[0]] = urlToCheck;
-                modelAndSavedRoleModel[modelAndRoleModel[0]] = modelAndRoleModel[1].replace("<","").replace(">","");
+                models[modelName] = urlToCheck;
+                modelAndSavedRoleModel[modelName] = savedRoleModelOnModel;
 
                 //console.log(models);
             }
@@ -98,9 +113,24 @@
                 if (response.startsWith("model")) {
                     response = response.replace(/\n|\r/g, "");
                     var modelAndRoleModel = response.split('<');
-                    var result = modelAndRoleModel[0].split('_');  // model and ip
-                    modelAndSavedRoleModel[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = modelAndRoleModel[1].replace("<","").replace(">","");
-                    modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
+                    var savedRoleModelOnModel = "";
+                    var modelName = "";
+                    var modelIP = "";
+                    if (response.indexOf('<') > -1) {
+                        modelAndRoleModel = response.split('<');
+                        savedRoleModelOnModel = modelAndRoleModel[1].replace("<","").replace(">","");
+                        result = modelAndRoleModel[0].split('_');  // model and ip
+                        modelName = result[0];
+                        modelIP = result[1];
+                    }
+                    else {
+                        savedRoleModelOnModel = "";    // model has no saved rolemodel
+                        result = response.split('_');  // model and ip
+                        modelName = result[0];
+                        modelIP = result[1];
+                    }
+                    modelAndSavedRoleModel[modelName + '-' + (Object.keys(modelIPs).length + 1)] = savedRoleModelOnModel;
+                    modelIPs[modelName + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + modelIP;
                 }
             };
 
@@ -233,7 +263,7 @@
         $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
         
-        var mDNSTimeout = 500;
+        var mDNSTimeout = 600;
         // if there is no response via mDNS within this time, a search though IP is performed
         setTimeout(function () {
             showModelList();    

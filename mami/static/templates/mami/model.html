@@ -10,7 +10,7 @@
 
     function confirmSelectedModel(roleModelId, roleModelProperty, modelId, modelUrl) {
         modelAndSavedRoleModel[modelId] = roleModelId;
-        $('#roleModelModal').modal('toggle');
+        $('#roleModelModal_' + modelId).modal('toggle');
 
         if (roleModelProperty["name"] != "") {
             var confirmedModelHTML = '<span>' + roleModelProperty["name"] + '</span>';
@@ -90,6 +90,7 @@
             modelTable += '">';
             modelTable += '<span>';
             modelTable += $('#nameRoleModel_' + modelAndSavedRoleModel[index]).html() || "-";
+            //modelTable += $('#nameRoleModel_' + index).html() || "-";
             modelTable += '</span>';
 
             modelTable += '<span style="float:right" class="bpmRoleModel_model_' + modelAndSavedRoleModel[index] + '">-</span>';
@@ -100,7 +101,9 @@
             modelTable += '    <td>';
 
             modelTable += '            <!-- Button trigger modal -->';
-            modelTable += '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#roleModelModal"';
+            modelTable += '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#roleModelModal_';
+            modelTable += index;
+            modelTable += '"';
             modelTable += " onclick='selectRoleModel(" + JSON.stringify(index) +"," + JSON.stringify(value) + ");'";
             modelTable += '>';
             modelTable += '  ${choice_button}';
@@ -122,7 +125,10 @@
             modelTable += '>${off}</button>';
 
             modelTable += '<!-- Modal -->';
-            modelTable += '<div class="modal fade" id="roleModelModal" tabindex="-1" role="dialog" aria-labelledby="roleModelModalLabel" aria-hidden="true">';
+            modelTable += '<div class="modal fade" id="roleModelModal_';
+            modelTable += index;
+            modelTable += '"';
+            modelTable += '  tabindex="-1" role="dialog" aria-labelledby="roleModelModalLabel" aria-hidden="true">';
             modelTable += '  <div class="modal-dialog" role="document">';
             modelTable += '    <div class="modal-content">';
             modelTable += '      <div class="modal-header">';
