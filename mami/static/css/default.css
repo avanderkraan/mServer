@@ -59,11 +59,11 @@
     bottom: -8px;
 }
 
-#roleModelModal {
+.roleModelModal {
     width: 460px;
 }
 
-#roleModel_result_panel {
+.roleModel_result_panel {
     width: 400px;
 }
 
@@ -83,7 +83,15 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.rpmEnds:hover {
+.rpmEnds_map:hover {
+    cursor: pointer;
+}
+
+.rpmEnds_roleModel:hover {
+    cursor: pointer;
+}
+
+.rpmEnds_rolemodel_modal:hover {
     cursor: pointer;
 }
 
@@ -96,7 +104,7 @@
     width: 600px;
   }
   
-#rpmEnds_map {
+.rpmEnds_map {
     position: absolute;
     top: 10px;
     left: 55px;
@@ -108,15 +116,28 @@
     padding-left: 4px;
   }
 
-/* Smartphones ----------- */
+.rpmEnds_map[disabled="disabled"] {
+    cursor: wait;
+    position: absolute;
+    top: 10px;
+    left: 55px;
+    width: 70px;
+    height: 45px;
+    background: ghostwhite;
+    border-left: 5px solid lightsteelblue;
+    box-sizing: border-box;
+    padding-left: 4px;
+  }
+
+  /* Smartphones ----------- */
 @media only screen and (max-width: 760px) {
     #is-mobile { display: none; }
 
-    #roleModelModal {
+    .roleModelModal {
         width: 360px;
     }
 
-    #roleModel_result_panel {
+    .roleModel_result_panel {
         width: 300px;
     }
 
@@ -141,10 +162,10 @@
         width: 300px;
     }
 
-    #rpmEnds_map {
+    .rpmEnds_map {
         position: absolute;
         top: 10px;
-        left: 65px;
+        left: 55px;
         width: 70px;
         height: 45px;
         background: ghostwhite;
@@ -152,5 +173,17 @@
         box-sizing: border-box;
         padding-left: 4px;
       }
-    
+
+    .rpmEnds_map[disabled="disabled"] {
+        position: absolute;
+        top: 10px;
+        left: 55px;
+        width: 70px;
+        height: 45px;
+        background: rgb(161, 161, 161);
+        border-left: 5px solid lightsteelblue;
+        box-sizing: border-box;
+        padding-left: 4px;
+      }
+      
 }

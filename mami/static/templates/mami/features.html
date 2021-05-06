@@ -6,7 +6,7 @@ function getValue(feature) {
     }
     value = value.toString();
 	if (isNaN(value)) {
-		value="0";
+		value="-";
 	} 
 	return value;
 }
@@ -14,6 +14,7 @@ function getValue(feature) {
 // start styleFunction for features
 function styleFunction(feature, resolution) {
 	var value = "0";
+	var zIndexNumber = 0;
 
 	var millImage = new ol.style.Icon({
 		anchor: [0.5, 46],
@@ -95,16 +96,19 @@ function styleFunction(feature, resolution) {
 
 	var workingMillStyle = new ol.style.Style({
 		image: openMillImage, //workingMillImage,
+		zIndex: zIndexNumber,
 	    text: workingMillText
 	});
 
 	var selectedMillStyle = new ol.style.Style({
 		image: selectedMillImage, //selectedMillImage,
+		zIndex: zIndexNumber,
 	    text: selectedMillText	
 	});
 
 	var validMillStyle = new ol.style.Style({
 		image: millImage, //validMillImage,
+		zIndex: zIndexNumber,
 	    text: validMillText	
 	});
 	
@@ -148,16 +152,24 @@ function styleFunction(feature, resolution) {
 
 	if (feature.getId() == selectedId) {
 		selectedMillText.setText(getValue(feature));
+		$.each(featureSource.getFeatures(), function(my_index, my_feature) {
+			my_feature.set("zindex", 0);  // all others
+		});
+		feature.set("zindex", 1);
+
+		selectedMillStyle.setZIndex(feature.get("zindex"));
 		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1 en geselecteerd
         return [selectedMillStyle];
 	}
-	else if (feature.getId() in senderData){
+	else if (feature.getId() in senderData) {
 		workingMillText.setText(getValue(feature));
+		workingMillStyle.setZIndex(feature.get("zindex"));
 		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1
         return [workingMillStyle];
 	}
 	else {
 		//return [validMillStyle, messageStyle, nameStyle];  // bij molen zonder data maar wel aanwezig in featureSource
+		validMillStyle.setZIndex(feature.get("zindex"));
 		return [validMillStyle];
 	}
 }

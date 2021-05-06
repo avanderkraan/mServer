@@ -67,7 +67,7 @@
         <div class="row loffset6 roffset6">
           <div class="col-xs-12">
             <div id="map"></div>
-            <div id="rpmEnds_map" style="cursor:pointer;" onclick="toggleUnit();"></div>
+            <div class="rpmEnds_map" onclick="toggleUnit();"></div>
           </div>
         </div>
       </div>
@@ -174,10 +174,13 @@
 
     // listen to click events for setModelIPSearchTimeout
     //setModelIPSearchTimeout();
-
-    unit = getStored("unit") || toggleUnit();
+    unit = getStored("unit");
+    if (unit == null) { 
+      toggleUnit();
+    }
     showUnit();
 
+    console.log(localStorage);
 
   });
   </script>
@@ -199,6 +202,7 @@ function selectTab(tabId) {
   // default tab
   $(tabId).trigger('click');
 }
+
 
 function refresh() {
     // set bpm in all features
@@ -253,10 +257,10 @@ function get_data_via_sse() {
           }
        	  refresh();
           if (unit == "rpm") {
-            $("#rpmEnds_map").html("${unit_text}<br/>${table_rpm}").css("pointer-events","auto");;
+            $(".rpmEnds_map").html("${unit_text}<br/>${table_rpm}").removeAttr("disabled");
           }
           if (unit == "end") {
-            $("#rpmEnds_map").html("${unit_text}<br/>${table_ends}").css("pointer-events","auto");;
+            $(".rpmEnds_map").html("${unit_text}<br/>${table_ends}").removeAttr("disabled");
           }
 	    }
 	}
@@ -285,7 +289,7 @@ var mySetTimeout = {};       // contains the setTimeout object while checking IP
 var searchIPTimeout = 400;   // starting searchTimeout in milliseconds for finding IPs
 
 var modelAndSavedRoleModel = {}; // contains the model as key and the saved roleModel id as value
-var modelMDNSSearchTimeout = 1000; // timeout for searching using mDNS in milliseconds
+var modelMDNSSearchTimeout = 1500; // timeout for searching using mDNS in milliseconds
 var isMobile = false;// used for presentation mobile/screen
 
 var maxIndependentSpeedInRPM = 60; // arbitrary max speed in revolutions per minute

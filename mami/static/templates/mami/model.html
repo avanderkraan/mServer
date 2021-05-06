@@ -1,20 +1,21 @@
 <script>
     function setSelectedModel(roleModelId, roleModelProperty, modelId, modelUrl) {
         var connectString = 'confirmSelectedModel(' + JSON.stringify(roleModelId) + ',' + JSON.stringify(roleModelProperty) + ',' + JSON.stringify(modelId) + ',' + JSON.stringify(modelUrl) + ');';
-        $('#connectButton').attr('onclick', connectString);
+        $('#connectButton_' + modelId).attr('onclick', connectString);
 
         $('.rolemodel').removeClass().addClass('rolemodel selectable');
-        $('#nameRoleModel_modal_' + roleModelId).removeClass('selectable');
-        $('#nameRoleModel_modal_' + roleModelId).addClass('selected-rolemodel');
+        $('#nameRoleModel_modal_' + modelId + '_' + roleModelId).removeClass('selectable');
+        $('#nameRoleModel_modal_' + modelId + '_' + roleModelId).addClass('selected-rolemodel');
     }
 
     function confirmSelectedModel(roleModelId, roleModelProperty, modelId, modelUrl) {
         modelAndSavedRoleModel[modelId] = roleModelId;
+
         $('#roleModelModal_' + modelId).modal('toggle');
 
         if (roleModelProperty["name"] != "") {
             var confirmedModelHTML = '<span>' + roleModelProperty["name"] + '</span>';
-            confirmedModelHTML += '<span style="float:right" class="bpmRoleModel_model_' + roleModelId + '">-</span>';
+            confirmedModelHTML += '<span style="float:right" id="bpmRoleModel_model_' + modelId + '_' + roleModelId + '">-</span>';
             $('#connectedTo_' + modelId).html(confirmedModelHTML);
           passIPAddress(modelId, modelUrl, roleModelId, false);
         }
@@ -31,22 +32,32 @@
     function removeSelectedRoleModel(modelId, modelUrl) {
         // cleanup modelAndSavedRoleModel
         $('#connectedTo_' + modelId).html("-");
-        delete modelAndSavedRoleModel[modelId];
+        deletremodelAndSavedRoleModel[modelId];
         passIPAddress(modelId, modelUrl, "None", false);   // None is default setting for a model
     }
 
     function showModelList() {
-        //models = {}; // remove remark to test IP-search over mDNS search
+        models = {}; // remove remark to test IP-search over mDNS search
         if (Object.keys(models).length == 0) {
             $("#modelList").html('${no_mdns}');
             $('#modelListPercentage').html('');
 
             // showModelIPList is called after leaving the recursive processIPResponse in connectModel.html
             findIPs();
+            
         }
         else {
             $("#modelList").html(makeModelList(models));
             $("#refreshModelList").attr("disabled", false);
+            $.each(models, function(index, value) {
+            if (modelAndSavedRoleModel[index] == "independent") {
+                $('#standalone_' + index).trigger('click');
+            }
+            else {
+                setSelectedModel(modelAndSavedRoleModel[index], null, index, models[index]);
+            }
+        });
+
         }
     }
 
@@ -54,6 +65,14 @@
         $("#modelList").html(makeModelList(modelIPs));
         $('#modelListPercentage').html('');
         $("#refreshModelList").attr("disabled", false);
+        $.each(modelIPs, function(index, value) {
+            if (modelAndSavedRoleModel[index] == "independent") {
+                $('#standalone_' + index).trigger('click');
+            }
+            else {
+                setSelectedModel(modelAndSavedRoleModel[index], null, index, modelIPs[index]);
+            }
+        });
     }
 
     function makeModelList(modelsAvailable) {
@@ -66,7 +85,20 @@
         modelTable += '<thead>';
         modelTable += '    <tr>';
         modelTable += '      <th scope="col">${table_model_name}</th>';
-        modelTable += '      <th scope="col">${table_model_connect}</th>';
+        modelTable += '      <th scope="col">${table_model_connect}';
+  
+        /*
+        modelTable += '<span style="float:right;">';
+        if (unit == "rpm") {
+            modelTable += "${table_rpm}";
+        }
+        if (unit == "end") {
+            modelTable += "${table_ends}";
+        }
+        modelTable += "</span>";
+        */
+        modelTable += '</th>';
+  
         modelTable += '      <th scope="col">${speed_buttons}</th>';
         modelTable += '    </tr>';
         modelTable += '  </thead>';
@@ -93,7 +125,10 @@
             //modelTable += $('#nameRoleModel_' + index).html() || "-";
             modelTable += '</span>';
 
-            modelTable += '<span style="float:right" class="bpmRoleModel_model_' + modelAndSavedRoleModel[index] + '">-</span>';
+            modelTable += '<span style="float:right" id="bpmRoleModel_model_';
+            modelTable += index + '_'
+            modelTable += modelAndSavedRoleModel[index];
+            modelTable += '">-</span>';
             modelTable += '</span>';
 
             modelTable += '    </td>';
@@ -125,14 +160,18 @@
             modelTable += '>${off}</button>';
 
             modelTable += '<!-- Modal -->';
-            modelTable += '<div class="modal fade" id="roleModelModal_';
+            modelTable += '<div class="modal fade roleModelModal" id="roleModelModal_';
             modelTable += index;
             modelTable += '"';
-            modelTable += '  tabindex="-1" role="dialog" aria-labelledby="roleModelModalLabel" aria-hidden="true">';
+            modelTable += '  tabindex="-1" role="dialog" aria-labelledby="roleModelModalLabel_';
+            modelTable += index;
+            modelTable += '" aria-hidden="true">';
             modelTable += '  <div class="modal-dialog" role="document">';
             modelTable += '    <div class="modal-content">';
             modelTable += '      <div class="modal-header">';
-            modelTable += '        <h5 class="modal-title" id="roleModelModalLabel">';
+            modelTable += '        <h5 class="modal-title" id="roleModelModalLabel_';
+            modelTable += index;
+            modelTable += '">';
             modelTable += '${connect} ';
             modelTable += index;
             modelTable += ' ${by_selecting}';
@@ -147,7 +186,9 @@
             modelTable += '      </div>';
             modelTable += '      <div class="modal-footer">';
             modelTable += '        <button type="button" class="btn btn-secondary" data-dismiss="modal">${close_button}</button>';
-            modelTable += '        <button type="button" id="connectButton" class="btn btn-primary">${connect_button}</button>';
+            modelTable += '        <button type="button" id="connectButton_';
+            modelTable += index;
+            modelTable +='" class="btn btn-primary">${connect_button}</button>';
             modelTable += '      </div>';
             modelTable += '    </div>';
             modelTable += '  </div>';
@@ -164,16 +205,19 @@
 
 function selectStandAlone(modelIndex, modelUrl) {
     var setSpeed = '';
-    setSpeed += '<span id="independent_less" class="glyphicon glyphicon-minus"></span>'
-    setSpeed += '&nbsp;&nbsp;';
-    setSpeed += '<span id="bpmRoleModel_model_independent';
-    setSpeed += '_';
+    setSpeed += '<span id="independent_less_';
     setSpeed += modelIndex;
+    setSpeed += '" class="glyphicon glyphicon-minus"></span>'
+    setSpeed += '&nbsp;&nbsp;';
+    setSpeed += '<span id="bpmRoleModel_model_';
+    setSpeed += modelIndex + '_independent';
     setSpeed += '" class="setSpeed';
     setSpeed += '">';
     setSpeed += '</span>';
     setSpeed += '&nbsp;&nbsp;';
-    setSpeed += '<span id="independent_more" class="glyphicon glyphicon-plus"></span>'
+    setSpeed += '<span id="independent_more_';
+    setSpeed += modelIndex;
+    setSpeed += '" class="glyphicon glyphicon-plus"></span>'
 
     setModelSpeed("independent", setSpeed, modelIndex, modelUrl);
 }
@@ -181,6 +225,7 @@ function selectStandAlone(modelIndex, modelUrl) {
 // start independent settings
 function processIndependentSettings(roleModelId, modelId, modelUrl) {
   independentSpeed = JSON.parse(getStored("independentSpeed")) || {};
+  
   $.each(modelAndSavedRoleModel, function(index, value) {
 
     if (modelAndSavedRoleModel[index] == "independent") {
@@ -190,25 +235,27 @@ function processIndependentSettings(roleModelId, modelId, modelUrl) {
         if ((independentSpeed[modelName] == undefined) || (independentSpeed[modelName] == null)) {
             independentSpeed[modelName] = 0;
         }
-        $('#bpmRoleModel_model_independent_' + modelName).html(independentSpeed[modelName].toString());
+        $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
         store("independentSpeed", JSON.stringify(independentSpeed));
-        $('#independent_less').off('click').on('click', function() {
-            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_independent_' + modelName).html()) - 1;
+        $('#independent_less_' + modelName).off('click').on('click', function() {
+            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) - 1;
             if (independentSpeed[modelName] < 0) {
                 independentSpeed[modelName] = 0;
             }
-            $('#bpmRoleModel_model_independent_' + modelName).html(independentSpeed[modelName].toString());
+            $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
             store("independentSpeed", JSON.stringify(independentSpeed));
             passIPAddress(modelId, modelUrl, roleModelId, true);
         });
-        $('#independent_more').off('click').on('click', function() {
-            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_independent_' + modelName).html()) + 1;
+        $('#independent_more_' + modelName).off('click').on('click', function() {
+            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) + 1;
             if (independentSpeed[modelName] > maxIndependentSpeedInRPM) {
                 independentSpeed[modelName] = maxIndependentSpeedInRPM;
             }
-            $('#bpmRoleModel_model_independent_' + modelName).html(independentSpeed[modelName].toString());
+
+            console.log('a a a' + modelName + modelId + modelAndSavedRoleModel[modelName]);
+            $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
             store("independentSpeed", JSON.stringify(independentSpeed));
-            passIPAddress(modelId, modelUrl, roleModelId, true);
+            passIPAddress(modelName, modelAndSavedRoleModel[modelName], "independent", true);
         });
     }
   })

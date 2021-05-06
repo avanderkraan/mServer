@@ -154,6 +154,12 @@
         // search for local ip addresses since mdns devices
         //   do not appear with this os/browser combination
         //   by using the ip address where the browser is active
+
+        // checkIPs is used within processIPResponse
+        for (var i=1; i < 256; i++) {
+            checkIPs[i] = false;
+        }
+
         var urlToCheck = window.location.href;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', urlToCheck + 'myip/', true);
@@ -162,10 +168,6 @@
         };
 
         xhr.onload = function() {
-            // checkIPs is used within processIPResponse
-            for (var i=1; i < 256; i++) {
-                checkIPs[i] = false;
-            }
             var response = xhr.responseText;
             processIPResponse(0, response, searchIPTimeout);
         };
@@ -207,18 +209,6 @@
                     clearTimeout(mySetTimeout[i]);
                 }
                 showModelIPList();
-                // show known values
-                $.each(modelAndSavedRoleModel, function(index, value) {
-                    if (modelAndSavedRoleModel[index] == "independent") {
-                        selectStandAlone(index, modelIPs[index]);
-                    }
-                    else {
-                        //setSelectedModel(roleModelId, roleModelProperty, modelId, modelUrl)
-                        // roleModelProperty is not needed here
-                        setSelectedModel(modelAndSavedRoleModel[index], null, index, modelIPs[index]);
-                    }
-                });
-
                 return;   // leave recursive processIPResponse
             }
             //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
@@ -232,20 +222,30 @@
     function passIPAddress(modelId, modelUrl, roleModelId, standalone=false) {
         var url = "";
         url = modelUrl + "/setRoleModel/?id=" + roleModelId;
-        if (standalone == true) {  // only a standalone model gives the speed value
-            // from rpm to rph (model expects rph)
-            // with 4 blades divide by 4
-            url += "&speed=" + independentSpeed[modelId] * 60 / 4;
+        if (modelUrl != undefined) {
+
+            if (standalone == true) {  // only a standalone model gives the speed value
+                // from rpm to rph (model expects rph)
+                // with 4 blades divide by 4
+                url += "&speed=" + independentSpeed[modelId] * 60 / 4;
+            }
+            // connect and cleanup selected RoleModel and selected model
+            var iframe = '<span id="toberemoved_';
+            iframe += modelId;
+            iframe += '"><iframe id="' + modelUrl + '" src="' + url + '" name="' + modelUrl + '"';
+            iframe += " onload='cleanupConnectModel(" + JSON.stringify(modelId) + ");'";
+            iframe += ' width="0px" height="0px"></iframe>';
+            iframe += '</span>';
+            $('#modelSelection').html(iframe);
+            //$('#modelSelection').append(iframe);
         }
-        // connect and cleanup selected RoleModel and selected model
-        connectModel();  // cleanup connected model if needed
-        var iframe = '<iframe id="' + modelUrl + '" src="' + url + '" onload="connectModel(this);" width="1px" height="1px"></iframe>';
-        $('#modelSelection').html(iframe);
     }
 
-    function connectModel(element) {
+    function cleanupConnectModel(element) {
         // cleanup connected model directly after IFrame was loaded
-        $('#modelSelection').html(''); 
+        setTimeout(function() {
+            $('#toberemoved_' + element).parent().html('');
+        }, 1000);
     }
 
 
@@ -263,7 +263,7 @@
         $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
         
-        var mDNSTimeout = 600;
+        var mDNSTimeout = 1500;
         // if there is no response via mDNS within this time, a search though IP is performed
         setTimeout(function () {
             showModelList();    

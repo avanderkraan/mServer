@@ -7,8 +7,7 @@ function showRoleModelList() {
   roleModelTable += '<thead>';
   roleModelTable += '    <tr>';
   roleModelTable += '      <th scope="col">${table_model_name}</th>';
-  roleModelTable += '      <th scope="col"><div id="rpmEnds_roleModel" style="cursor:pointer;" onclick="toggleUnit();"></div></th>';
-  //roleModelTable += '      <th scope="col"><input type="button" class="rpmEnds" value="${table_ends}"/></th>';
+  roleModelTable += '      <th scope="col"><div class="rpmEnds_roleModel" style="cursor:pointer;" onclick="toggleUnit();"></div></th>';
   roleModelTable += '    </tr>';
   roleModelTable += '  </thead>';
   roleModelTable += '<tbody>';
@@ -50,7 +49,7 @@ function showFilteredRoleModelList(_millList, modelIndex, modelUrl) {
   var roleModelList = '';
   roleModelList += '<li class="list-group-item">';
   roleModelList += '<span>${table_model_name}</span>';
-  roleModelList += '<span id="rpmEnds_rolemodel_modal" style="cursor:pointer;float:right;" onclick="toggleUnit();">${waiting}</span>';
+  roleModelList += '<span class="rpmEnds_rolemodel_modal" style="cursor:pointer;float:right;" onclick="toggleUnit();">${waiting}</span>';
   roleModelList += '</li>'
   $.each(_millList, function(id, property) {
       var selectable = '';
@@ -59,7 +58,7 @@ function showFilteredRoleModelList(_millList, modelIndex, modelUrl) {
         roleModelList += '    <li class="list-group-item">';
 
         roleModelList += '<span id="nameRoleModel_modal_';
-        roleModelList += id;
+        roleModelList += modelIndex + '_' + id;
         roleModelList += '"';
         roleModelList += " onclick='setSelectedModel(" + JSON.stringify(id) + "," + JSON.stringify(property) + "," + JSON.stringify(modelIndex) + "," + JSON.stringify(modelUrl) + ");'";
 
@@ -83,9 +82,8 @@ function showFilteredRoleModelList(_millList, modelIndex, modelUrl) {
 
 
 function selectRoleModel(modelIndex, modelUrl) {
-  console.log('a a a' + JSON.stringify(modelIndex) + "," + JSON.stringify(modelUrl));
     var roleModelList = '';
-    roleModelList += '<div class="panel panel-primary" id="roleModel_result_panel">';
+    roleModelList += '<div class="panel panel-primary roleModel_result_panel">';
     roleModelList += '<div class="panel-heading"><h3 class="panel-title">';
 
     roleModelList += '<input id="search_rolemodel_modal" placeholder="${search}" value=""';
@@ -94,7 +92,9 @@ function selectRoleModel(modelIndex, modelUrl) {
     roleModelList += '</h3>';
     roleModelList += '</div>';
     roleModelList += '<div class="panel-body">';
-    roleModelList += '  <ul id="roleModelList_modal" class="list-group">';
+    roleModelList += '  <ul id="roleModelList_modal_';
+    roleModelList += modelIndex;
+    roleModelList += '" class="list-group">';
 
     roleModelList += showFilteredRoleModelList(allMills, modelIndex, modelUrl);
 
@@ -113,7 +113,7 @@ function preSelect(modelIndex, modelUrl) {
       filteredMillsList[key] = value;
     };
   });
-  $('#roleModelList_modal').html(showFilteredRoleModelList(filteredMillsList, modelIndex, modelUrl));
+  $('#roleModelList_modal_' + modelIndex).html(showFilteredRoleModelList(filteredMillsList, modelIndex, modelUrl));
 }
 
 function showRoleModelListData() {
@@ -123,9 +123,15 @@ function showRoleModelListData() {
       var value = Math.round(parseInt(property['rph']) / 60);  // == ends
     }
     value = value.toString();
+    if (modelAndSavedRoleModel) {
+      $.each(modelAndSavedRoleModel, function(mIndex, mValue) {
+        if (mValue == id) {
+          $('#bpmRoleModel_model_' + mIndex + '_' + id).html(value);  // in model.html
+        }
+      })
+    }
     $('#bpmRoleModel_' + id).html(value);        // in rolemodel.html
     $('#bpmRoleModel_modal_' + id).html(value);  // in model.html
-    $('.bpmRoleModel_model_' + id).html(value);  // in model.html
   });
   showUnit();
 }
@@ -143,14 +149,14 @@ function setSelectedRoleModel(id, property) {
 
 function showUnit() {
   if (unit == "rpm") {
-      $("#rpmEnds_roleModel").html("${table_rpm}");
-      $("#rpmEnds_rolemodel_modal").html("${table_rpm}");
-      $("#rpmEnds_map").html("${unit_text}<br/>...").css("pointer-events","none");
+      $(".rpmEnds_roleModel").html("${table_rpm}");
+      $(".rpmEnds_rolemodel_modal").html("${table_rpm}");
+      $(".rpmEnds_map").html("${unit_text}<br/><span class='glyphicon glyphicon-hourglass'></span>").attr("disabled","disabled");
     }
   if (unit == "end") {
-      $("#rpmEnds_roleModel").html("${table_ends}");
-      $("#rpmEnds_rolemodel_modal").html("${table_ends}");
-      $("#rpmEnds_map").html("${unit_text}<br/>...").css("pointer-events","none");
+      $(".rpmEnds_roleModel").html("${table_ends}");
+      $(".rpmEnds_rolemodel_modal").html("${table_ends}");
+      $(".rpmEnds_map").html("${unit_text}<br/><span class='glyphicon glyphicon-hourglass'></span>").attr("disabled","disabled");
     }
 }
 
