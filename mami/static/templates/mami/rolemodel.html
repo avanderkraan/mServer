@@ -103,6 +103,7 @@ function selectRoleModel(modelIndex, modelUrl) {
     roleModelList += '</div>';
 
     $('#modal-body_' + modelIndex).html(roleModelList);
+    showUnit();
 }
 
 function preSelect(modelIndex, modelUrl) {
@@ -133,7 +134,6 @@ function showRoleModelListData() {
     $('#bpmRoleModel_' + id).html(value);        // in rolemodel.html
     $('#bpmRoleModel_modal_' + id).html(value);  // in model.html
   });
-  showUnit();
 }
 
 // start roleModel selection

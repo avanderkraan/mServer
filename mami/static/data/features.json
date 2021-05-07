@@ -5,21 +5,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    0,
-                    90
-                ]
-            },
-            "type": "Feature",
-            "properties": {
-                "name": "Santa Claus, test",
-                "mac_address": "84:CC:A8:A2:D1:84"
-            },
-            "id": "nl_0"
-        },
-        {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     4.351280,
                     52.013996
                 ]
