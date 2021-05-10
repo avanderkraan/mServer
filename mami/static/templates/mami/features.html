@@ -15,6 +15,9 @@ function getValue(feature) {
 function styleFunction(feature, resolution) {
 	var value = "0";
 	var zIndexNumber = 0;
+	if (getStored("focus") == feature.getId()) {
+		zIndexNumber = 1;
+	}
 
 	var millImage = new ol.style.Icon({
 		anchor: [0.5, 46],
@@ -156,6 +159,7 @@ function styleFunction(feature, resolution) {
 			my_feature.set("zindex", 0);  // all others
 		});
 		feature.set("zindex", 1);
+		store("focus", feature.getId());
 
 		selectedMillStyle.setZIndex(feature.get("zindex"));
 		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1 en geselecteerd
@@ -163,13 +167,13 @@ function styleFunction(feature, resolution) {
 	}
 	else if (feature.getId() in senderData) {
 		workingMillText.setText(getValue(feature));
-		workingMillStyle.setZIndex(feature.get("zindex"));
+		//workingMillStyle.setZIndex(feature.get("zindex"));
 		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1
         return [workingMillStyle];
 	}
 	else {
 		//return [validMillStyle, messageStyle, nameStyle];  // bij molen zonder data maar wel aanwezig in featureSource
-		validMillStyle.setZIndex(feature.get("zindex"));
+		//validMillStyle.setZIndex(feature.get("zindex"));
 		return [validMillStyle];
 	}
 }

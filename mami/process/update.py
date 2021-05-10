@@ -46,9 +46,20 @@ class UpdateFirmware:
         '''
         redirects all not-defined URLs to root.index
         '''
-        pass
-        newUrl = '%s%s' % (cherrypy.request.script_name, '/updateFirmware')
+        # perform obsolete update for molen with version 0.1.2 or less
+        # TODO: remove when all molen devices have a version of 0.1.3 or higher
+        device = 'device' in kwargs.keys() and kwargs.get('device')
+        version = 'version' in kwargs.keys() and kwargs.get('version')
+        newUrl = '%s/updateFirmware/?device=%s&version=%s' % (cherrypy.request.script_name,
+                                                              device,
+                                                              version)
         raise cherrypy.HTTPRedirect(newUrl)
+
+
+        #pass
+        #newUrl = '%s%s' % (cherrypy.request.script_name, '/updateFirmware')
+        #raise cherrypy.HTTPRedirect(newUrl)
+
 
     @cherrypy.expose
     def updateFirmware(self, device=None, version="latest"):

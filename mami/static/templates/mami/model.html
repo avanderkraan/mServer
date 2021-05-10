@@ -32,7 +32,7 @@
     function removeSelectedRoleModel(modelId, modelUrl) {
         // cleanup modelAndSavedRoleModel
         $('#connectedTo_' + modelId).html("-");
-        deletremodelAndSavedRoleModel[modelId];
+        delete modelAndSavedRoleModel[modelId];
         passIPAddress(modelId, modelUrl, "None", false);   // None is default setting for a model
     }
 
@@ -218,13 +218,15 @@ function selectStandAlone(modelIndex, modelUrl) {
     setSpeed += '<span id="independent_more_';
     setSpeed += modelIndex;
     setSpeed += '" class="glyphicon glyphicon-plus"></span>'
+    setSpeed += '<span style="float:right">(0-' + maxIndependentSpeedInRPM + ')</span>';
+
 
     setModelSpeed("independent", setSpeed, modelIndex, modelUrl);
 }
 
 // start independent settings
 function processIndependentSettings(roleModelId, modelId, modelUrl) {
-  independentSpeed = JSON.parse(getStored("independentSpeed")) || {};
+  independentSpeed = JSON.parse(getStored("speed")) || {};
   
   $.each(modelAndSavedRoleModel, function(index, value) {
 
@@ -236,26 +238,24 @@ function processIndependentSettings(roleModelId, modelId, modelUrl) {
             independentSpeed[modelName] = 0;
         }
         $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
-        store("independentSpeed", JSON.stringify(independentSpeed));
+        store("speed", JSON.stringify(independentSpeed));
         $('#independent_less_' + modelName).off('click').on('click', function() {
-            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) - 1;
+            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) - Math.round((10 / maxIndependentSpeedInRPM) * maxIndependentSpeedInRPM);
             if (independentSpeed[modelName] < 0) {
                 independentSpeed[modelName] = 0;
             }
             $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
-            store("independentSpeed", JSON.stringify(independentSpeed));
+            store("speed", JSON.stringify(independentSpeed));
             passIPAddress(modelId, modelUrl, roleModelId, true);
         });
         $('#independent_more_' + modelName).off('click').on('click', function() {
-            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) + 1;
+            independentSpeed[modelName] = parseInt($('#bpmRoleModel_model_' + modelName + '_independent').html()) + Math.round((10 / maxIndependentSpeedInRPM) * maxIndependentSpeedInRPM);
             if (independentSpeed[modelName] > maxIndependentSpeedInRPM) {
                 independentSpeed[modelName] = maxIndependentSpeedInRPM;
             }
-
-            console.log('a a a' + modelName + modelId + modelAndSavedRoleModel[modelName]);
             $('#bpmRoleModel_model_' + modelName + '_independent').html(independentSpeed[modelName].toString());
-            store("independentSpeed", JSON.stringify(independentSpeed));
-            passIPAddress(modelName, modelAndSavedRoleModel[modelName], "independent", true);
+            store("speed", JSON.stringify(independentSpeed));
+            passIPAddress(modelId, modelUrl, roleModelId, true);
         });
     }
   })

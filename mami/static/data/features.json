@@ -5,6 +5,20 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    5.351280,
+                    52.013996
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "Test",
+                "mac_address": "84:CC:A8:A2:D1:84"
+            },
+            "id": "nl_0"
+        },        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     4.351280,
                     52.013996
                 ]

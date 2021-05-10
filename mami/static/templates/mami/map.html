@@ -1,5 +1,5 @@
 <script>
-    // start base map with molenlayer
+      // start base map with molenlayer
     var molenLayer = new ol.layer.Vector({
         title: 'molen',
         opacity: 1,
@@ -14,27 +14,10 @@
             //source: new.ol.source.OSM(https://maps-cdn.salesboard.biz/styles/klokantech-3d-gl-style/{z}/{x}/{y}.png)
     });
 
-    var longitude;
-    var lattitude;
-    var zoom;
-    try{
-      longitude = storedLongitude;
-    }
-    catch {
-      longitude = 4.34;
-    }
-    try{
-      lattitude = storedLattitude;
-    }
-    catch {
-      lattitude = 52.0;
-    }
-    try{
-      zoom = storedZoom;
-    }
-    catch {
-      zoom = 7;
-    }
+    var view = new ol.View({
+        center: ol.proj.fromLonLat([0, 0]),
+        zoom: 7
+    });
 
     var map = new ol.Map({
         target: 'map',
@@ -42,13 +25,8 @@
             mapLayer,
             molenLayer,
         ],
-
-        view: new ol.View({
-            // values stored in browser cookies
-            center: ol.proj.fromLonLat([longitude, lattitude]),
-            zoom: zoom
-        })
-    });
+        view: view
+      });
     //end base map with molenlayer
 
 
@@ -61,8 +39,6 @@
     var select = selectClick;
 
     // start event on map
-
-    //map.addInteraction(select);
     map.on('click', function(evt) {
         // Clear previous popup (if exists) and empty global selectedId
         millInfo.setPosition(undefined);
@@ -77,45 +53,34 @@
         if (feature) {
             popup(feature);
             selectedId = feature.getId();
-            // TODO: getUpdate is for step 3. the client getUpdates(selectedId);
-            //       not sure yet how this is done, poll local ip addresses through javascript?
-            //       which could be a client (toy-mill) 
         }
         refresh();
     });
 
-/* TODO: make cursor pointer type
-// from an example on https://openlayers.org/en/latest/examples/select-hover-features.html
+    map.on("pointermove", function (evt) {
+        var hit = this.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+            return true;
+        }); 
+        if (hit) {
+            this.getTargetElement().style.cursor = 'pointer';
+        } else {
+            this.getTargetElement().style.cursor = '';
+        }
+    });
 
-var highlightStyle = new Style({
-  fill: new Fill({
-    color: 'rgba(255,255,255,0.7)',
-  }),
-  stroke: new Stroke({
-    color: '#3399CC',
-    width: 3,
-  }),
-});
-
-map.on('pointermove', function (e) {
-  if (selected !== null) {
-    selected.setStyle(undefined);
-    selected = null;
-  }
-
-  map.forEachFeatureAtPixel(e.pixel, function (f) {
-    selected = f;
-    f.setStyle(highlightStyle);
-    return true;
-  });
-
-  if (selected) {
-    status.innerHTML = '&nbsp;Hovering: ' + selected.get('name');
-  } else {
-    status.innerHTML = '&nbsp;';
-  }
-});
-*/
+    map.on('moveend', function (evt) {
+      var lonlat = ol.proj.transform(view.getCenter(), 'EPSG:3857', 'EPSG:4326');
+      store("longitude", JSON.stringify(lonlat[0]));
+      store("latitude", JSON.stringify(lonlat[1]));
+      store("zoom", JSON.stringify(view.getZoom()));
+    });
     // end event on map
+
+    function showMap() {
+      var coordinate = [parseFloat(getStored("longitude")), parseFloat(getStored("latitude"))];
+      coordinate = ol.proj.transform(coordinate, 'EPSG:4326', 'EPSG:3857');
+      view.setCenter(coordinate);
+      view.setZoom(getStored('zoom'));
+    }
 
 </script>

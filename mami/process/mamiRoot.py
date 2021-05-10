@@ -182,6 +182,10 @@ class MamiRoot():
             table_model_name = text.get(section, 'table_model_name')
             table_model_connect = text.get(section, 'table_model_connect')
             home_text = text.get(section, 'home_text')
+            local_storage_text = text.get(section, 'local_storage_text')
+            show_local_storage = text.get(section, 'show_local_storage')
+            hide_local_storage = text.get(section, 'hide_local_storage')
+            clear_local_storage = text.get(section, 'clear_local_storage')
             molendatabase = text.get(section, 'molendatabase')
             return template.render_unicode(language_options = language_options,
                                            homepage_message = homepage_message,
@@ -223,6 +227,10 @@ class MamiRoot():
                                            table_model_name = table_model_name,
                                            table_model_connect = table_model_connect,
                                            home_text = home_text,
+                                           local_storage_text = local_storage_text,
+                                           show_local_storage = show_local_storage,
+                                           hide_local_storage = hide_local_storage,
+                                           clear_local_storage = clear_local_storage,
                                            molendatabase = molendatabase
                                            ).encode('utf-8', 'replace')
         except Exception as inst:

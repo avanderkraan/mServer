@@ -119,15 +119,17 @@ function preSelect(modelIndex, modelUrl) {
 
 function showRoleModelListData() {
   $.each(millData, function(id, property) {
+    var unitTag = "${table_ends}";
     var value = Math.round(parseInt(property['rph'] * parseInt(property['blades']) / 60));
     if (unit == 'rpm') {
       var value = Math.round(parseInt(property['rph']) / 60);  // == ends
+      unitTag = "${table_rpm}";
     }
     value = value.toString();
     if (modelAndSavedRoleModel) {
       $.each(modelAndSavedRoleModel, function(mIndex, mValue) {
         if (mValue == id) {
-          $('#bpmRoleModel_model_' + mIndex + '_' + id).html(value);  // in model.html
+          $('#bpmRoleModel_model_' + mIndex + '_' + id).html(value + ' ' + unitTag);  // in model.html
         }
       })
     }

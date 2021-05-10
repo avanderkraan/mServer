@@ -61,6 +61,23 @@
             <div id="about">${home_text}</div>
           </div>
         </div>
+
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            <hr>
+          </div>
+        </div>
+    
+        <div class="row loffset6 roffset6">
+          <div class="col-xs-12">
+            ${local_storage_text}
+            <input id="showLocalStorage" type="button" onclick="localStorageAction('show');" value="${show_local_storage}"/>
+            <input id="hideLocalStorage" type="button" onclick="localStorageAction('hide');" value="${hide_local_storage}"/>
+            <input id="clearLocalStorage" type="button" onclick="localStorageAction('clear');" value="${clear_local_storage}"/>
+            <div id="localStorage"></div>
+          </div>
+        </div>
+    
       </div>
 
       <div class="tab-pane fade active" id="pills-map" role="tabpanel" aria-labelledby="pills-map-tab">
@@ -90,14 +107,6 @@
             </div>
 
             <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
-<!--
-            <span id="modelSearchTime_less" class="glyphicon glyphicon-minus"></span>
-            &nbsp;&nbsp;
-            <span id="modelSearchTime">{Zoektijd}</span>
-            &nbsp;&nbsp;
-            <span id="modelSearchTime_more" class="glyphicon glyphicon-plus"></span>
-
--->
             <br>
             <span id="modelList"></span><span id="modelListPercentage"></span>
 
@@ -149,6 +158,31 @@
         isMobile = true;  
     }
 
+    // get stored map data or use default
+    if (getStored("longitude") == null) {
+      store('longitude', storedLongitude);
+    }
+    else {
+      storedLongitude = getStored("longitude");
+    };
+
+    if (getStored("latitude") == null) {
+      store('latitude', storedLatitude);
+    }
+    else {
+      storedLatitude = getStored("latitude");
+    };
+
+    if (getStored("zoom") == null) {
+      store('zoom', storedZoom);
+    }
+    else {
+      storedZoom = getStored("zoom");
+    };
+
+    showMap();
+
+
     // make sure the map is displayed, even with the class fade
     $('#pills-map-tab').parent().off('mouseup').on('mouseup', function () {
         $('canvas').css({'display': 'inline'});
@@ -179,8 +213,6 @@
       toggleUnit();
     }
     showUnit();
-
-    //console.log(localStorage);
 
   });
   </script>
@@ -271,9 +303,9 @@ function get_data_via_sse() {
 // end sse functions
 
 // global variables
-var storedLongitude = 4.34;
-var storedLattitude = 52.0;
-var storedZoom = 7;
+var storedLongitude = "5.08";
+var storedLatitude = "52.13";
+var storedZoom = "7";
 
 var unit = '';       // contains the unit ('end' or 'rpm')
 var selectedId = ''; //'nl_03503';
@@ -319,9 +351,38 @@ function getStored(key) {
   }
 } 
 
-store("Longitude", storedLongitude);
-store("Lattitude", storedLattitude);
-store("Zoom", storedZoom);
+function localStorageAction(action) {
+  if (action == "clear") {
+    $.each(localStorage, function(key, value) {
+      if (value) {
+        localStorage.removeItem(key);
+      }
+    });
+    $('#localStorage').html("");
+  }
+  if (action == "show") {
+    var _localStorage = "<table class='table'>";
+    $.each(localStorage, function(key, value) {
+      if (JSON.stringify(value) != undefined) {
+        if (key != 'length') {
+          _localStorage += '<tr>'
+          _localStorage += '<td>';
+          _localStorage += key;
+          _localStorage += '</td>';
+          _localStorage += '<td>';
+          _localStorage += value;
+          _localStorage += '</td>';
+          _localStorage += '</tr>';
+        }
+      }
+    });
+    _localStorage += '</table>';
+    $('#localStorage').html(_localStorage);
+  }
+  if (action == "hide") {
+    $('#localStorage').html("");
+  }    
+}
 
 // start language choice
 $('#languagechoice').off('change').on('change', function(event){
@@ -335,36 +396,5 @@ $('#languagechoice').off('change').on('change', function(event){
 		window.location.href = newLocation;
 });
 // end language choice
-
-/*
-function showModelTimeoutHTML() {
-  var showTimeoutInSeconds = Math.round(modelIPSearchTimeout / 1000);
-
-  if (isNaN(showTimeoutInSeconds)) {
-    modelIPSearchTimeout = 2000;
-    showTimeoutInSeconds = 2;
-  }
-  $("#modelSearchTime").html("{zoektijd} " + showTimeoutInSeconds.toString());
-}
-
-// start set search timeout
-function setModelIPSearchTimeout() {
-  $('#modelSearchTime_more').off('click').on('click', function() {
-    modelIPSearchTimeout += 1000;
-    if (modelIPSearchTimeout > 10000) {
-      modelIPSearchTimeout = 10000;
-    }
-    showModelTimeoutHTML();
-  });
-  $('#modelSearchTime_less').off('click').on('click', function() {
-    modelIPSearchTimeout -= 1000;
-    if (modelIPSearchTimeout < 1000) {
-      modelIPSearchTimeout = 1000;
-    }
-    showModelTimeoutHTML();
-  });
-}
-// end set search timeout
-*/
 
 </script>

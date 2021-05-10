@@ -26,6 +26,18 @@
     margin-right: 6px;
 }
 
+#languagechoice:hover {
+    cursor: pointer;
+}
+
+.glyphicon-plus:hover {
+    cursor: pointer;
+}
+
+.glyphicon-minus:hover {
+    cursor: pointer;
+}
+
 .selectable {
     padding-left: 3px;
     border-radius: 4px;
@@ -75,7 +87,7 @@
     width: 440px;
 }
 
-.list-group{
+.list-group {
     max-height: 300px;
     max-width: 380px;
     margin-bottom: 10px;
