@@ -17,6 +17,8 @@ from mami import current_dir
 from mami import module_dir
 from mami import cache_delay
 from mami import sse_timeout
+from mami import data_file
+from mami.process.database import Database
 
 from mami.locale.properties import LocaleHandle
 
@@ -47,6 +49,18 @@ class MamiRoot():
 
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
+
+    @cherrypy.expose
+    def refresh_features(self):
+        cherrypy.request.headers['Pragma'] = 'no-cache'
+        cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
+        database = Database()
+        features_as_json = json.loads(database.get_features_as_json())
+        with open(data_file, "w") as fp:
+            json.dump(features_as_json, fp, indent=4)
+        self._cleancache()
+        newUrl = '%s%s' % (cherrypy.request.script_name, '/')
+        raise cherrypy.HTTPRedirect(newUrl)
 
     @cherrypy.expose
     def myip(self):
@@ -83,12 +97,12 @@ class MamiRoot():
 
         # start mac_address_sender dictionary
         if len(mac_address_sender) > 1500:
-            mac_address_sender = {}  # just empty, it will fill up itself
+            mac_address_sender.clear()  # just empty, it will fill up itself
         # end mac_address_sender dictionary
        
         # start mac_address_model dictionary
         if len(mac_address_model) > 1500:
-            mac_address_model = {}  # just empty, it will fill up itself
+            mac_address_model.clear()  # just empty, it will fill up itself
         # end mac_address_model dictionary
 
         # TODO clean model_inventory?
@@ -498,7 +512,8 @@ class MamiRoot():
                 #        "A0:20:A6:29:18:13": { "comment": "de Roos",
                 #        "84:CC:A8:A0:FE:2D": { "comment": "de Hoop, Zoetermeer",
                 
-                backwards_compatible_list = ("84:CC:A8:A0:FE:2D", "84:CC:A8:A0:FE:2D")
+                backwards_compatible_list = ()
+                
                 if macAddress in backwards_compatible_list:
                     feed_counter = 0  # skip update to new version
 
@@ -557,9 +572,8 @@ class MamiRoot():
             macAddress = body.get('data').get('mac')  # macAddress
             roleModel = body.get('data').get('rM')    # roleModel 
 
-            #model = Model()
-            #if macAddress in model.mac_address_list():
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
+            # TODO: use from uuid import uuid4 to get a new uuid and the database to safe the proposed uuid
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print('receiver',macAddress)
@@ -616,7 +630,7 @@ class MamiRoot():
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     get_data_via_sse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
-
+    
 if __name__ == '__main__':
     try:
         pass

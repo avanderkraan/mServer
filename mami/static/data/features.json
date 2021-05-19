@@ -5,27 +5,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    5.351280,
-                    52.013996
-                ]
-            },
-            "type": "Feature",
-            "properties": {
-                "name": "Test",
-                "mac_address": "84:CC:A8:A2:D1:84"
-            },
-            "id": "nl_0"
-        },        {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    4.351280,
-                    52.013996
+                    4.35128,
+                    52.014
                 ]
             },
             "type": "Feature",
             "properties": {
                 "name": "De Roos",
+                "city": "Delft",
                 "mac_address": "A0:20:A6:29:18:13"
             },
             "id": "nl_03503"
@@ -34,28 +21,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    4.559610,
-                    52.026466
-                ]
-            },
-            "type": "Feature",
-            "properties": {
-                "name": "(Tweemanspolder) Nr.3",
-                "mac_address": "84:CC:A8:A3:09:11"
-            },
-            "id": "nl_00935"
-        },
-        {
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    4.402017,
-                    52.082935
+                    4.40202,
+                    52.0829
                 ]
             },
             "type": "Feature",
             "properties": {
                 "name": "De Salamander",
+                "city": "Leidschendam",
                 "mac_address": "A0:20:A6:14:85:06"
             },
             "id": "nl_12549"
@@ -64,16 +37,49 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    4.497779,
-                    52.053169
+                    4.55961,
+                    52.0265
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "(Tweemanspolder) Nr.3",
+                "city": "Zevenhuizen",
+                "mac_address": "84:CC:A8:A3:09:11"
+            },
+            "id": "nl_00935"
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.49778,
+                    52.0532
                 ]
             },
             "type": "Feature",
             "properties": {
                 "name": "De Hoop",
+                "city": "Zoetermeer",
                 "mac_address": "84:CC:A8:A0:FE:2D"
             },
             "id": "nl_00937"
+        },
+        {
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    0.0,
+                    0.0
+                ]
+            },
+            "type": "Feature",
+            "properties": {
+                "name": "testsender",
+                "city": "",
+                "mac_address": "84:CC:A8:A2:D1:84"
+            },
+            "id": "nl_0"
         }
     ]
 }

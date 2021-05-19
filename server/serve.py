@@ -14,11 +14,14 @@ from cherrypy.process.plugins import Daemonizer
 from server import current_dir
 from mami.process.mamiRoot import MamiRoot
 from mami.process.update import UpdateFirmware
+from mami.process.database import Database
 
 # 20200328: logfiles uitgezet
 useLog = False
 if useLog:
     from server.logfiles import Logfiles
+
+database = Database()
 
 class Server(object):
     def __init__(self):
