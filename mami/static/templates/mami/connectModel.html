@@ -201,7 +201,8 @@
             //mySearchIPTimeout = (counter+1) * 4 * 1000;
             //showModelIPList();
             //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
-            if ((counter > 5) || (allTrue == true)) {
+//            if ((counter > 5) || (allTrue == true)) {
+            if ((counter > 3) || (allTrue == true)) {
             //setTimeout(function (){
             //},mySearchIPTimeout);
 
@@ -256,7 +257,7 @@
     // start get models
     function refreshModelList() {
         // clear global variable models
-        $("#refreshModelList").attr("disabled", true);
+        $("#refreshModelList").attr("disabled", "disabled");
         models = {};
         modelIPs = {};
         $("#modelList").html("${waiting}");

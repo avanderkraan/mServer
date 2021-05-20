@@ -60,6 +60,9 @@ class Database():
 
     def _get_result(self, db_query):
         '''
+        remark: the with-statements does not seem to work
+                there are issues with the context of it
+                and is noted as a bug (somewhere)
         try:
             if not self.credentials or self.credentials == {}:
                 self.credentials = self._get_credentials()
@@ -76,9 +79,9 @@ class Database():
             print(e)
         '''
         try:
-            with self.connection.cursor() as cursor:
-                cursor.execute(db_query)
-                result = cursor.fetchall()
+            cursor = self.connection.cursor()
+            cursor.execute(db_query)
+            result = cursor.fetchall()
             self.connection.close()  # remove this if it is a singleton
             return result
         except Exception as inst:

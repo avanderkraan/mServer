@@ -48,7 +48,7 @@
         }
         else {
             $("#modelList").html(makeModelList(models));
-            $("#refreshModelList").attr("disabled", false);
+            $("#refreshModelList").removeAttr("disabled");
             $.each(models, function(index, value) {
             if (modelAndSavedRoleModel[index] == "independent") {
                 $('#standalone_' + index).trigger('click');
@@ -64,7 +64,7 @@
     function showModelIPList() {
         $("#modelList").html(makeModelList(modelIPs));
         $('#modelListPercentage').html('');
-        $("#refreshModelList").attr("disabled", false);
+        $("#refreshModelList").removeAttr("disabled");
         $.each(modelIPs, function(index, value) {
             if (modelAndSavedRoleModel[index] == "independent") {
                 $('#standalone_' + index).trigger('click');

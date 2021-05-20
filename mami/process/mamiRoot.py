@@ -70,6 +70,8 @@ class MamiRoot():
                  this gives a clue to find models in the same network
         """
         try:
+            cherrypy.request.headers['Pragma'] = 'no-cache'
+            cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
             return cherrypy.request.headers.get('Remote-Addr')
         except:
             return ''
@@ -81,6 +83,9 @@ class MamiRoot():
         using an external program like cron or by this program itself, say every 5 minutes
         """
         # start dynamic dictionary
+        cherrypy.request.headers['Pragma'] = 'no-cache'
+        cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
+
         now = datetime.now() 
         delta = timedelta(minutes=cache_delay)
         remove_objects = []
@@ -156,7 +161,8 @@ class MamiRoot():
         # end language stuff
 
         try:
-            #print (model_inventory) 
+            #print (model_inventory)
+            # TODO: use the database as data-source 
             data = Data()
             homepage_message = message.get(language, 'homepage_message')
 

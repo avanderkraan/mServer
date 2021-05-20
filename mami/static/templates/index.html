@@ -105,8 +105,7 @@
               <br>
               ${link_model_explanation}
             </div>
-
-            <input id="refreshModelList" type="button" onclick="refreshModelList();" value="${refresh_model_list}"/>
+            <button type="button" id="refreshModelList" class="btn btn-primary" onclick="refreshModelList();">${refresh_model_list}</button>
             <br>
             <span id="modelList"></span><span id="modelListPercentage"></span>
 
@@ -318,7 +317,9 @@ var models = {};     // contains a table with model data
 var modelIPs = {};   // contains a table with model ip addresses, given by the user   
 var checkIPs = {};   // contains the checked ips
 var mySetTimeout = {};       // contains the setTimeout object while checking IPs
-var searchIPTimeout = 400;   // starting searchTimeout in milliseconds for finding IPs
+
+// 400 seems too small for some WiFi environments
+var searchIPTimeout = 800 //400;   // starting searchTimeout in milliseconds for finding IPs
 
 var modelAndSavedRoleModel = {}; // contains the model as key and the saved roleModel id as value
 var modelMDNSSearchTimeout = 1500; // timeout for searching using mDNS in milliseconds
