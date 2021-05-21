@@ -150,7 +150,7 @@
         }
     }
 
-    function findIPs() {
+    function findIPs(myUrlToCheck) {
         // search for local ip addresses since mdns devices
         //   do not appear with this os/browser combination
         //   by using the ip address where the browser is active
@@ -160,7 +160,10 @@
             checkIPs[i] = false;
         }
 
-        var urlToCheck = window.location.href;
+        processIPResponse(0, myUrlToCheck, searchIPTimeout);
+        /*
+        var urlToCheck = myUrlToCheck;
+
         var xhr = new XMLHttpRequest();
         xhr.open('GET', urlToCheck + 'myip/', true);
 
@@ -179,6 +182,7 @@
         };
 
         xhr.send(null);
+        */
 
     }
 
@@ -201,8 +205,8 @@
             //mySearchIPTimeout = (counter+1) * 4 * 1000;
             //showModelIPList();
             //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
-//            if ((counter > 5) || (allTrue == true)) {
-            if ((counter > 3) || (allTrue == true)) {
+            if ((counter > 5) || (allTrue == true)) {
+            //if ((counter > 3) || (allTrue == true)) {
             //setTimeout(function (){
             //},mySearchIPTimeout);
 

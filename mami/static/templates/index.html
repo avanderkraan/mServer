@@ -157,6 +157,15 @@
         isMobile = true;  
     }
 
+    // urlToCheck is used to find models through the IP method
+    myUrlToCheck = $(location).attr('protocol') + 
+                   '//' + 
+                   $(location).attr('hostname') +
+                   ':' +
+                   $(location).attr('port') +
+                   '/';
+
+
     // get stored map data or use default
     if (getStored("longitude") == null) {
       store('longitude', storedLongitude);
@@ -319,7 +328,18 @@ var checkIPs = {};   // contains the checked ips
 var mySetTimeout = {};       // contains the setTimeout object while checking IPs
 
 // 400 seems too small for some WiFi environments
-var searchIPTimeout = 800 //400;   // starting searchTimeout in milliseconds for finding IPs
+var searchIPTimeout = 1000 //400;   // starting searchTimeout in milliseconds for finding IPs
+// TODO remove next line which is for testing the delay
+var myUrlToCheck = 'localhost/';
+
+searchIPTimeout = ${millis}; //400;   // starting searchTimeout in milliseconds for finding IPs
+searchIPTimeout = parseInt(searchIPTimeout);
+if (searchIPTimeout == -1) {
+  searchIPTimeout = 1000;
+}
+else {
+  $('#homepage_message').html(searchIPTimeout);
+}
 
 var modelAndSavedRoleModel = {}; // contains the model as key and the saved roleModel id as value
 var modelMDNSSearchTimeout = 1500; // timeout for searching using mDNS in milliseconds

@@ -126,6 +126,8 @@ class MamiRoot():
     def index(self, *args, **kwargs):
         template = mylookup.get_template('index.html')
 
+        millis = 'millis' in kwargs.keys() and kwargs.get('millis') or '-1'
+
         # start locale stuff
         locale_handle = LocaleHandle()
         text = locale_handle.text
@@ -173,6 +175,10 @@ class MamiRoot():
             unit_text = text.get(section, "unit_text")
             active_mills = text.get(section, 'active_mills')
             waiting = text.get(section, 'waiting')
+            waiting_for_ip = text.get(section, 'waiting_for_ip')
+            router_close_button = text.get(section, 'router_close_button')
+            router_clear_button = text.get(section, 'router_clear_button')
+            router_ok_button = text.get(section, 'router_ok_button')
             no_mdns = text.get(section, 'no_mdns')
             refresh_model_list = text.get(section, 'refresh_model_list')
             selected_rolemodel = text.get(section, 'selected_rolemodel')
@@ -208,6 +214,7 @@ class MamiRoot():
             clear_local_storage = text.get(section, 'clear_local_storage')
             molendatabase = text.get(section, 'molendatabase')
             return template.render_unicode(language_options = language_options,
+                                           millis = millis,
                                            homepage_message = homepage_message,
                                            model_inventory = model_inventory,
                                            all_mills = data.get_all_ids_properties(),
@@ -218,6 +225,10 @@ class MamiRoot():
                                            unit_text = unit_text,
                                            active_mills = active_mills,
                                            waiting = waiting,
+                                           waiting_for_ip = waiting_for_ip,
+                                           router_close_button = router_close_button,
+                                           router_clear_button = router_clear_button,
+                                           router_ok_button = router_ok_button,
                                            no_mdns = no_mdns,
                                            refresh_model_list = refresh_model_list,
                                            selected_rolemodel = selected_rolemodel,

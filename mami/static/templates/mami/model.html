@@ -36,15 +36,68 @@
         passIPAddress(modelId, modelUrl, "None", false);   // None is default setting for a model
     }
 
+    function checkRouterIP() {
+        $('#routerClearButton').removeAttr('disabled');
+        var ipAddress = $('#routerIP').val();
+        if (/^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/.test(ipAddress)) {
+/*
+        Explained:
+
+^ start of string
+  (?!0)         Assume IP cannot start with 0
+  (?!.*\.$)     Make sure string does not end with a dot
+  (
+    (
+    1?\d?\d|   A single digit, two digits, or 100-199
+    25[0-5]|   The numbers 250-255
+    2[0-4]\d   The numbers 200-249
+    )
+  \.|$ the number must be followed by either a dot or end-of-string - to match the last number
+  ){4}         Expect exactly four of these
+$ end of string
+*/
+            $('#routerOKButton').removeAttr('disabled');
+            store('router', ipAddress);
+        }
+    }
+
+    function routerAction(line) {
+        if (line.id == 'routerCloseButton') {
+            $('#refreshModelList').removeAttr('disabled');
+            $("#modelList").html('');
+        }
+        if (line.id == 'routerClearButton') {
+            $('#routerIP').val('');
+            $('#routerClearButton').attr('disabled', 'disabled');
+        }
+        if (line.id == 'routerOKButton') {
+            findIPs($('#routerIP').val());
+            $("#modelList").html('${waiting_for_ip}');
+        }
+    }
+
     function showModelList() {
-        //models = {}; // remove remark to test IP-search over mDNS search
+        models = {}; // remove remark to test IP-search over mDNS search
         if (Object.keys(models).length == 0) {
-            $("#modelList").html('${no_mdns}');
+            var modelListHTML = '${no_mdns}';
+            modelListHTML += '<div id="router">';
+            modelListHTML += '  <input type="text" id="routerIP" placeholder="192.168.0.1" onkeyup="checkRouterIP();"/>';
+            modelListHTML += '  <button type="button" id="routerCloseButton" class="btn btn-primary" onclick="routerAction(this);">${router_close_button}</button>';
+            modelListHTML += '  <button type="button" id="routerClearButton" class="btn btn-primary" onclick="routerAction(this);" disabled="disabled">${router_clear_button}</button>';
+            modelListHTML += '  <button type="button" id="routerOKButton" class="btn btn-primary" onclick="routerAction(this);" disabled="disabled">${router_ok_button}</button>';
+            modelListHTML += '</div>';
+            $("#modelList").html(modelListHTML);
+            if (getStored('router')) {
+                $('#routerIP').val(getStored('router'));
+                $('#routerOKButton').removeAttr('disabled');
+                $('#routerClearButton').removeAttr('disabled');
+            }
+
             $('#modelListPercentage').html('');
 
+
             // showModelIPList is called after leaving the recursive processIPResponse in connectModel.html
-            findIPs();
-            
+            //findIPs();        
         }
         else {
             $("#modelList").html(makeModelList(models));
