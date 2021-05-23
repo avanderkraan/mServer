@@ -180,6 +180,7 @@ class MamiRoot():
             router_clear_button = text.get(section, 'router_clear_button')
             router_ok_button = text.get(section, 'router_ok_button')
             no_mdns = text.get(section, 'no_mdns')
+            router_placeholder = text.get(section, 'router_placeholder')
             refresh_model_list = text.get(section, 'refresh_model_list')
             selected_rolemodel = text.get(section, 'selected_rolemodel')
             ok = text.get(section, 'ok')
@@ -230,6 +231,7 @@ class MamiRoot():
                                            router_clear_button = router_clear_button,
                                            router_ok_button = router_ok_button,
                                            no_mdns = no_mdns,
+                                           router_placeholder = router_placeholder,
                                            refresh_model_list = refresh_model_list,
                                            selected_rolemodel = selected_rolemodel,
                                            ok = ok,

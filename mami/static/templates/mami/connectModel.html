@@ -194,34 +194,33 @@
                 break;
             }
         }
+        // make sure all models are searched
+        // if one is found then the others will be found soon
+        if (Object.keys(modelIPs).length == 0) {
+            // keep on searching with
+            allTrue = false;
+        }
 
-        //var mySetTimeout ;
-        //var searchIPTimeout = 1000;
         for (var i=1; i < 256; i++) {
             findLocalModelsIP(i, response, mySearchIPTimeout, checkIPs[i]);
         }
 
-        mySetTimeout[counter] = setTimeout(function() {
-            //mySearchIPTimeout = (counter+1) * 4 * 1000;
-            //showModelIPList();
-            //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
-            if ((counter > 5) || (allTrue == true)) {
-            //if ((counter > 3) || (allTrue == true)) {
-            //setTimeout(function (){
-            //},mySearchIPTimeout);
-
-                for (var i=0; i<mySetTimeout.length;i++) {
-                    clearTimeout(mySetTimeout[i]);
-                }
-                showModelIPList();
-                return;   // leave recursive processIPResponse
+        if ((counter > 4) || (allTrue == true)) {
+            for (var i=0; i<mySetTimeout.length;i++) {
+                clearTimeout(mySetTimeout[i]);
             }
-            //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
-
-            processIPResponse(counter + 1, response, (counter+2) * mySearchIPTimeout);
-
-
-        }, mySearchIPTimeout);
+            showModelIPList();
+            return;   // leave recursive processIPResponse
+        }
+        else {
+            mySetTimeout[counter] = setTimeout(function() {
+                //mySearchIPTimeout = (counter+1) * 4 * 1000;
+                //showModelIPList();
+                //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
+                //$('#modelListPercentage').html(' ' + Math.round(100 - (100 / (counter + 1))) + '%');
+                processIPResponse(counter + 1, response, (counter+2) * mySearchIPTimeout);
+            }, mySearchIPTimeout);
+        }
     }
 
     function passIPAddress(modelId, modelUrl, roleModelId, standalone=false) {

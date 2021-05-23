@@ -81,10 +81,10 @@ $ end of string
         if (Object.keys(models).length == 0) {
             var modelListHTML = '${no_mdns}';
             modelListHTML += '<div id="router">';
-            modelListHTML += '  <input type="text" id="routerIP" placeholder="192.168.0.1" onkeyup="checkRouterIP();"/>';
-            modelListHTML += '  <button type="button" id="routerCloseButton" class="btn btn-primary" onclick="routerAction(this);">${router_close_button}</button>';
-            modelListHTML += '  <button type="button" id="routerClearButton" class="btn btn-primary" onclick="routerAction(this);" disabled="disabled">${router_clear_button}</button>';
+            modelListHTML += '  <input type="text" id="routerIP" placeholder="${router_placeholder}" onkeyup="checkRouterIP();"/>';
             modelListHTML += '  <button type="button" id="routerOKButton" class="btn btn-primary" onclick="routerAction(this);" disabled="disabled">${router_ok_button}</button>';
+            modelListHTML += '  <button type="button" id="routerClearButton" class="btn btn-primary" onclick="routerAction(this);" disabled="disabled">${router_clear_button}</button>';
+            modelListHTML += '  <button type="button" id="routerCloseButton" class="btn btn-primary" onclick="routerAction(this);">${router_close_button}</button>';
             modelListHTML += '</div>';
             $("#modelList").html(modelListHTML);
             if (getStored('router')) {

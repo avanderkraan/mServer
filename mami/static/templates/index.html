@@ -328,14 +328,14 @@ var checkIPs = {};   // contains the checked ips
 var mySetTimeout = {};       // contains the setTimeout object while checking IPs
 
 // 400 seems too small for some WiFi environments
-var searchIPTimeout = 1000 //400;   // starting searchTimeout in milliseconds for finding IPs
+var searchIPTimeout = 100 //400;   // starting searchTimeout in milliseconds for finding IPs
 // TODO remove next line which is for testing the delay
 var myUrlToCheck = 'localhost/';
 
 searchIPTimeout = ${millis}; //400;   // starting searchTimeout in milliseconds for finding IPs
 searchIPTimeout = parseInt(searchIPTimeout);
 if (searchIPTimeout == -1) {
-  searchIPTimeout = 1000;
+  searchIPTimeout = 100;
 }
 else {
   $('#homepage_message').html(searchIPTimeout);
