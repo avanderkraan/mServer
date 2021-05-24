@@ -88,6 +88,18 @@ class Database():
             print(inst, 'Check the credentials')
             return None
 
+    def _update_db(self, db_query):
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(db_query)
+            result = cursor.fetchone()
+            self.connection.commit()
+            self.connection.close()
+            return result
+        except Exception as inst:
+            print(inst, 'Check the credentials')
+            return None
+
     def get_features_as_json(self):
         '''
         {
@@ -294,4 +306,30 @@ class Database():
             if id in item:
                 return True
         return False
+
+    def write_sender_statistics(self, id=None, revolutions=0):
+        '''
+        '''
+        my_query = "SELECT `revolution_count` \
+                    FROM `mami_statistic`.`sender` \
+                    WHERE `id_sender` = '%s' \
+                    ORDER BY `id` DESC LIMIT 1;" \
+                    % id
+
+        result = self._get_result(my_query)
+        last_counter_value = 0
+        for item in result:
+            if len(item) > 0:
+                last_counter_value = item[0]
+
+        # have to make a new connection because self._get_result closed it
+        self.db_connection = DatabaseConnection()
+        self.connection = self.db_connection.get_connection()
+
+        if (id != None and int(revolutions) not in (0, last_counter_value)):
+            my_query = "INSERT \
+                INTO `mami_statistic`.`sender` \
+                (`id_sender`, `revolution_count`) \
+                VALUES ('%s', '%d');" % (id, int(revolutions))
+            result = self._update_db(my_query)
 

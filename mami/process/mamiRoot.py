@@ -4,6 +4,7 @@ Created on Jan 11, 2018
 @author: andre
 '''
 
+from re import I
 import cherrypy
 import os
 import json
@@ -383,6 +384,16 @@ class MamiRoot():
                                    #'showData':showData,
                                    #'message':message
                                    }
+            try:
+                if (int(rph) > 0):  # write only when there is movement
+                    database = Database()
+                    database.write_sender_statistics(id=feature_id, 
+                                                     revolutions=revolutions)
+
+
+            except:
+                pass  # error while writing to the database
+
         except Exception as inst:
 
             print('most likely, mac_address is None', inst)
