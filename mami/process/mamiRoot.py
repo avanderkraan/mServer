@@ -318,11 +318,11 @@ class MamiRoot():
         cherrypy.response.headers["Connection"] = "keep-alive"
         cherrypy.response.headers["Pragma"] = "no-cache"
         if feature_id:
-            result = self._get_data().get(feature_id)
-            result = result or {}
-            print('a a a', result)
+            # TODO: do something eith the feature data in the popup?
+            # for now: not using these values
+            # result = self._get_data().get(feature_id)
+            result = {}
             now = datetime.now().strftime('%Y-%m-%d')
-            print(now)
             database = Database()
             statistics = database.get_sender_statistics(id=feature_id,
                                                         from_date=now,
