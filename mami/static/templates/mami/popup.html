@@ -8,7 +8,7 @@
         border: 1px solid #cccccc;
         bottom: 12px;
         left: -50px;
-        min-width: 200px;
+        min-width: 270px;
     }
     
     .ol-popup:after,
@@ -56,10 +56,6 @@
     var content = document.getElementById('popup-content');
     var closer = document.getElementById('popup-closer');
 
-    /* create a text as content for a popup
-     */
-    var popupText = '';
-
     /**
      * Create an overlay to anchor the popup to the map.
      */
@@ -95,7 +91,8 @@
             var numberStart = selectedId.indexOf("_");
             if (numberStart > -1) {
                 var tenbruggencatenummer = selectedId.substring(numberStart + 1);
-                popupTitle = "<div id=\"popup_" + selectedId + "\" >";
+                popupTitle = "${molendatabase}";
+                popupTitle += "<div id=\"popup_" + selectedId + "\" >";
                 popupTitle += "<form target=\"_blank\"";
                 popupTitle += " id=\"molendatabase_" + selectedId + "\"";
                 popupTitle += " onclick=\"submitForm('" + selectedId + "');\"";
@@ -105,23 +102,33 @@
                 popupTitle += ">";
                 popupTitle += "<input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\">\n";
                 popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\">";
+                popupTitle += "<strong>";
                 popupTitle += feature.values_.name;
                 popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\"</div>";
+                popupTitle += "</strong>";
                 popupTitle += "</span>\n";
                 popupTitle += "</form>\n";
             }
-            content.innerHTML = "${molendatabase}" + "<br>" + popupTitle;
 
             if (selectedId != undefined) {
                 $.getJSON("get_data_as_json/?feature_id=" + selectedId)
                     .done(function(data) {
-                        var popupText = "<ul style=\"list-style-type:none\">";
+                        /* create a text as content for a popup
+                        */
+                        var popupText = "<ul style=\"list-style-type:square\">";
                         $.each(data, function(key, val) {
                             // data: name, bpm, nr_blades
+                            popupText += "<li>";
+                            if (key == "day_counter") {
+                                key = "${day_counter}";
+                            }
+                            popupText += key + " " + val;
+                            popupText += "</li>"
                         });
 
                         popupText += "</ul>";
-                        content.innerHTML += popupText; //'<p>You clicked here:</p><code>' + hdms + '</code>';
+
+                        content.innerHTML = popupTitle + popupText;
                     })
             };
         }

@@ -215,6 +215,7 @@ class MamiRoot():
             hide_local_storage = text.get(section, 'hide_local_storage')
             clear_local_storage = text.get(section, 'clear_local_storage')
             molendatabase = text.get(section, 'molendatabase')
+            day_counter = text.get(section, 'day_counter')
             return template.render_unicode(language_options = language_options,
                                            millis = millis,
                                            homepage_message = homepage_message,
@@ -265,7 +266,8 @@ class MamiRoot():
                                            show_local_storage = show_local_storage,
                                            hide_local_storage = hide_local_storage,
                                            clear_local_storage = clear_local_storage,
-                                           molendatabase = molendatabase
+                                           molendatabase = molendatabase,
+                                           day_counter = day_counter
                                            ).encode('utf-8', 'replace')
         except Exception as inst:
             print(inst)
@@ -317,8 +319,22 @@ class MamiRoot():
         cherrypy.response.headers["Pragma"] = "no-cache"
         if feature_id:
             result = self._get_data().get(feature_id)
-            if result:
-                return json.dumps(result).encode('utf-8', 'replace')
+            result = result or {}
+            print('a a a', result)
+            now = datetime.now().strftime('%Y-%m-%d')
+            print(now)
+            database = Database()
+            statistics = database.get_sender_statistics(id=feature_id,
+                                                        from_date=now,
+                                                        last_date=now)
+            if len(statistics) > 0:
+                day_counter = 0
+                try:
+                    day_counter = statistics[-1][3] - statistics[0][3]
+                    result.update({'day_counter': '%s' % day_counter})
+                except:
+                    pass
+            return json.dumps(result).encode('utf-8', 'replace')
         return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
     @cherrypy.expose
@@ -442,7 +458,7 @@ class MamiRoot():
             cherrypy.response.headers["Content-Type"] = "application/json"
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
-            print(rawbody)
+            #print(rawbody)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
             revolutions = body.get('data').get('r')  # revolutions of the axis with blades
@@ -594,7 +610,7 @@ class MamiRoot():
 
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
-            print(rawbody, cl)
+            #print(rawbody, cl)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
             uuid = body.get('data').get('key')        # deviceKey

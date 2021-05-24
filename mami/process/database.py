@@ -309,6 +309,7 @@ class Database():
 
     def write_sender_statistics(self, id=None, revolutions=0):
         '''
+        Get last record and if the input is greater, than insert a new row
         '''
         my_query = "SELECT `revolution_count` \
                     FROM `mami_statistic`.`sender` \
@@ -332,4 +333,17 @@ class Database():
                 (`id_sender`, `revolution_count`) \
                 VALUES ('%s', '%d');" % (id, int(revolutions))
             result = self._update_db(my_query)
+
+    def get_sender_statistics(self, id=None, from_date=None, last_date=None):
+        '''
+        Gets statistics from the sender table, including the dates mentioned
+        '''
+        my_query = "SELECT `id`, `id_sender`, `change_date`, `revolution_count` \
+                    FROM `mami_statistic`.`sender` \
+                    WHERE `id_sender` = '%s' \
+                        AND date(change_date) >= '%s' AND date(change_date) <= '%s';" \
+                    % (id, from_date, last_date)
+
+        result = self._get_result(my_query)
+        return result
 
