@@ -118,12 +118,14 @@
                         var popupText = "<ul style=\"list-style-type:square\">";
                         $.each(data, function(key, val) {
                             // data: name, bpm, nr_blades
+                            
                             popupText += "<li>";
                             if (key == "day_counter") {
                                 key = "${day_counter}";
                             }
                             popupText += key + " " + val;
                             popupText += "</li>"
+                            
                         });
 
                         popupText += "</ul>";

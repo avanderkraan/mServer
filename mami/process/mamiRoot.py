@@ -330,7 +330,7 @@ class MamiRoot():
             if len(statistics) > 0:
                 day_counter = 0
                 try:
-                    day_counter = statistics[-1][3] - statistics[0][3]
+                    day_counter = statistics[-1][3] #statistics[-1][3] - statistics[0][3]
                     result.update({'day_counter': '%s' % day_counter})
                 except:
                     pass
@@ -402,8 +402,10 @@ class MamiRoot():
                                    }
             try:
                 if (int(rph) > 0):  # write only when there is movement
+                    now = datetime.now().strftime('%Y-%m-%d')
                     database = Database()
-                    database.write_sender_statistics(id=feature_id, 
+                    database.write_sender_statistics(id=feature_id,
+                                                     change_date = now,
                                                      revolutions=revolutions)
 
 

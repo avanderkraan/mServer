@@ -307,32 +307,52 @@ class Database():
                 return True
         return False
 
-    def write_sender_statistics(self, id=None, revolutions=0):
+    def write_sender_statistics(self, id=None, change_date='', revolutions=0):
         '''
         Get last record and if the input is greater, than insert a new row
         '''
         my_query = "SELECT `revolution_count` \
                     FROM `mami_statistic`.`sender` \
                     WHERE `id_sender` = '%s' \
-                    ORDER BY `id` DESC LIMIT 1;" \
-                    % id
+                        AND date(change_date) >= '%s' AND date(change_date) <= '%s' \
+                    ORDER BY `id` ASC LIMIT 1;" \
+                    % (id, change_date, change_date)
+
 
         result = self._get_result(my_query)
         last_counter_value = 0
         for item in result:
             if len(item) > 0:
                 last_counter_value = item[0]
-
+        
         # have to make a new connection because self._get_result closed it
         self.db_connection = DatabaseConnection()
         self.connection = self.db_connection.get_connection()
 
-        if (id != None and int(revolutions) not in (0, last_counter_value)):
-            my_query = "INSERT \
-                INTO `mami_statistic`.`sender` \
-                (`id_sender`, `revolution_count`) \
-                VALUES ('%s', '%d');" % (id, int(revolutions))
-            result = self._update_db(my_query)
+        # write to database when new values have arrived
+        if id != None and last_counter_value > 0:
+            # if revolutions > last_counter_value then add difference
+            # otherwise: add the new revoltions value
+            #   this happens because the sender sets the number
+            #   of revolutions to 0 when rebooting
+            new_counter_value = int(revolutions) - last_counter_value
+            if new_counter_value < 0:
+                new_counter_value = last_counter_value + int(revolutions)
+
+            if len(result) == 0:  # new record
+                my_query = "INSERT \
+                    INTO `mami_statistic`.`sender` \
+                    (`id_sender`, `revolution_count`) \
+                    VALUES ('%s', '%d');" \
+                    % (id, new_counter_value)
+                result = self._update_db(my_query)
+            else:  # existing record
+                my_query = "UPDATE `mami_statistic`.`sender` \
+                    SET `revolution_count` = '%d' \
+                    WHERE `id_sender` = '%s' \
+                        AND date(`change_date`) = '%s';" \
+                    % (new_counter_value, id, change_date)
+                result = self._update_db(my_query)
 
     def get_sender_statistics(self, id=None, from_date=None, last_date=None):
         '''
@@ -341,7 +361,8 @@ class Database():
         my_query = "SELECT `id`, `id_sender`, `change_date`, `revolution_count` \
                     FROM `mami_statistic`.`sender` \
                     WHERE `id_sender` = '%s' \
-                        AND date(change_date) >= '%s' AND date(change_date) <= '%s';" \
+                        AND date(change_date) >= '%s' AND date(change_date) <= '%s' \
+                    ORDER BY `change_date` ASC;" \
                     % (id, from_date, last_date)
 
         result = self._get_result(my_query)
