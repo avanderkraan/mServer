@@ -1,60 +1,105 @@
 <script>
+
 function getValue(feature) {
-    var value = Math.round(parseInt(feature.get('rph') * parseInt(feature.get('blades')) / 60));
-    if (unit == 'rpm') {
-      var value = Math.round(parseInt(feature.get('rph')) / 60);  // == ends
-    }
-    value = value.toString();
+	var value = Math.round(parseInt(feature.get('rph') * parseInt(feature.get('blades')) / 60));
+	if (unit == 'rpm') {
+	var value = Math.round(parseInt(feature.get('rph')) / 60);
+	}
+	value = value.toString();
 	if (isNaN(value)) {
 		value="-";
-	} 
+	}
 	return value;
+}
+
+
+function rotate(feature) {
+	// bladesIntervalFactor is a global variable, depends on the setInterval, see index.html
+	var rotationValue = Math.round(parseInt(feature.get('rph')) / 60);
+	if (isNaN(rotationValue)) {
+		rotationAngle[feature.getId()] = 45 * Math.PI/180;
+		return rotationAngle[feature.getId()];
+	}
+	else {
+		var nrBlades = parseInt(feature.get('blades'));
+		rotationAngle[feature.getId()] += (rotationValue * nrBlades)/bladesIntervalFactor * Math.PI;
+		if (rotationAngle[feature.getId()] > 2 * Math.PI) {
+			rotationAngle[feature.getId()] = 0;
+		}
+		return rotationAngle[feature.getId()] * -1;
+	}
 }
 
 // start styleFunction for features
 function styleFunction(feature, resolution) {
 	var value = "0";
+
 	var zIndexNumber = 0;
 	if (getStored("focus") == feature.getId()) {
 		zIndexNumber = 1;
 	}
 
 	var millImage = new ol.style.Icon({
-		anchor: [0.5, 46],
-		anchorXUnits: 'fraction',
+		anchor: [160, 160],
+		anchorXUnits: 'pixels',
 		anchorYUnits: 'pixels',
-		src: 'static/images/mill.png',
-		opacity: 0.75,
+		src: 'static/images/amill2.png',
+    	opacity: 0.75,
 		// the real size of your icon
 		//size: [10, 10],
 		// the scale factor
-		scale: 0.03
+		scale: 0.08
 	});
 
 	var openMillImage = new ol.style.Icon({
-		anchor: [0.5, 46],
-		anchorXUnits: 'fraction',
+		anchor: [160, 160],
+		anchorXUnits: 'pixels',
 		anchorYUnits: 'pixels',
-		src: 'static/images/open_mill.png',
+		src: 'static/images/amill2_blue.png',
+		//anchor: [0.5, 46],
+		//anchorXUnits: 'fraction',
+		//anchorYUnits: 'pixels',
+		//src: 'static/images/open_mill.png',
 		opacity: 0.75,
 		// the real size of your icon
 		//size: [10, 10],
 		// the scale factor
-		scale: 0.03
+		scale: 0.08
 	});
 
 	var selectedMillImage = new ol.style.Icon({
-		anchor: [0.5, 46],
-		anchorXUnits: 'fraction',
+		anchor: [160, 160],
+		anchorXUnits: 'pixels',
 		anchorYUnits: 'pixels',
-		src: 'static/images/green_mill.png',
+		src: 'static/images/amill2_green.png',
+		//anchor: [0.5, 46],
+		//anchorXUnits: 'fraction',
+		//anchorYUnits: 'pixels',
+		//src: 'static/images/green_mill.png',
 		opacity: 0.75,
 		// the real size of your icon
 		//size: [10, 10],
 		// the scale factor
-		scale: 0.03
+		scale: 0.08
 	});
 
+	/*
+	var millBladesRotation = new ol.style.Icon({
+		anchor: [160, 160],
+		anchorXUnits: 'pixels',
+		anchorYUnits: 'pixels',
+		src: 'static/images/ax1.png',
+		//src: 'static/images/ezgif.com-gif-maker.png',
+    	opacity: 0.75,
+		rotation: rotate(feature),
+		//rotation: rotate(feature),
+		// the real size of your icon
+		//size: [10, 10],
+		// the scale factor
+		scale: 0.08
+	});
+    */
+   
 	var workingMillText = new ol.style.Text({
 		font: '18px Calibri,sans-serif',
 		fill: new ol.style.Fill({
@@ -64,7 +109,7 @@ function styleFunction(feature, resolution) {
 			color: 'rgba(0, 0, 255, 0.6)'
 		}),
         padding: [0,5,0,5],
-		text: value,
+		text: getValue(feature),
 		offsetX: -20,
 		offsetY: 20
 	});
@@ -78,7 +123,7 @@ function styleFunction(feature, resolution) {
 			color: 'rgba(0, 128, 0, 0.6)'
 		}),
         padding: [0,5,0,5],
-		text: value,
+		text: getValue(feature),
 		offsetX: -20,
 		offsetY: 20
 	});
@@ -110,11 +155,18 @@ function styleFunction(feature, resolution) {
 	});
 
 	var validMillStyle = new ol.style.Style({
-		image: millImage, //validMillImage,
+		image: millImage, //Base, //validMillImage,
 		zIndex: zIndexNumber,
 	    text: validMillText	
 	});
 	
+	/*
+	var millBladesRotationStyle = new ol.style.Style({
+		image: millBladesRotation,
+		zIndex: zIndexNumber  //,
+	    //text: validMillText	
+	});
+    */
 	/*
 	var name = "";
 	var nameText = new ol.style.Text({
@@ -155,6 +207,10 @@ function styleFunction(feature, resolution) {
 
 	if (feature.getId() == selectedId) {
 		selectedMillText.setText(getValue(feature));
+		store("focus", feature.getId());
+
+		//selectedMillText.setText(getValue(feature));
+		/*
 		$.each(featureSource.getFeatures(), function(my_index, my_feature) {
 			my_feature.set("zindex", 0);  // all others
 		});
@@ -162,11 +218,13 @@ function styleFunction(feature, resolution) {
 		store("focus", feature.getId());
 
 		selectedMillStyle.setZIndex(feature.get("zindex"));
+		*/
 		//return [selectedMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1 en geselecteerd
         return [selectedMillStyle];
 	}
 	else if (feature.getId() in senderData) {
 		workingMillText.setText(getValue(feature));
+		//workingMillText.setText(getValue(feature));
 		//workingMillStyle.setZIndex(feature.get("zindex"));
 		//return [workingMillStyle, messageStyle, nameStyle];  // bij molen in feature met bpm > -1
         return [workingMillStyle];
@@ -174,8 +232,39 @@ function styleFunction(feature, resolution) {
 	else {
 		//return [validMillStyle, messageStyle, nameStyle];  // bij molen zonder data maar wel aanwezig in featureSource
 		//validMillStyle.setZIndex(feature.get("zindex"));
+		//return [validMillStyle];
+		//return [validMillStyle, validMillStyleRotation];
 		return [validMillStyle];
+
 	}
+}
+//end styleFunction for features
+
+
+// start styleFunction for features
+function styleRotationFunction(feature, resolution) {
+
+	var millBladesRotation = new ol.style.Icon({
+		anchor: [160, 160],
+		anchorXUnits: 'pixels',
+		anchorYUnits: 'pixels',
+		src: 'static/images/ax1.png',
+		//src: 'static/images/ezgif.com-gif-maker.png',
+    	opacity: 0.75,
+		rotation: rotate(feature),
+		// the real size of your icon
+		//size: [10, 10],
+		// the scale factor
+		scale: 0.08
+	});
+
+	var millBladesRotationStyle = new ol.style.Style({
+		image: millBladesRotation,
+		zIndex: feature.get('zindex')  //,
+	    //text: validMillText	
+	});
+
+	return [millBladesRotationStyle]
 }
 //end styleFunction for features
 </script>

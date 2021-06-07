@@ -8,6 +8,16 @@
         })
     });
 
+    
+    var wiekenLayer = new ol.layer.Vector({
+        title: 'wieken',
+        opacity: 1,
+        source: new ol.source.Vector({
+            features: []
+        })
+    });
+    
+
     var mapLayer = new ol.layer.Tile({
         opacity: 0.8,
         source: new ol.source.OSM()
@@ -24,6 +34,7 @@
         layers: [
             mapLayer,
             molenLayer,
+            wiekenLayer
         ],
         view: view
       });
@@ -36,7 +47,7 @@
         layers: [molenLayer],
         style: false
     });
-    var select = selectClick;
+    //var select = selectClick;
 
     // start event on map
     map.on('click', function(evt) {
@@ -53,8 +64,9 @@
         if (feature) {
             popup(feature);
             selectedId = feature.getId();
+            refresh();
         }
-        refresh();
+    
     });
 
     map.on("pointermove", function (evt) {

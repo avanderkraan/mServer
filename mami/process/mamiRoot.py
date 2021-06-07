@@ -477,6 +477,7 @@ class MamiRoot():
             #backwards compatible for sender 0.1.2 and before
             #{"data": {"revolutions":"0","rawCounter":"6","viewPulsesPerMinute":"0","firmwareVersion":"0.1.2",
             # "deviceKey":"88888888-4444-4444-4444-121212121212","macAddress":"A0:20:A6:14:85:06","isOpen":"1","showData":"1","message":""}}'
+            '''
             backwards_compatibility_on = False
             if revolutions == None:
                 revolutions = body.get('data').get('revolutions')
@@ -490,14 +491,13 @@ class MamiRoot():
                 uuid = body.get('data').get('deviceKey')
             if macAddress == None:
                 macAddress = body.get('data').get('macAddress')
-
+            '''
             # rph is needed for the models, revolutions per hour, to get a big enough number
             rph = None
             try:
                 rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
             except:
                 pass
-
 
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
@@ -508,8 +508,9 @@ class MamiRoot():
 
             try:
                 previous_rph = mac_address_sender.get(macAddress).get("stored_rph")
-                if (int(rph) == 0) and (previous_rph > self.max_delta):
-                    rph = str(int(previous_rph - self.max_delta))
+                # slowly lower rph value when it is suddenly 0
+                #if (int(rph) == 0) and (previous_rph > self.max_delta):
+                #    rph = str(int(previous_rph - self.max_delta))
             except:
                 pass
             try: 
@@ -555,6 +556,7 @@ class MamiRoot():
 
             result = {}
 
+            '''
             if backwards_compatibility_on == True:
                 #        "84:CC:A8:A3:09:11": { "comment": "(Tweemanspolder) Nr.3",
                 #        "A0:20:A6:29:18:13": { "comment": "de Roos",
@@ -570,10 +572,11 @@ class MamiRoot():
                             "proposedUUID": uuid,  # TODO: change this 
                             "pushFirmware" : feed_counter == -1 and "latest" or "",
                             "macAddress": macAddress})
-            else:
-                result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
-                            "pFv" : feed_counter == -1 and "latest" or ""
-                            })
+            '''
+            #else:
+            result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
+                        "pFv" : feed_counter == -1 and "latest" or ""
+                        })
 
             result_string = json.dumps(result)
             cherrypy.response.headers["Content-Length"] = len(result_string)

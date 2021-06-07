@@ -222,6 +222,12 @@
     }
     showUnit();
 
+    // set interval for spinning blades
+    setInterval(function() {
+      showRotation();
+    }, bladesInterval);
+    
+
   });
   </script>
 
@@ -243,6 +249,9 @@ function selectTab(tabId) {
   $(tabId).trigger('click');
 }
 
+function showRotation() {
+  wiekenLayer.setStyle(styleRotationFunction);
+}
 
 function refresh() {
     // set bpm in all features
@@ -256,24 +265,34 @@ function refresh() {
       var featureId = feature.getId();
       var featureData = senderData[featureId];
 
-        perMillData = {};  // data per mill
-        if (featureData !== undefined) {
-          feature.set("name", featureData["name"]);
-          feature.set("rph", featureData["rph"]);
-          feature.set("blades", featureData["blades"]);
-          //feature.set("message", featureData["message"]);
-          
-          perMillData["id"] = featureId;
-          perMillData["name"] = featureData["name"];
-          //perMillData["bpm"] = featureData["bpm"];
-          perMillData["rph"] = featureData["rph"]
-          perMillData["blades"] = featureData["blades"]
-          //perMillData["message"] = featureData["message"];
-          millData[featureId] = perMillData;
+      perMillData = {};  // data per mill
+      if (featureData !== undefined) {
+        feature.set("name", featureData["name"]);
+        feature.set("rph", featureData["rph"]);
+        feature.set("blades", featureData["blades"]);
+        //feature.set("message", featureData["message"]);
+        //feature.set("rph", 3600 / 4);
+
+        // settings for map
+        feature.set("zindex", 0);
+        if (getStored("focus") == feature.getId()) {
+          feature.set("zindex", 1);
         }
+
+        perMillData["id"] = featureId;
+        perMillData["name"] = featureData["name"];
+        //perMillData["bpm"] = featureData["bpm"];
+        perMillData["rph"] = featureData["rph"]
+        perMillData["blades"] = featureData["blades"]
+        //perMillData["message"] = featureData["message"];
+        millData[featureId] = perMillData;
+      }
     });
+
     molenLayer.setSource(featureSource);
     molenLayer.setStyle(styleFunction);
+
+    wiekenLayer.setSource(featureSource);
     
     showRoleModelListData();
 }
@@ -349,6 +368,11 @@ var maxIndependentSpeedInRPM = 60; // arbitrary max speed in revolutions per min
 var independentSpeed = {};         // contains the speed per modelName for a stand alone model
 var allMills = ${all_mills};       // contains all mills from the features
 var filteredMillsList = {};        // contains mills after a search entry
+
+var rotationAngle = [];            // for rotation, per feature
+var bladesInterval = 100;          // for rotation, in msec
+var bladesIntervalFactor = 600 ; // bladesInterval;  // for rotation, per minute
+
 
 var featureSource = new ol.source.Vector({
     url: "static/data/features.json",

@@ -10,7 +10,7 @@
         var xhr = new XMLHttpRequest();
         xhr.timeout = modelMDNSSearchTimeout;
         //console.log('UNSENT', xhr.readyState); // readyState will be 0
-        xhr.open('GET', urlToCheck + '/_mdns/', true);
+        xhr.open('GET', urlToCheck + '/_mdns/?name=' + encodeURIComponent(document.location), true);
         //console.log('OPENED', xhr.readyState); // readyState will be 1
 
         xhr.onprogress = function() {
@@ -100,7 +100,7 @@
             checkIPs[number] = true;
             var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
 
-            urlToCheck = urlToCheck + number.toString() + '/_ip/';
+            urlToCheck = urlToCheck + number.toString() + '/_ip/?name=' + encodeURIComponent(document.location);
 
             // and remember the jqXHR object for this request
             var xhr = new XMLHttpRequest();
