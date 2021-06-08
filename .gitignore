@@ -1,0 +1,8 @@
+.*
+!.gitignore
+
+server/ssl
+mami/db/*
+
+__pycache__
+*.pyc

@@ -309,58 +309,75 @@ class Database():
 
     def write_sender_statistics(self, id=None, change_date='', revolutions=0):
         '''
-        Get last record and if the input is greater, than insert a new row
+        Get last record, calculate the new values and write the result back
         '''
-        my_query = "SELECT `revolution_count` \
-                    FROM `mami_statistic`.`sender` \
-                    WHERE `id_sender` = '%s' \
-                        AND date(change_date) >= '%s' AND date(change_date) <= '%s' \
-                    ORDER BY `id` ASC LIMIT 1;" \
-                    % (id, change_date, change_date)
+        if id != None and int(revolutions) > 0:
+            my_query = "SELECT `previous_count`, `latest_count`, `revolution_count` \
+                        FROM `mami_statistic`.`sender` \
+                        WHERE `id_sender` = '%s' \
+                            AND date(`change_date`) >= '%s' AND date(`change_date`) <= '%s' \
+                        ORDER BY `id` ASC LIMIT 1;" \
+                        % (id, change_date, change_date)
 
+            result = self._get_result(my_query)
 
-        result = self._get_result(my_query)
-        last_counter_value = 0
-        for item in result:
-            if len(item) > 0:
-                last_counter_value = item[0]
-        
-        # have to make a new connection because self._get_result closed it
-        self.db_connection = DatabaseConnection()
-        self.connection = self.db_connection.get_connection()
-
-        # write to database when new values have arrived
-        if id != None and last_counter_value > 0:
-            # if revolutions > last_counter_value then add difference
-            # otherwise: add the new revoltions value
-            #   this happens because the sender sets the number
-            #   of revolutions to 0 when rebooting
-            new_counter_value = int(revolutions) - last_counter_value
-            if new_counter_value < 0:
-                new_counter_value = last_counter_value + int(revolutions)
-
-            if len(result) == 0:  # new record
-                my_query = "INSERT \
+            set_new_value_query = ''
+            if len(result) == 0:
+                # means a new day, previous_count stays null/None
+                # current record is not a reliable daycounter value
+                set_new_value_query = "INSERT \
                     INTO `mami_statistic`.`sender` \
-                    (`id_sender`, `revolution_count`) \
-                    VALUES ('%s', '%d');" \
-                    % (id, new_counter_value)
-                result = self._update_db(my_query)
-            else:  # existing record
-                my_query = "UPDATE `mami_statistic`.`sender` \
-                    SET `revolution_count` = '%d' \
+                    (`id_sender`, `latest_count`, `revolution_count`) \
+                    VALUES ('%s', '%d', '%d');" \
+                    % (id, int(revolutions), int(revolutions))
+            else:
+                previous_count = result[0][0]
+                latest_count = result[0][1]
+                revolution_count = result[0][2]
+
+                # if previous_count == None then it is the first entry of the day
+                if previous_count == None:
+                    previous_count = latest_count
+                    revolution_count = 0
+                else:
+                    if int(revolutions) < previous_count:
+                        # caused by a restart of the sender, internally counter = 0
+                        revolution_count += int(revolutions)
+                        latest_count = int(revolutions)
+
+                    if int(revolutions) > previous_count:
+                        # sender is internally accumulated
+                        revolution_count += int(revolutions) - previous_count
+                        latest_count = int(revolutions)
+
+                previous_count = latest_count
+
+                set_new_value_query = "UPDATE `mami_statistic`.`sender` \
+                    SET `previous_count` = '%d', \
+                        `latest_count` = '%d', \
+                        `revolution_count` = '%d' \
                     WHERE `id_sender` = '%s' \
                         AND date(`change_date`) = '%s';" \
-                    % (new_counter_value, id, change_date)
-                result = self._update_db(my_query)
+                    % (previous_count, latest_count, revolution_count, id, change_date)
+
+            # have to make a new connection because self._get_result closed it
+            self.db_connection = DatabaseConnection()
+            self.connection = self.db_connection.get_connection()
+
+            # write to database when new values have arrived
+            if id != None and int(revolutions) > 0:
+                result = self._update_db(set_new_value_query)
+
 
     def get_sender_statistics(self, id=None, from_date=None, last_date=None):
         '''
         Gets statistics from the sender table, including the dates mentioned
+        If previous_count == null/None then the revolution_count is unreliable
         '''
         my_query = "SELECT `id`, `id_sender`, `change_date`, `revolution_count` \
                     FROM `mami_statistic`.`sender` \
                     WHERE `id_sender` = '%s' \
+                        AND `previous_count` IS NOT NULL \
                         AND date(change_date) >= '%s' AND date(change_date) <= '%s' \
                     ORDER BY `change_date` ASC;" \
                     % (id, from_date, last_date)
