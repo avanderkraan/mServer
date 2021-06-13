@@ -28,6 +28,8 @@ import json
 import cherrypy
 from mami import current_dir, data_file
 
+# deprecated by using a database
+'''
 class Data(object):
     def __init__(self):
         self.filename = data_file
@@ -72,7 +74,7 @@ class Data(object):
             pass
         return ids
 
-    '''
+    ''
     def get_feature_from_uuid(self, uuid=None):
         # search uuid and return the corresponding feature, using the feature_id
         try:
@@ -83,7 +85,7 @@ class Data(object):
                     return self.get_feature(_id=id) 
         except:
             return None
-    '''
+    ''
 
     def get_feature_from_mac_address(self, mac_address=None):
         # search mac_address and return the corresponding feature, using the feature_id
@@ -106,6 +108,7 @@ class Data(object):
         except:
             pass
         return my_feature
+    '''
     
 if __name__ == '__main__':
     pass

@@ -5,12 +5,13 @@ Created on Jan 11, 2018
 '''
 
 from re import I
+import uuid
 import cherrypy
 import os
 import json
 from datetime import datetime, timedelta
 from copy import deepcopy
-from mami.io.data import Data
+#from mami.io.data import Data
 from mami.process.update import Update
 from mami.process.validate import validate_model, validate_role_model
 #from mako import exceptions
@@ -19,7 +20,8 @@ from mami import module_dir
 from mami import cache_delay
 from mami import sse_timeout
 from mami import data_file
-from mami.process.database import Database
+from mami.sql.database import Database
+from mami.sql.statistics import Statistics
 
 from mami.locale.properties import LocaleHandle
 
@@ -44,6 +46,9 @@ mac_address_model = {}   # holds data from model wih mac_address as key
 class MamiRoot():
     def __init__(self, media_dir=''):
         print ('entered MamiRoot')
+        # to protect features from being exposed too easily
+        self.get_features_code = str(uuid.uuid4())
+
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
         self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour if an update is nessecary
         self.max_eat_counter = 12 * 60  # with every 5 sec request, check every 1 hour if an update is nessecary
@@ -51,6 +56,18 @@ class MamiRoot():
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
+    @cherrypy.expose
+    def get_features_from_sql(self, f=None):
+        cherrypy.request.headers['Pragma'] = 'no-cache'
+        cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
+        if f == self.get_features_code:
+            database = Database()
+            #features_as_json = json.loads(database.get_features_as_json())
+            return database.get_features_as_json().encode('utf-8', 'replace')
+        else:
+            return '{"Availability": "None"}'.encode('utf-8', 'replace')
+
+    '''
     @cherrypy.expose
     def refresh_features(self):
         cherrypy.request.headers['Pragma'] = 'no-cache'
@@ -62,7 +79,9 @@ class MamiRoot():
         self._cleancache()
         newUrl = '%s%s' % (cherrypy.request.script_name, '/')
         raise cherrypy.HTTPRedirect(newUrl)
+    '''
 
+    '''
     @cherrypy.expose
     def myip(self):
         """
@@ -76,6 +95,7 @@ class MamiRoot():
             return cherrypy.request.headers.get('Remote-Addr')
         except:
             return ''
+    '''
 
     @cherrypy.expose
     def _cleancache(self):
@@ -126,7 +146,7 @@ class MamiRoot():
     @cherrypy.expose
     def index(self, *args, **kwargs):
         template = mylookup.get_template('index.html')
-
+        
         millis = 'millis' in kwargs.keys() and kwargs.get('millis') or '-1'
 
         # start locale stuff
@@ -165,8 +185,10 @@ class MamiRoot():
 
         try:
             #print (model_inventory)
-            # TODO: use the database as data-source 
-            data = Data()
+            # TODO: use the database as data-source
+            data = Database()
+            all_mills = data.get_all_ids_properties()
+            #data = Data()
             homepage_message = message.get(language, 'homepage_message')
 
             cpright = text.get(section, 'copyright')
@@ -218,9 +240,10 @@ class MamiRoot():
             day_counter = text.get(section, 'day_counter')
             return template.render_unicode(language_options = language_options,
                                            millis = millis,
+                                           get_features_code = self.get_features_code,
                                            homepage_message = homepage_message,
                                            model_inventory = model_inventory,
-                                           all_mills = data.get_all_ids_properties(),
+                                           all_mills = all_mills,
                                            cpright = cpright,
                                            donation = donation,
                                            title = title,
@@ -323,14 +346,14 @@ class MamiRoot():
             # result = self._get_data().get(feature_id)
             result = {}
             now = datetime.now().strftime('%Y-%m-%d')
-            database = Database()
-            statistics = database.get_sender_statistics(id=feature_id,
-                                                        from_date=now,
-                                                        last_date=now)
-            if len(statistics) > 0:
+            statistics = Statistics()
+            stats = statistics.get_sender_statistics(id=feature_id,
+                                                     from_date=now,
+                                                     last_date=now)
+            if len(stats) > 0:
                 day_counter = 0
                 try:
-                    day_counter = statistics[-1][3] #statistics[-1][3] - statistics[0][3]
+                    day_counter = stats[-1][3] #statistics[-1][3] - statistics[0][3]
                     result.update({'day_counter': '%s' % day_counter})
                 except:
                     pass
@@ -380,8 +403,10 @@ class MamiRoot():
         The uuid(=deviceKey) in the data is used to authenticate the feeding device
         """
         try:
-            feature_data = Data()
-            feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
+            # deprecated by using sql. feature_data = Data()
+            # deprecated by using sql. feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
+            database = Database()
+            feature = database.get_feature_from_mac_address(mac_address=mac_address)
             #feature = feature_data.get_feature(feature_id)
             now = datetime.now()
             feature_id = feature['id']
@@ -403,10 +428,10 @@ class MamiRoot():
             try:
                 if (int(rph) > 0):  # write only when there is movement
                     now = datetime.now().strftime('%Y-%m-%d')
-                    database = Database()
-                    database.write_sender_statistics(id=feature_id,
-                                                     change_date = now,
-                                                     revolutions=revolutions)
+                    statistics = Statistics()
+                    statistics.write_sender_statistics(id=feature_id,
+                                                       change_date = now,
+                                                       revolutions=revolutions)
 
 
             except:
@@ -509,8 +534,8 @@ class MamiRoot():
             try:
                 previous_rph = mac_address_sender.get(macAddress).get("stored_rph")
                 # slowly lower rph value when it is suddenly 0
-                #if (int(rph) == 0) and (previous_rph > self.max_delta):
-                #    rph = str(int(previous_rph - self.max_delta))
+                if (int(rph) == 0) and (previous_rph > self.max_delta):
+                    rph = str(int(previous_rph - self.max_delta))
             except:
                 pass
             try: 

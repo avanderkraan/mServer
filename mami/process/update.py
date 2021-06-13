@@ -35,9 +35,9 @@ import hashlib
 import cherrypy
 import json
 from mami import current_dir
-from mami import authentication_dir
 from mami import firmware_dir
 from mami import firmware_pattern
+from mami.sql.database import Database
 
 
 class UpdateFirmware:
@@ -117,6 +117,9 @@ class Update:
         self.firmware_file_list = self._get_ordered_filtered_firmware_list()
         self.filename = None
 
+
+    # deprecated by using the database instead of files sender.json and reciever.json
+    '''
     def get_device_db(self):
         """
         Reads a JSON file and convert it to a Python object
@@ -129,6 +132,7 @@ class Update:
         except Exception as inst:
             pass
         return data
+    '''
 
     def make_zero_filled_version(self, value):
         """
@@ -286,9 +290,15 @@ class Update:
         Use this method after check_headers()
         """
         try:
-            for item in self.get_device_db():
-                if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
-                    return True
+            database = Database()
+            if self.device_function == 'model':
+                return database.validate_model(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
+            if self.device_function == 'sender':
+                return database.validate_sender(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
+
+            #for item in self.get_device_db():
+            #    if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
+            #        return True
         except KeyError:
             pass
         return False

@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from mami.process import database
+from mami.sql import database
 
 def validate_role_model(realm='role_model', key=None, value=None):
     '''

@@ -371,11 +371,13 @@ var filteredMillsList = {};        // contains mills after a search entry
 
 var rotationAngle = [];            // for rotation, per feature
 var bladesInterval = 100;          // for rotation, in msec
-var bladesIntervalFactor = 600 ; // bladesInterval;  // for rotation, per minute
+var bladesIntervalFactor = 1200 ; // bladesInterval;  // for rotation, per minute
 
+var featureUrl = "/get_features_from_sql?f=${get_features_code}";
 
 var featureSource = new ol.source.Vector({
-    url: "static/data/features.json",
+    url: featureUrl,
+    //url: "static/data/features.json",
     format: new ol.format.GeoJSON(),
     useSpatialIndex: false
 });
