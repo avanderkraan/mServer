@@ -373,11 +373,10 @@ var rotationAngle = [];            // for rotation, per feature
 var bladesInterval = 100;          // for rotation, in msec
 var bladesIntervalFactor = 1200 ; // bladesInterval;  // for rotation, per minute
 
-var featureUrl = "/get_features_from_sql?f=${get_features_code}";
+var featureUrl = "/get_features_from_data?f=${get_features_code}";
 
 var featureSource = new ol.source.Vector({
     url: featureUrl,
-    //url: "static/data/features.json",
     format: new ol.format.GeoJSON(),
     useSpatialIndex: false
 });

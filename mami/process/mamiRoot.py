@@ -11,7 +11,6 @@ import os
 import json
 from datetime import datetime, timedelta
 from copy import deepcopy
-#from mami.io.data import Data
 from mami.process.update import Update
 from mami.process.validate import validate_model, validate_role_model
 #from mako import exceptions
@@ -19,9 +18,8 @@ from mami import current_dir
 from mami import module_dir
 from mami import cache_delay
 from mami import sse_timeout
-from mami import data_file
-from mami.sql.database import Database
-from mami.sql.statistics import Statistics
+from mami.data.database import Database
+from mami.data.statistics import Statistics
 
 from mami.locale.properties import LocaleHandle
 
@@ -57,7 +55,7 @@ class MamiRoot():
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
     @cherrypy.expose
-    def get_features_from_sql(self, f=None):
+    def get_features_from_data(self, f=None):
         cherrypy.request.headers['Pragma'] = 'no-cache'
         cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
         if f == self.get_features_code:
@@ -66,36 +64,6 @@ class MamiRoot():
             return database.get_features_as_json().encode('utf-8', 'replace')
         else:
             return '{"Availability": "None"}'.encode('utf-8', 'replace')
-
-    '''
-    @cherrypy.expose
-    def refresh_features(self):
-        cherrypy.request.headers['Pragma'] = 'no-cache'
-        cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
-        database = Database()
-        features_as_json = json.loads(database.get_features_as_json())
-        with open(data_file, "w") as fp:
-            json.dump(features_as_json, fp, indent=4)
-        self._cleancache()
-        newUrl = '%s%s' % (cherrypy.request.script_name, '/')
-        raise cherrypy.HTTPRedirect(newUrl)
-    '''
-
-    '''
-    @cherrypy.expose
-    def myip(self):
-        """
-        Returns the IP address of the caller
-        Purpose: The browser is part of a local network and
-                 this gives a clue to find models in the same network
-        """
-        try:
-            cherrypy.request.headers['Pragma'] = 'no-cache'
-            cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
-            return cherrypy.request.headers.get('Remote-Addr')
-        except:
-            return ''
-    '''
 
     @cherrypy.expose
     def _cleancache(self):
@@ -403,8 +371,8 @@ class MamiRoot():
         The uuid(=deviceKey) in the data is used to authenticate the feeding device
         """
         try:
-            # deprecated by using sql. feature_data = Data()
-            # deprecated by using sql. feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
+            # deprecated by using data. feature_data = Data()
+            # deprecated by using data. feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
             database = Database()
             feature = database.get_feature_from_mac_address(mac_address=mac_address)
             #feature = feature_data.get_feature(feature_id)

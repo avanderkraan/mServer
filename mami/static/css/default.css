@@ -177,7 +177,7 @@
     .rpmEnds_map {
         position: absolute;
         top: 10px;
-        left: 55px;
+        left: 65px;
         width: 70px;
         height: 45px;
         background: ghostwhite;
@@ -189,7 +189,7 @@
     .rpmEnds_map[disabled="disabled"] {
         position: absolute;
         top: 10px;
-        left: 55px;
+        left: 65px;
         width: 70px;
         height: 45px;
         background: rgb(161, 161, 161);

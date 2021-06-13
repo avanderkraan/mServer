@@ -37,7 +37,7 @@ import json
 from mami import current_dir
 from mami import firmware_dir
 from mami import firmware_pattern
-from mami.sql.database import Database
+from mami.data.database import Database
 
 
 class UpdateFirmware:
@@ -116,23 +116,6 @@ class Update:
 
         self.firmware_file_list = self._get_ordered_filtered_firmware_list()
         self.filename = None
-
-
-    # deprecated by using the database instead of files sender.json and reciever.json
-    '''
-    def get_device_db(self):
-        """
-        Reads a JSON file and convert it to a Python object
-        Returns the Python object
-        """
-        data = {}
-        try:
-            with open(os.path.join(authentication_dir, '%s.json' % self.device_function), encoding='utf-8') as data_file:
-                data = json.load(data_file)
-        except Exception as inst:
-            pass
-        return data
-    '''
 
     def make_zero_filled_version(self, value):
         """

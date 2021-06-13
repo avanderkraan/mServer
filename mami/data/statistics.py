@@ -1,4 +1,4 @@
-from mami.sql.databaseConnection import DatabaseConnection
+from mami.data.databaseConnection import DatabaseConnection
 
 
 class Statistics():
