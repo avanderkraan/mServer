@@ -7,8 +7,8 @@
         border-radius: 10px;
         border: 1px solid #cccccc;
         bottom: 12px;
-        left: -50px;
-        min-width: 270px;
+        left: -102px;
+        min-width: 200px;
     }
     
     .ol-popup:after,
@@ -25,14 +25,14 @@
     .ol-popup:after {
         border-top-color: white;
         border-width: 10px;
-        left: 48px;
+        left: 100px;
         margin-left: -10px;
     }
     
     .ol-popup:before {
         border-top-color: #cccccc;
         border-width: 11px;
-        left: 48px;
+        left: 100px;
         margin-left: -11px;
     }
     
@@ -119,14 +119,12 @@
                         $.each(data, function(key, val) {
                             // data: name, bpm, nr_blades
                             
-                            /*
                             popupText += "<li>";
                             if (key == "day_counter") {
                                 key = "${day_counter}";
                             }
                             popupText += key + " " + val;
                             popupText += "</li>"
-                            */
                         });
 
                         popupText += "</ul>";
