@@ -292,6 +292,19 @@ class Database():
         models += ']'          
         return models
 
+    def get_active_sender_data(self):
+        my_query = "SELECT \
+                    mami_role.sender.id_sender, \
+                    mami_role.sender.name, \
+                    mami_role.sender.city, \
+                    mami_role.sender.longitude, \
+                    mami_role.sender.latitude \
+                    FROM mami_role.sender \
+                    WHERE mami_role.sender.active = 1;"
+        result = self._get_result(my_query)
+        return result
+
+
     def validate_model(self, id):
         '''
         '''

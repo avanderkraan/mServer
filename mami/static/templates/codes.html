@@ -1,0 +1,134 @@
+<%inherit file="base.html"/>
+
+
+  <div class="container">
+    <span id="is-mobile"><!-- determining resolution in css --></span>
+
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-2 voffset16">
+        <div>
+          <a href="/">
+            <img id="logo" src="static/images/logo.png" width="30"/>
+          </a>
+        </div>
+        <div class="row loffset6">
+          <h6><small>${cpright}</small></h6>
+        </div>
+      </div>
+      <div class="col-xs-10">
+        <div class="row loffset6">
+          <h2>${title}</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="row text-center">
+      <div class="col-xs-12">
+        <div id="homepage_message"><b><code style="background:white">${homepage_message}</code></b></div>
+      </div>
+    </div>				
+
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-12">
+        <div id="codes"></div>
+      </div>
+    </div>
+
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-12">
+        <hr>
+      </div>
+    </div>
+    
+    <div class="row loffset6 roffset6">
+      <div class="col-xs-5">
+        <!--
+        <span>${donation}
+          <img src="/static/images/epc-qr.eu_donation_2euro_site_developer.png" height="100">
+        </span>
+        -->
+      </div>
+      <div class="col-xs-7">
+        <select id="languagechoice" class="form-control">${language_options}</select>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  $( document ).ready(function() {      
+    isMobile = false;  // global variable
+    if( $('#is-mobile').css('display')=='none') {
+        isMobile = true;  
+    }
+    showCodes();
+  });
+
+// global variable
+var allCodes = ${all_codes};       // contains all codes of active mills
+
+function showCodes() {
+  var codeTable = '<table class="table">';
+  codeTable += '<thead>';
+  codeTable += '    <tr>';
+  codeTable += '      <th scope="col">${code}</th>';
+  codeTable += '      <th scope="col">${name}</th>';
+  codeTable += '      <th scope="col">${city}</th>';
+  codeTable += '    </tr>';
+  codeTable += '  </thead>';
+  codeTable += '<tbody>';
+  
+  $.each(allCodes, function(key, value) {
+    var selectable = '';
+    codeTable += '  <tr';
+    codeTable += '>';
+
+    codeTable += '    <td>';
+    codeTable += '<div id="code_';
+    codeTable += value[0];
+    codeTable += '" class="';
+    //codeTable += selectable;
+    codeTable += '">';
+    codeTable += value[0];
+    codeTable += '</div>';
+    codeTable += '    </td>';
+    
+    codeTable += '    <td>';
+    codeTable += '<div id="name_';
+    codeTable += value[0];
+    codeTable += '" class="';
+    codeTable += '">';
+    codeTable += value[1];
+    codeTable += '</div>';
+    codeTable += '    </td>';
+
+    codeTable += '    <td>';
+    codeTable += '<div id="city_';
+    codeTable += value[0];
+    codeTable += '" class="';
+    codeTable += '">';
+    codeTable += value[2];
+    codeTable += '</div>';
+    codeTable += '    </td>';
+
+    codeTable += '  </tr>';
+  });
+  codeTable += '  </tbody>';
+  codeTable += '</table>';
+
+  $('#codes').html(codeTable);
+}
+
+// start language choice
+$('#languagechoice').off('change').on('change', function(event){
+		var choice = $('#languagechoice').val();
+		var newLocation = window.location.href;
+		questionLocation = newLocation.indexOf("?");
+		if (questionLocation > -1) {
+			newLocation = newLocation.split("?")[0];
+		}
+		newLocation = newLocation + "?lang=" + choice;
+		window.location.href = newLocation;
+});
+// end language choice
+  </script>

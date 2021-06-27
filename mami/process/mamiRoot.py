@@ -20,6 +20,8 @@ from mami import cache_delay
 from mami import sse_timeout
 from mami.data.database import Database
 from mami.data.statistics import Statistics
+from mami.data.debug import Debug
+
 
 from mami.locale.properties import LocaleHandle
 
@@ -522,6 +524,22 @@ class MamiRoot():
                     # do this because an update call blocks the device (shortly)
                     if rph and rph == "0":
                         feed_counter = -1   # means check for update
+
+                        # but first set some debug info in the database
+                        # start write debug info
+                        database = Database()
+                        feature = database.get_feature_from_mac_address(mac_address=macAddress)
+                        #feature = feature_data.get_feature(feature_id)
+                        now = datetime.now()
+                        feature_id = feature['id']
+                        now = datetime.now().strftime('%Y-%m-%d')
+                        info = "version: %s, blades: %s, ratio: %s" % \
+                               (version, blades, "unknown")
+                        debug_data = Debug()
+                        debug_data.write_sender_debug_data(id=feature_id,
+                                                           change_date=now,
+                                                           info=info)
+                        # end write debug info
                     else:
                         feed_counter = 0    # means no check on update
             except:
@@ -548,25 +566,6 @@ class MamiRoot():
                      )
 
             result = {}
-
-            '''
-            if backwards_compatibility_on == True:
-                #        "84:CC:A8:A3:09:11": { "comment": "(Tweemanspolder) Nr.3",
-                #        "A0:20:A6:29:18:13": { "comment": "de Roos",
-                #        "84:CC:A8:A0:FE:2D": { "comment": "de Hoop, Zoetermeer",
-                
-                backwards_compatible_list = ()
-                
-                if macAddress in backwards_compatible_list:
-                    feed_counter = 0  # skip update to new version
-
-                result.update({"bpm":bpm,
-                            #"message":message,
-                            "proposedUUID": uuid,  # TODO: change this 
-                            "pushFirmware" : feed_counter == -1 and "latest" or "",
-                            "macAddress": macAddress})
-            '''
-            #else:
             result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
                         "pFv" : feed_counter == -1 and "latest" or ""
                         })
@@ -579,6 +578,7 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
+    '''
     @cherrypy.expose
     def authenticate_sender(self, mac_address="", key="", previous_key=""):
         """
@@ -595,6 +595,7 @@ class MamiRoot():
         """
         sender = Sender(mac_address, key, previous_key)
         return sender.response()
+    '''
 
 ####################################################################################### 
     @cherrypy.expose
@@ -671,6 +672,75 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
+    @cherrypy.expose
+    def codes(self, *args, **kwargs):
+        """
+        :return: a response of codes, millnames and places
+        TODO: create a html template to show this data, with search capabilities?
+        """
+        template = mylookup.get_template('codes.html')
+
+        # start locale stuff
+        locale_handle = LocaleHandle()
+        text = locale_handle.text
+        locale_available = locale_handle.locale_available
+        message = locale_handle.message
+        # end locale stuff
+
+        # start language stuff
+        language = 'en'
+        if 'Accept-language' in cherrypy.request.headers:
+            language = cherrypy.request.headers['Accept-language'][0:2]
+        if 'language' in cherrypy.session.keys():
+            language = cherrypy.session['language']
+        if 'lang' in kwargs:
+            language = kwargs.get('lang')
+        cherrypy.session['language'] = language
+        # setting cherrypy default url in the config
+        text.set('DEFAULT', 'url',cherrypy.url())
+        sectionList = text.sections()
+
+        if not language in sectionList:
+            cherrypy.session['language'] = 'en'
+            language = cherrypy.session['language']
+  
+        language_options = ''
+        for locale_item in locale_available:
+            selected = ''
+            if language == locale_item[0]:
+                selected = 'selected'
+            language_options += '<option %s value="%s">%s</option>' % (selected, locale_item[0], locale_item[1])
+
+        section = self._get_section(template, language)
+        # end language stuff
+
+        try:
+            database = Database()
+            active_sender_codes = json.dumps(database.get_active_sender_data())
+
+            homepage_message = message.get(language, 'homepage_message')
+
+            code = text.get(section, 'code')
+            name = text.get(section, 'name')
+            city = text.get(section, 'city')
+            cpright = text.get(section, 'copyright')
+            title = text.get(section, 'title')
+            donation = text.get(section, 'donation')
+
+            return template.render_unicode(language_options = language_options,
+                                           homepage_message = homepage_message,
+                                           all_codes = active_sender_codes,
+                                           code = code,
+                                           name = name,
+                                           city = city,
+                                           cpright = cpright,
+                                           donation = donation,
+                                           title = title
+                                           ).encode('utf-8', 'replace')
+        except Exception as inst:
+            print(inst)
+            cherrypy.log('exception', traceback=True)
+            return 
 
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     get_data_via_sse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
