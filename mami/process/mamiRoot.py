@@ -358,7 +358,7 @@ class MamiRoot():
     # @cherrypy.expose
     def set(self,
             mac_address=None,
-            uuid=None,
+            #uuid=None,
             #rawCounter=-1,
             #bpm=-1,
             rph=-1,
@@ -383,7 +383,7 @@ class MamiRoot():
             #if feature and 'id' in feature.keys() and feature['id'] == feature_id:
             name = feature['properties']['name']
             dynamic[feature_id] = {'mac_address':mac_address,
-                                   'uuid':uuid,
+                                   #'uuid':uuid,
                                    'now':now,
                                    'name':name,
                                    #'rawCounter':rawCounter,
@@ -461,32 +461,55 @@ class MamiRoot():
             revolutions = body.get('data').get('r')  # revolutions of the axis with blades
             #rawCounter = body.get('data').get('rawCounter')
             bpm = body.get('data').get('bpm')        # enden, bladesPerMinute, viewPulsesPerMinute
-            uuid = body.get('data').get('key')       # deviceKey
             macAddress = body.get('data').get('mac') # macAddress   
             #isOpen = body.get('data').get('isOpen')   
             #showData = body.get('data').get('showData')   
             #message = body.get('data').get('message')
-            version = body.get('data').get('v')      # firmwareVersion
             blades = body.get('data').get('b')       # number of blades
 
-            #backwards compatible for sender 0.1.2 and before
-            #{"data": {"revolutions":"0","rawCounter":"6","viewPulsesPerMinute":"0","firmwareVersion":"0.1.2",
-            # "deviceKey":"88888888-4444-4444-4444-121212121212","macAddress":"A0:20:A6:14:85:06","isOpen":"1","showData":"1","message":""}}'
-            '''
-            backwards_compatibility_on = False
-            if revolutions == None:
-                revolutions = body.get('data').get('revolutions')
-            if bpm == None:
-                bpm = body.get('data').get('viewPulsesPerMinute')
-                blades = 4  # default
-                backwards_compatibility_on = True
-            if version == None:
-                version = body.get('data').get('firmwareVersion')
-            if uuid == None:
-                uuid = body.get('data').get('deviceKey')
-            if macAddress == None:
-                macAddress = body.get('data').get('macAddress')
-            '''
+            # start backwards compatibility (< 0.1.7) for key and version
+            uuid = body.get('data').get('key')       # deviceKey
+            if uuid == None and body.get('info'):
+                uuid = body.get('info').get('key')
+            version = body.get('data').get('v')      # firmwareVersion
+            if version == None and body.get('info'):
+                version = body.get('info').get('v')
+            # end backwards compatibility (< 0.1.7) for key and version
+            
+            #print(body.get('info'))
+            if body.get('info') != None:
+                # but first set some debug info in the database
+                # start write debug info
+                database = Database()
+                feature = database.get_feature_from_mac_address(mac_address=macAddress)
+                #feature = feature_data.get_feature(feature_id)
+                now = datetime.now()
+                feature_id = feature['id']
+                now = datetime.now().strftime('%Y-%m-%d')
+
+                '''
+                keys, used by body.get('info'):
+                
+                v      : firmwareVersion
+                key    : deviceKey
+                ra     : ratio, given by user
+                apssid : accespoint ssid, given by user
+                stssid : station ssid, given by user
+                cid    : ESP.getFlashChipId
+                crs    : ESP.getFlashChipRealSize
+                csi    : ESP.getFlashChipSize
+                csp    : ESP.getFlashChipSpeed
+                cm     : ESP.getFlashChipMode
+                '''
+                info = "version: %s, blades: %s, ratio: %s" % \
+                        (version, blades, body.get('info').get('ra'))
+                debug_data = Debug()
+                debug_data.write_sender_debug_data(id=feature_id,
+                                                   change_date=now,
+                                                   info=info)
+                # end write debug info
+
+
             # rph is needed for the models, revolutions per hour, to get a big enough number
             rph = None
             try:
@@ -524,29 +547,18 @@ class MamiRoot():
                     # do this because an update call blocks the device (shortly)
                     if rph and rph == "0":
                         feed_counter = -1   # means check for update
-
-                        # but first set some debug info in the database
-                        # start write debug info
-                        database = Database()
-                        feature = database.get_feature_from_mac_address(mac_address=macAddress)
-                        #feature = feature_data.get_feature(feature_id)
-                        now = datetime.now()
-                        feature_id = feature['id']
-                        now = datetime.now().strftime('%Y-%m-%d')
-                        info = "version: %s, blades: %s, ratio: %s" % \
-                               (version, blades, "unknown")
-                        debug_data = Debug()
-                        debug_data.write_sender_debug_data(id=feature_id,
-                                                           change_date=now,
-                                                           info=info)
-                        # end write debug info
                     else:
                         feed_counter = 0    # means no check on update
             except:
                 pass
             try:
+                # first time for <macAddress>, so set feed _counter to -1 to force an update request
+                if (mac_address_sender[macAddress].get('feed_counter')) == None:
+                    feed_counter = -1
                 mac_address_sender[macAddress].update({"feed_counter": feed_counter} )
             except:
+                # first time for <macAddress>, so set feed _counter to -1 to force an update request
+                feed_counter = -1
                 mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
             #print('version', version, feed_counter, bpm, uuid)
             #print(mac_address_sender)
@@ -554,7 +566,7 @@ class MamiRoot():
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,
-                     uuid=uuid,
+                     #uuid=uuid,
                      #rawCounter=rawCounter,
                      #bpm=bpm,
                      rph=rph,
@@ -567,10 +579,12 @@ class MamiRoot():
 
             result = {}
             result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
-                        "pFv" : feed_counter == -1 and "latest" or ""
-                        })
+                           "pFv" : feed_counter == -1 and "latest" or "",
+                           "i"   : feed_counter == -1 and "info" or ""
+                          })
 
             result_string = json.dumps(result)
+            #print(result_string, feed_counter)
             cherrypy.response.headers["Content-Length"] = len(result_string)
             return result_string.encode('utf-8', 'replace')
 

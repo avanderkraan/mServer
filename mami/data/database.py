@@ -305,8 +305,10 @@ class Database():
         return result
 
 
-    def validate_model(self, id):
+    def validate_model(self, id, value=None):
         '''
+        id contains the mac address
+        value contains the uuid which is not used at this moment
         '''
         my_query = "SELECT \
                     mami_identification.authorisation.authorisation_key \
@@ -323,8 +325,11 @@ class Database():
                 return True
         return False
 
-    def validate_sender(self, id):
+    def validate_sender(self, id, value=None):
         '''
+        id contains the mac address
+        value contains the uuid which is not used at this moment
+              for the Update process the value will be None
         '''
         my_query = "SELECT \
                     mami_identification.authorisation.authorisation_key \
@@ -341,8 +346,11 @@ class Database():
                 return True
         return False
 
-    def validate_viewer(self, id):
+    def validate_viewer(self, id, value=None):
         '''
+        id contains the mac address
+        value contains the uuid which is not used at this moment
+              for the Update process the value will be None
         '''
         my_query = "SELECT \
                     mami_identification.authorisation.authorisation_key \
