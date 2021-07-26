@@ -54,7 +54,6 @@ class Debug():
         '''
         Get last record, write only when info data has changed
         '''
-        print('a a a', info)
         if id != None and info != None:
             my_query = "SELECT `info` \
                         FROM `mami_debug`.`sender` \

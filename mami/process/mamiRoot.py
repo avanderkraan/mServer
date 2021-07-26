@@ -10,6 +10,7 @@ import cherrypy
 import os
 import json
 from datetime import datetime, timedelta
+from random import randrange
 from copy import deepcopy
 from mami.process.update import Update
 from mami.process.validate import validate_model, validate_role_model
@@ -50,8 +51,9 @@ class MamiRoot():
         self.get_features_code = str(uuid.uuid4())
 
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
-        self.max_feed_counter = 12 * 60 # with every 5 sec request, check every 1 hour if an update is nessecary
-        self.max_eat_counter = 12 * 60  # with every 5 sec request, check every 1 hour if an update is nessecary
+        self.max_feed_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
+        self.max_feed_delta_info_hours = 8    # check every 24 hours or more if for new info
+        self.max_eat_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
 
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
@@ -485,7 +487,9 @@ class MamiRoot():
                 #feature = feature_data.get_feature(feature_id)
                 now = datetime.now()
                 feature_id = feature['id']
-                now = datetime.now().strftime('%Y-%m-%d')
+                #now = datetime.now().strftime('%Y-%m-%d')
+
+                #print(datetime.now().strftime('%Y-%m-%d:%H:%M:%S'))
 
                 '''
                 keys, used by body.get('info'):
@@ -509,13 +513,17 @@ class MamiRoot():
                                                    info=info)
                 # end write debug info
 
-
+            storage_mac_address_sender = mac_address_sender.get(macAddress)
+            if storage_mac_address_sender == None:
+                mac_address_sender.update({macAddress:{}})
+                storage_mac_address_sender = mac_address_sender.get(macAddress)
+            #print('a a a', storage_mac_address_sender)
             # rph is needed for the models, revolutions per hour, to get a big enough number
             rph = None
             try:
                 rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
             except:
-                pass
+                rph = "0"
 
             # TODO: use uuid as the authentication-uuid-key from the device->pSettings
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
@@ -525,44 +533,50 @@ class MamiRoot():
             # TODO:      "pushFirmware=latest to push the latest
 
             try:
-                previous_rph = mac_address_sender.get(macAddress).get("stored_rph")
+                previous_rph = storage_mac_address_sender.get("stored_rph")
                 # slowly lower rph value when it is suddenly 0
                 if (int(rph) == 0) and (previous_rph > self.max_delta):
                     rph = str(int(previous_rph - self.max_delta))
             except:
-                pass
-            try: 
-                mac_address_sender[macAddress].update({"stored_rph":int(rph)} )
-            except:
                 if rph != None:
-                    mac_address_sender.update({macAddress:{"stored_rph":int(rph)}} )
+                    storage_mac_address_sender.update({"stored_rph":int(rph)})
 
-            feed_counter = 0
+            feed_update_time = storage_mac_address_sender.get("feed_update_time")
+            feed_info_time =  storage_mac_address_sender.get("feed_info_time")
+            delta_update = None
+            delta_info = None
+            sender_update_flag = False
+            sender_info_flag = False
             try:
-                feed_counter = mac_address_sender.get(macAddress).get("feed_counter") or 0
-                feed_counter += 1
-                if feed_counter > self.max_feed_counter:
-                    # push Update
-                    # only update when bpm == 0
-                    # do this because an update call blocks the device (shortly)
-                    if rph and rph == "0":
-                        feed_counter = -1   # means check for update
-                    else:
-                        feed_counter = 0    # means no check on update
+                if feed_update_time != None:
+                    delta_update = timedelta(hours = self.max_feed_delta_update_hours)
+                else:
+                    # First time after starting the server, so spread the load
+                    delta_update = timedelta(seconds = randrange(1, 60))
+                    feed_update_time = datetime.now() + delta_update
+                    storage_mac_address_sender.update({"feed_update_time": feed_update_time})
+                if feed_info_time != None:
+                    delta_info = timedelta(hours = self.max_feed_delta_info_hours)
+                else:
+                    # First time after starting the server, so spread the load
+                    delta_info = timedelta(seconds = randrange(1, 60))
+                    feed_info_time = datetime.now() + delta_info
+                    storage_mac_address_sender.update({"feed_info_time": feed_info_time})
+
+                # push Update only when bpm (alias rph) == 0
+                # do this because an update call blocks the device (shortly)
+                
+                if rph and rph == "0":
+                    if datetime.now() > feed_update_time:
+                        sender_update_flag = True
+                        feed_update_time += delta_update
+                        storage_mac_address_sender.update({"feed_update_time": feed_update_time})
+                    if datetime.now() > feed_info_time:
+                        sender_info_flag = True
+                        feed_info_time += delta_info
+                        storage_mac_address_sender.update({"feed_info_time": feed_info_time})
             except:
                 pass
-            try:
-                # first time for <macAddress>, so set feed _counter to -1 to force an update request
-                if (mac_address_sender[macAddress].get('feed_counter')) == None:
-                    feed_counter = -1
-                mac_address_sender[macAddress].update({"feed_counter": feed_counter} )
-            except:
-                # first time for <macAddress>, so set feed _counter to -1 to force an update request
-                feed_counter = -1
-                mac_address_sender.update({macAddress:{"feed_counter": feed_counter}} )
-            #print('version', version, feed_counter, bpm, uuid)
-            #print(mac_address_sender)
-
 
             # put feeded data in the dynamic features
             self.set(mac_address=macAddress,
@@ -579,8 +593,8 @@ class MamiRoot():
 
             result = {}
             result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
-                           "pFv" : feed_counter == -1 and "latest" or "",
-                           "i"   : feed_counter == -1 and "info" or ""
+                           "pFv" : sender_update_flag and "latest" or "",
+                           "i"   : sender_info_flag and "info" or ""
                           })
 
             result_string = json.dumps(result)
@@ -644,34 +658,41 @@ class MamiRoot():
                 # put all known information about the rolemodel in the response
                 result = deepcopy(self._get_data().get(roleModel) or {})
                 #print('roleModel data:', result)
-                
+
                 # set a zero value if rolemodel doesn't give any data (about the speed)
                 if result.get("rph") == None and roleModel != "independent":
                     result.update({"rph": " 0"})
 
-                eat_counter = 0
+                storage_mac_address_model = mac_address_model.get(macAddress)
+                if storage_mac_address_model == None:
+                    mac_address_model.update({macAddress:{}})
+                    storage_mac_address_model = mac_address_model.get(macAddress)
+
+                eat_update_time = storage_mac_address_model.get("eat_update_time")
+                delta_update = None
+                model_update_flag = False
                 try:
-                    eat_counter = mac_address_model.get(macAddress).get("eat_counter") or 0
-                    eat_counter += 1
-                    if eat_counter > self.max_eat_counter:
-                        # push Update
-                        # only update when bpm == 0; bpm comes from roleModel
-                        # do this because an update call blocks the device (shortly)
-                        # if no role model is choosen, the value will be "None"
-                        if result.get("rph") and result.get("rph") == "0" or roleModel == "None":
-                            eat_counter = -1   # means check for update
-                        else:
-                            eat_counter = 0    # means no check on update
+                    if eat_update_time != None:
+                        delta_update = timedelta(hours = self.max_eat_delta_update_hours)
+                    else:
+                        # First time after starting the server, so spread the load
+                        delta_update = timedelta(seconds = randrange(1, 60))
+                        eat_update_time = datetime.now() + delta_update
+                        storage_mac_address_model.update({"eat_update_time": eat_update_time})
+
+                    if result.get("rph") and result.get("rph") == "0" or roleModel in ("None", "independent"):
+                        # backwards compatibility for version < 0.1.5: roleModel "None"
+                        # with version => 0.1.5 roleModel == "independent" is used
+                        if datetime.now() > eat_update_time:
+                            model_update_flag = True
+                            eat_update_time += delta_update
+                            storage_mac_address_model.update({"eat_update_time": eat_update_time})
                 except:
                     pass
-                try:
-                    mac_address_model[macAddress].update({"eat_counter": eat_counter} )
-                except:
-                    mac_address_model.update({macAddress:{"eat_counter": eat_counter}} )
 
                 # overwrite the response uuid and macAddress with model values
                 result.update({"pKey": uuid,  # TODO: change this 
-                               "pFv" : eat_counter == -1 and "latest" or ""
+                               "pFv" : model_update_flag and "latest" or ""
                                })
                 #print('model data:', result)
                 result_string = json.dumps(result)
