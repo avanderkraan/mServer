@@ -458,7 +458,12 @@ class MamiRoot():
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
             #print(rawbody)
-            unicodebody = rawbody.decode(encoding="utf-8")
+            unicodebody = ""
+            try:
+                unicodebody = rawbody.decode(encoding="utf-8",errors="strict")
+            except:
+                # workaround of decode problem
+                unicodebody = str(rawbody)[2:-1].replace("\\x","-")
             body = json.loads(unicodebody)
             revolutions = body.get('data').get('r')  # revolutions of the axis with blades
             #rawCounter = body.get('data').get('rawCounter')
@@ -522,6 +527,9 @@ class MamiRoot():
             rph = None
             try:
                 rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
+                # TODO: let the server decise which ratio is used.
+                # TODO: nor now (20210820) divide by 45 is about right
+                rph = str(round(int(rph) / 45)) 
             except:
                 rph = "0"
 
