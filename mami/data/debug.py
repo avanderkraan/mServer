@@ -74,7 +74,7 @@ class Debug():
             else:
                 latest_info = result[0][0]
 
-                if (info != latest_info):
+                if True: #even altijd schrijven voor test (info != latest_info):
                     set_new_value_query = "UPDATE `mami_debug`.`sender` \
                         SET `info` = '%s' \
                         WHERE `id_sender` = '%s';" \

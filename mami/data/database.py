@@ -304,6 +304,17 @@ class Database():
         result = self._get_result(my_query)
         return result
 
+    def get_sender_ratio(self, id=""):
+        '''
+        id contains the id_sender
+        '''
+        my_query = "SELECT \
+                    mami_role.sender.ratio \
+                    FROM mami_role.sender \
+                    WHERE mami_role.sender.id_sender = '%s';" \
+                    % id
+        result = self._get_result(my_query)
+        return result
 
     def validate_model(self, id, value=None):
         '''

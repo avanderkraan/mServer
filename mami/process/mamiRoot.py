@@ -52,7 +52,7 @@ class MamiRoot():
 
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
         self.max_feed_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
-        self.max_feed_delta_info_hours = 8    # check every 24 hours or more if for new info
+        self.max_feed_delta_info_hours = 1    # check every 24 hours or more if for new info
         self.max_eat_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
 
     def _get_section(self, template, locale='en'):
@@ -484,6 +484,10 @@ class MamiRoot():
             # end backwards compatibility (< 0.1.7) for key and version
             
             #print(body.get('info'))
+            # ratio_from_db gets the information from the miller/owner and/or
+            # the data from the molendatabase.nl and compares it
+            # every time when info is asked (e.g. every 24 hours)
+            ratio_from_db = ""
             if body.get('info') != None:
                 # but first set some debug info in the database
                 # start write debug info
@@ -510,13 +514,21 @@ class MamiRoot():
                 csp    : ESP.getFlashChipSpeed
                 cm     : ESP.getFlashChipMode
                 '''
-                info = "version: %s, blades: %s, ratio: %s" % \
-                        (version, blades, body.get('info').get('ra'))
+                info = "version: %s, blades: %s, ratio: %s, WiFiSSID: %s" % \
+                        (version, blades, body.get('info').get('ra'), body.get('info').get('stssid'))
                 debug_data = Debug()
                 debug_data.write_sender_debug_data(id=feature_id,
                                                    change_date=now,
                                                    info=info)
                 # end write debug info
+                # start get ratio_from_db
+                database = Database()
+                ratio_from_db_result = database.get_sender_ratio(id=feature_id)
+                try:
+                    ratio_from_db = ratio_from_db_result[0][0]
+                except:
+                    pass
+                # end get ratio_from_db
 
             storage_mac_address_sender = mac_address_sender.get(macAddress)
             if storage_mac_address_sender == None:
@@ -602,6 +614,7 @@ class MamiRoot():
             result = {}
             result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
                            "pFv" : sender_update_flag and "latest" or "",
+                           "pR"  : ratio_from_db,
                            "i"   : sender_info_flag and "info" or ""
                           })
 
