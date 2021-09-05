@@ -475,6 +475,7 @@ class MamiRoot():
             blades = body.get('data').get('b')       # number of blades
 
             # start backwards compatibility (< 0.1.7) for key and version
+            '''
             uuid = body.get('data').get('key')       # deviceKey
             if uuid == None and body.get('info'):
                 uuid = body.get('info').get('key')
@@ -482,13 +483,16 @@ class MamiRoot():
             if version == None and body.get('info'):
                 version = body.get('info').get('v')
             # end backwards compatibility (< 0.1.7) for key and version
-            
+            '''
+
             #print(body.get('info'))
             # ratio_from_db gets the information from the miller/owner and/or
             # the data from the molendatabase.nl and compares it
             # every time when info is asked (e.g. every 24 hours)
             ratio_from_db = ""
             if body.get('info') != None:
+                uuid = body.get('info').get('key')
+                version = body.get('info').get('v')
                 # but first set some debug info in the database
                 # start write debug info
                 database = Database()
@@ -521,7 +525,7 @@ class MamiRoot():
                                                    change_date=now,
                                                    info=info)
                 # end write debug info
-                # start get ratio_from_db
+                # start get ratio_from_db to send it to the Sender
                 database = Database()
                 ratio_from_db_result = database.get_sender_ratio(id=feature_id)
                 try:
@@ -539,9 +543,6 @@ class MamiRoot():
             rph = None
             try:
                 rph = str(round(int(bpm) * 60 / int(blades))) # revolutions per hour of the axis with blades
-                # TODO: let the server decise which ratio is used.
-                # TODO: nor now (20210820) divide by 45 is about right
-                rph = str(round(int(rph) / 45)) 
             except:
                 rph = "0"
 
@@ -612,12 +613,14 @@ class MamiRoot():
                      )
 
             result = {}
-            result.update({"pKey": uuid,  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)  
-                           "pFv" : sender_update_flag and "latest" or "",
+            result.update({"pFv" : sender_update_flag and "latest" or "",
                            "pR"  : ratio_from_db,
                            "i"   : sender_info_flag and "info" or ""
                           })
-
+            if body.get("info"):
+                uuid = body.get("info").get("key")
+                result.update({"pKey": uuid or "",  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)
+                              })
             result_string = json.dumps(result)
             #print(result_string, feed_counter)
             cherrypy.response.headers["Content-Length"] = len(result_string)
