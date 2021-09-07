@@ -119,6 +119,22 @@ function showCodes() {
   $('#codes').html(codeTable);
 }
 
+function store(key, value) {
+  if (typeof(Storage) !== "undefined") {
+    localStorage.setItem(key, value);
+  } else {
+    // Sorry! No Web Storage support..
+  }
+}
+
+function getStored(key) {
+  if (typeof(Storage) !== "undefined") {
+    return localStorage.getItem(key);
+  } else {
+    // Sorry! No Web Storage support..
+  }
+}
+
 // start language choice
 $('#languagechoice').off('change').on('change', function(event){
 		var choice = $('#languagechoice').val();
@@ -127,6 +143,7 @@ $('#languagechoice').off('change').on('change', function(event){
 		if (questionLocation > -1) {
 			newLocation = newLocation.split("?")[0];
 		}
+    store('lang', choice);
 		newLocation = newLocation + "?lang=" + choice;
 		window.location.href = newLocation;
 });

@@ -45,7 +45,7 @@ mac_address_model = {}   # holds data from model wih mac_address as key
 #print (locale_handle.text.get('nl.base', 'title'))
 
 class MamiRoot():
-    def __init__(self, media_dir=''):
+    def __init__(self):
         print ('entered MamiRoot')
         # to protect features from being exposed too easily
         self.get_features_code = str(uuid.uuid4())
@@ -136,6 +136,10 @@ class MamiRoot():
             language = cherrypy.session['language']
         if 'lang' in kwargs:
             language = kwargs.get('lang')
+            cherrypy.session['language'] = language
+            newUrl = '%s%s' % (cherrypy.request.script_name, '/')
+            raise cherrypy.HTTPRedirect(newUrl)
+
         cherrypy.session['language'] = language
         # setting cherrypy default url in the config
         text.set('DEFAULT', 'url',cherrypy.url())
@@ -170,12 +174,7 @@ class MamiRoot():
             unit_text = text.get(section, "unit_text")
             active_mills = text.get(section, 'active_mills')
             waiting = text.get(section, 'waiting')
-            waiting_for_ip = text.get(section, 'waiting_for_ip')
-            router_close_button = text.get(section, 'router_close_button')
-            router_clear_button = text.get(section, 'router_clear_button')
-            router_ok_button = text.get(section, 'router_ok_button')
             no_mdns = text.get(section, 'no_mdns')
-            router_placeholder = text.get(section, 'router_placeholder')
             refresh_model_list = text.get(section, 'refresh_model_list')
             selected_rolemodel = text.get(section, 'selected_rolemodel')
             ok = text.get(section, 'ok')
@@ -185,7 +184,20 @@ class MamiRoot():
             mill_table_map = text.get(section, 'mill_table_map')
             link_model_tab = text.get(section, 'link_model_tab')
             link_steps = text.get(section, 'link_steps')
-            link_model_explanation = text.get(section, "link_model_explanation")
+            link_steps_explanation = text.get(section, 'link_steps_explanation')
+            link_step_mdns_button = text.get(section, 'link_step_mdns_button')
+            link_step_code_button = text.get(section, 'link_step_code_button')
+            link_step_mdns = text.get(section, 'link_step_mdns')
+            link_step_mdns_explanation = text.get(section, 'link_step_mdns_explanation')
+            link_step_code = text.get(section, 'link_step_code')
+            link_step_code_explanation = text.get(section, 'link_step_code_explanation')
+            enter_code_guide = text.get(section, 'enter_code_guide')
+            code_screenshot_1 = text.get(section, 'code_screenshot_1')
+            code_screenshot_2 = text.get(section, 'code_screenshot_2')
+            code_screenshot_3 = text.get(section, 'code_screenshot_3')
+            get_ip_number = text.get(section, 'get_ip_number')
+            spin_settings_code = text.get(section, 'spin_settings_code')
+            spin_settings_independent = text.get(section, 'spin_settings_independent')
             off = text.get(section, 'off')
             close_button = text.get(section, 'close_button')
             connect_button = text.get(section, 'connect_button')
@@ -223,12 +235,7 @@ class MamiRoot():
                                            unit_text = unit_text,
                                            active_mills = active_mills,
                                            waiting = waiting,
-                                           waiting_for_ip = waiting_for_ip,
-                                           router_close_button = router_close_button,
-                                           router_clear_button = router_clear_button,
-                                           router_ok_button = router_ok_button,
                                            no_mdns = no_mdns,
-                                           router_placeholder = router_placeholder,
                                            refresh_model_list = refresh_model_list,
                                            selected_rolemodel = selected_rolemodel,
                                            ok = ok,
@@ -238,7 +245,20 @@ class MamiRoot():
                                            mill_table_map = mill_table_map,
                                            link_model_tab = link_model_tab,
                                            link_steps = link_steps,
-                                           link_model_explanation = link_model_explanation,
+                                           link_steps_explanation = link_steps_explanation,
+                                           link_step_mdns_button = link_step_mdns_button,
+                                           link_step_code_button = link_step_code_button,
+                                           link_step_mdns = link_step_mdns,
+                                           link_step_mdns_explanation = link_step_mdns_explanation,
+                                           link_step_code = link_step_code,
+                                           link_step_code_explanation = link_step_code_explanation,
+                                           enter_code_guide = enter_code_guide,
+                                           code_screenshot_1 = code_screenshot_1,
+                                           code_screenshot_2 = code_screenshot_2,
+                                           code_screenshot_3 = code_screenshot_3,
+                                           get_ip_number = get_ip_number,
+                                           spin_settings_independent = spin_settings_independent,
+                                           spin_settings_code = spin_settings_code,
                                            off = off,
                                            close_button = close_button,
                                            connect_button = connect_button,
@@ -754,6 +774,10 @@ class MamiRoot():
             language = cherrypy.session['language']
         if 'lang' in kwargs:
             language = kwargs.get('lang')
+            cherrypy.session['language'] = language
+            newUrl = '%s%s' % (cherrypy.request.script_name, '/codes/')
+            raise cherrypy.HTTPRedirect(newUrl)
+
         cherrypy.session['language'] = language
         # setting cherrypy default url in the config
         text.set('DEFAULT', 'url',cherrypy.url())

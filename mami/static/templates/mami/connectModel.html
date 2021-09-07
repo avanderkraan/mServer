@@ -1,6 +1,5 @@
 <script>
     function findLastKnownModel(number) {
-        //var urlToCheck = 'http://molen' + pad(number, 4) + '.local';
         var urlToCheck = 'http://model';
         if (number > 1) {
             urlToCheck = urlToCheck + "-" + number.toString() + ".local";
@@ -59,170 +58,6 @@
         xhr.send(null);
     }
 
-    /*
-    function findLocalModelsIP(number, myip) {
-        // and remember the jqXHR object for this request
-        var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
-
-        urlToCheck = urlToCheck + number.toString() + '/_ip/';
-        var xhr = $.ajax({url: urlToCheck,
-                            timeout: modelIPSearchTimeout} )
-        .done(function() {
-            //alert( "success" );
-            var response = xhr.responseText;
-                //console.log("DONE " + response);
-                if (response.startsWith("model")) {
-                    response = response.replace(/\n|\r/g, "");
-                    var modelAndRoleModel = response.split('<');
-                    var result = modelAndRoleModel[0].split('_');  // model and ip
-                    modelAndSavedRoleModel[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = modelAndRoleModel[1].replace("<","").replace(">","");
-                    modelIPs[result[0] + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + result[1];
-                }
-                //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
-
-        })
-        .fail(function() {
-            alert( "error" );
-            //$('#modelListPercentage').html(Math.round((number/255) * 100) + '%');
-        })
-        .always(function() {
-            //alert( "complete" );
-            // sort on name
-        });
-    }
-    */
-
-    //var searchIPTimeout = 300;  // milliseconds
-
-    function findLocalModelsIP(number, myip, mySearchIPTimeout, myCheckIP) {
-        if (myCheckIP == false) {
-            // default true, only with timeout set to false, so next time increase timeout
-            checkIPs[number] = true;
-            var urlToCheck = 'http://' + myip.substring(0, myip.lastIndexOf('.') + 1);
-
-            urlToCheck = urlToCheck + number.toString() + '/_ip/?name=' + encodeURIComponent(document.location);
-
-            // and remember the jqXHR object for this request
-            var xhr = new XMLHttpRequest();
-            xhr.setTimeout = mySearchIPTimeout;
-
-            xhr.open('GET', urlToCheck, true);
-
-            xhr.onload = function() {
-                var response = xhr.responseText;
-                if (response.startsWith("model")) {
-                    response = response.replace(/\n|\r/g, "");
-                    var modelAndRoleModel = response.split('<');
-                    var savedRoleModelOnModel = "";
-                    var modelName = "";
-                    var modelIP = "";
-                    if (response.indexOf('<') > -1) {
-                        modelAndRoleModel = response.split('<');
-                        savedRoleModelOnModel = modelAndRoleModel[1].replace("<","").replace(">","");
-                        result = modelAndRoleModel[0].split('_');  // model and ip
-                        modelName = result[0];
-                        modelIP = result[1];
-                    }
-                    else {
-                        savedRoleModelOnModel = "";    // model has no saved rolemodel
-                        result = response.split('_');  // model and ip
-                        modelName = result[0];
-                        modelIP = result[1];
-                    }
-                    modelAndSavedRoleModel[modelName + '-' + (Object.keys(modelIPs).length + 1)] = savedRoleModelOnModel;
-                    modelIPs[modelName + '-' + (Object.keys(modelIPs).length + 1)] = 'http://' + modelIP;
-                }
-            };
-
-            xhr.onerror = function() {
-            };
-            xhr.onprogress = function() {
-            };
-            xhr.ontimeout = function() {
-                checkIPs[number] = false;
-            };
-
-            xhr.send(null);
-
-        }
-        if (number == 255) {
-            return;
-        }
-    }
-
-    function findIPs(myUrlToCheck) {
-        // search for local ip addresses since mdns devices
-        //   do not appear with this os/browser combination
-        //   by using the ip address where the browser is active
-
-        // checkIPs is used within processIPResponse
-        for (var i=1; i < 256; i++) {
-            checkIPs[i] = false;
-        }
-
-        processIPResponse(0, myUrlToCheck, searchIPTimeout);
-        /*
-        var urlToCheck = myUrlToCheck;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', urlToCheck + 'myip/', true);
-
-        xhr.onprogress = function() {
-        };
-
-        xhr.onload = function() {
-            var response = xhr.responseText;
-            processIPResponse(0, response, searchIPTimeout);
-        };
-
-        xhr.ontimeout = function() {
-        };
-
-        xhr.onerror = function() {
-        };
-
-        xhr.send(null);
-        */
-
-    }
-
-    function processIPResponse(counter, response, mySearchIPTimeout) {
-        var allTrue = true;
-        for (var i=1; i < 256; i++) {
-            allTrue = allTrue && checkIPs[i];
-            if (allTrue == false) {
-                break;
-            }
-        }
-        // make sure all models are searched
-        // if one is found then the others will be found soon
-        if (Object.keys(modelIPs).length == 0) {
-            // keep on searching with
-            allTrue = false;
-        }
-
-        for (var i=1; i < 256; i++) {
-            findLocalModelsIP(i, response, mySearchIPTimeout, checkIPs[i]);
-        }
-
-        if ((counter > 4) || (allTrue == true)) {
-            for (var i=0; i<mySetTimeout.length;i++) {
-                clearTimeout(mySetTimeout[i]);
-            }
-            showModelIPList();
-            return;   // leave recursive processIPResponse
-        }
-        else {
-            mySetTimeout[counter] = setTimeout(function() {
-                //mySearchIPTimeout = (counter+1) * 4 * 1000;
-                //showModelIPList();
-                //console.log(mySearchIPTimeout + ' - ' + JSON.stringify(checkIPs));
-                //$('#modelListPercentage').html(' ' + Math.round(100 - (100 / (counter + 1))) + '%');
-                processIPResponse(counter + 1, response, (counter+2) * mySearchIPTimeout);
-            }, mySearchIPTimeout);
-        }
-    }
-
     function passIPAddress(modelId, modelUrl, roleModelId, standalone=false) {
         var url = "";
         url = modelUrl + "/setRoleModel/?id=" + roleModelId;
@@ -253,18 +88,12 @@
     }
 
 
-    function makeModelIPList() {
-        var modelIPList = $("#modelIPList").html();
-    }
-
     // start get models
     function refreshModelList() {
         // clear global variable models
         $("#refreshModelList").attr("disabled", "disabled");
         models = {};
-        modelIPs = {};
         $("#modelList").html("${waiting}");
-        $("#modelIPList").html("");
         findLastKnownModel(1);  // starting with the first one
         
         var mDNSTimeout = 1500;
@@ -275,5 +104,26 @@
         
     }
     // end get models
+
+    // start show connect type
+    function viewConnectPart(mode) {
+        $('#search_mdns').hide();
+        $('#enter_code').hide();
+        $('#selectSearchMDNS').removeClass('btn-link');
+        $('#selectEnterCode').removeClass('btn-link');
+        if (mode == 'mdns') {
+            $('#search_mdns').show();
+            $('#selectEnterCode').addClass('btn-link');
+            $('#selectSearchMDNS').removeClass('btn-info');
+            $('#selectSearchMDNS').addClass('btn-info');
+        }
+        if (mode == 'code') {
+            $('#enter_code').show();
+            $('#selectSearchMDNS').addClass('btn-link');
+            $('#selectEnterCode').removeClass('btn-info');
+            $('#selectEnterCode').addClass('btn-info');
+        }
+    }
+    // end sow connect type
 
 </script>

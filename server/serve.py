@@ -9,16 +9,9 @@ import os
 sys.path.append('%s' % os.getcwd())
 # before mounting anything 
 from cherrypy.process.plugins import Daemonizer
-#Daemonizer(cherrypy.engine).subscribe()
-#from server.logfiles import Logfiles
 from server import current_dir
 from mami.process.mamiRoot import MamiRoot
 from mami.process.update import UpdateFirmware
-
-# 20200328: logfiles uitgezet
-useLog = False
-if useLog:
-    from server.logfiles import Logfiles
 
 
 class Server(object):
@@ -36,7 +29,7 @@ class Server(object):
         headers['Content-Security-Policy'] = "default-src 'self';"
 
     @staticmethod
-    def setup_server(media_dir = ''):
+    def setup_server():
         class Root(object):
             @cherrypy.expose
             def default(self,*args,**kwargs):
@@ -62,24 +55,6 @@ class Server(object):
                             script_name='/update',
                             config='%s/%s' % (current_dir, '../settings/update.conf'))
 
-        # take care of logfiles
-        if useLog:
-            logfiles = Logfiles(media_dir = directory)
-
-            baseLogDict = {}
-            baseLogDict['log.access_file'] = '%s/%s' % (logfiles.log_dir, '/access_base.log')
-            baseLogDict['log.error_file'] = '%s/%s' % (logfiles.log_dir, '/error_base.log')
-            #root_app.merge({'/':baseLogDict})
-
-            mamiLogDict = {}
-            mamiLogDict['log.access_file'] = '%s/%s' % (logfiles.log_dir, '/access_mami.log')
-            mamiLogDict['log.error_file'] = '%s/%s' % (logfiles.log_dir, '/error_mami.log')
-            
-            #root_app.merge({'/mami':mamiLogDict})
-        
-            root_app.merge({'/':baseLogDict,
-                            '/mami':mamiLogDict
-                           })
 
 if __name__ == '__main__':
     """
@@ -104,7 +79,7 @@ if __name__ == '__main__':
         cherrypy.server.httpserver = None
     '''
     server = Server()
-    server.setup_server(media_dir = '/tmp')
+    server.setup_server()
     cherrypy.engine.stop()
     cherrypy.server.httpserver = None
 
