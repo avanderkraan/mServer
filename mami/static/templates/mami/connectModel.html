@@ -9,7 +9,13 @@
         var xhr = new XMLHttpRequest();
         xhr.timeout = modelMDNSSearchTimeout;
         //console.log('UNSENT', xhr.readyState); // readyState will be 0
-        xhr.open('GET', urlToCheck + '/_mdns/?name=' + encodeURIComponent(document.location), true);
+        var bareDocumentLocation = document.location.href;
+        var questionLocation = bareDocumentLocation.indexOf("?");
+		if (questionLocation > -1) {
+			bareDocumentLocation = bareDocumentLocation.split("?")[0];
+		}
+        xhr.open('GET', urlToCheck + '/_mdns/?name=' + encodeURIComponent(bareDocumentLocation), true);
+
         //console.log('OPENED', xhr.readyState); // readyState will be 1
 
         xhr.onprogress = function() {
@@ -38,7 +44,7 @@
                     modelName = response;
                 }
                 if (number == 1) {
-                    modelName += "-1";  // to match mdns names with names gotten using the IP method
+                    modelName += "-1";  // to match mdns names with names gotten using the (deprecated) IP method
                 }
                 number += 1;
   

@@ -12,7 +12,7 @@ from configparser import ConfigParser
 
 class LocaleHandle:
     '''
-    Reads langiage properties, using ConfigParser
+    Reads language properties, using ConfigParser
     First reads language_properties file to get available languages
     Then reads text and messages
     '''

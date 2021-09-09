@@ -136,9 +136,6 @@ class MamiRoot():
             language = cherrypy.session['language']
         if 'lang' in kwargs:
             language = kwargs.get('lang')
-            cherrypy.session['language'] = language
-            newUrl = '%s%s' % (cherrypy.request.script_name, '/')
-            raise cherrypy.HTTPRedirect(newUrl)
 
         cherrypy.session['language'] = language
         # setting cherrypy default url in the config
@@ -774,9 +771,6 @@ class MamiRoot():
             language = cherrypy.session['language']
         if 'lang' in kwargs:
             language = kwargs.get('lang')
-            cherrypy.session['language'] = language
-            newUrl = '%s%s' % (cherrypy.request.script_name, '/codes/')
-            raise cherrypy.HTTPRedirect(newUrl)
 
         cherrypy.session['language'] = language
         # setting cherrypy default url in the config
