@@ -146,8 +146,12 @@ class Update:
         using a callable method: self.make_zero_filled_version
         e.g. value = 'esp8266_0.0.6.bin'
              regular expression = r'^(.*?)_([0-9]+)\.([0-9]+)\.([0-9]+)\.bin'
+        To prevent that a newer(testversion) is rejected the detected version
+        also ends up in the firmware_list
         """
         firmware_list = [f for f in os.listdir(self.firmware_path) if re.match(self.firmware_pattern, f)]
+        if not self.detected_firmware_version in firmware_list:
+            firmware_list.append(self.detected_firmware_version)
         return sorted(firmware_list, key=self.make_zero_filled_version)
 
     def check_go(self):

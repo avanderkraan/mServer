@@ -56,7 +56,7 @@ class Debug():
         '''
         if id != None and info != None:
             my_query = "SELECT `info` \
-                        FROM `mami_debug`.`sender` \
+                        FROM `mami_debug`.`sender_info` \
                         WHERE `id_sender` = '%s' \
                         ORDER BY `id` ASC LIMIT 1;" \
                         % id
@@ -67,18 +67,58 @@ class Debug():
             if len(result) == 0:
                 # means a new record,
                 set_new_value_query = "INSERT \
-                    INTO `mami_debug`.`sender` \
+                    INTO `mami_debug`.`sender_info` \
                     (`id_sender`, `info`) \
                     VALUES ('%s', '%s');" \
                     % (id, info)
             else:
                 latest_info = result[0][0]
 
-                if True: #even altijd schrijven voor test (info != latest_info):
-                    set_new_value_query = "UPDATE `mami_debug`.`sender` \
+                # if info != latest_info:
+                if True: #even altijd schrijven voor test
+                    set_new_value_query = "UPDATE `mami_debug`.`sender_info` \
                         SET `info` = '%s' \
                         WHERE `id_sender` = '%s';" \
                         % (info, id)
+            if set_new_value_query != '':
+                # have to make a new connection because self._get_result closed it
+                self.db_connection = DatabaseConnection()
+                self.connection = self.db_connection.get_connection()
+
+                # write to database when new values have arrived
+                result = self._update_db(set_new_value_query)
+
+    def write_model_debug_data(self, mac_address=None, change_date='', info=None):
+        '''
+        Get last record, write only when info data has changed
+        '''
+        if mac_address != None and info != None:
+            my_query = "SELECT `info` \
+                        FROM `mami_debug`.`model_info` \
+                        WHERE `id_model` = '%s' \
+                        ORDER BY `id` ASC LIMIT 1;" \
+                        % mac_address
+
+            result = self._get_result(my_query)
+
+            set_new_value_query = ''
+            if len(result) == 0:
+                # means a new record,
+                set_new_value_query = "INSERT \
+                    INTO `mami_debug`.`model_info` \
+                    (`id_model`, `info`) \
+                    VALUES ('%s', '%s');" \
+                    % (mac_address, info)
+            else:
+                latest_info = result[0][0]
+
+                # if info != latest_info:
+                if True: #even altijd schrijven voor test 
+                    set_new_value_query = "UPDATE `mami_debug`.`model_info` \
+                        SET `info` = '%s' \
+                        WHERE `id_model` = '%s';" \
+                        % (info, mac_address)
+
             if set_new_value_query != '':
                 # have to make a new connection because self._get_result closed it
                 self.db_connection = DatabaseConnection()

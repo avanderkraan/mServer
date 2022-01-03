@@ -157,7 +157,7 @@ class Database():
                     "name": "De Hoop",
                     "mac_address": "84:CC:A8:A0:FE:2D"
                 },
-                "id": "nl_00937"
+                "id": "00937"
             }
         ]
         '''
@@ -377,3 +377,38 @@ class Database():
             if id in item:
                 return True
         return False
+
+    def get_motor_properties_as_json(self, mac_address=None):
+        my_query = "SELECT \
+                    mami_properties.model_motor.steps_per_revolution, \
+                    mami_properties.model_motor.max_speed, \
+                    mami_properties.model_motor.direction, \
+                    mami_properties.model_motor.motor_interface_type \
+                    FROM mami_identification.authorisation, \
+                         mami_role.model, \
+                         mami_properties.model_motor \
+                    WHERE mami_identification.authorisation.authorisation_key = '%s' \
+                    AND mami_identification.authorisation.id = mami_role.model.authorisation_key \
+                    AND mami_role.model.id_motor = mami_properties.model_motor.id;" \
+                        % mac_address
+        result = self._get_result(my_query)
+        if result == []:
+            return '["%s":{}]' %mac_address
+        motor_properties = '['
+        for item in result:
+            motor_property = '{"%s" \
+                :{ \
+                "steps_per_revolution":"%s", \
+                "max_speed": "%s", \
+                "direction": "%s", \
+                "motor_interface_type": "%s" \
+                } \
+                },'
+            motor_properties += motor_property % (mac_address,
+                                item[0],
+                                item[1],
+                                item[2],
+                                item[3])
+        motor_properties = motor_properties[:-1]  # remove last character (comma)
+        motor_properties += ']'          
+        return motor_properties

@@ -52,8 +52,9 @@ class MamiRoot():
 
         self.max_delta = 60             # max difference of rph to prevent a sudden 0
         self.max_feed_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
-        self.max_feed_delta_info_hours = 1    # check every 24 hours or more if for new info
-        self.max_eat_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
+        self.max_feed_delta_info_hours = 1     # check every 24 hours or more if for new info
+        self.max_eat_delta_update_hours = 1    # check after 1 hour or more if an update is nessecary
+        self.max_eat_delta_info_hours = 1      # check every 24 hours or more if for new info
 
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
@@ -219,6 +220,7 @@ class MamiRoot():
             clear_local_storage = text.get(section, 'clear_local_storage')
             molendatabase = text.get(section, 'molendatabase')
             day_counter = text.get(section, 'day_counter')
+            tenbruggecate_code = text.get(section, 'tenbruggecate_code')
             return template.render_unicode(language_options = language_options,
                                            millis = millis,
                                            get_features_code = self.get_features_code,
@@ -279,7 +281,8 @@ class MamiRoot():
                                            hide_local_storage = hide_local_storage,
                                            clear_local_storage = clear_local_storage,
                                            molendatabase = molendatabase,
-                                           day_counter = day_counter
+                                           day_counter = day_counter,
+                                           tenbruggecate_code = tenbruggecate_code
                                            ).encode('utf-8', 'replace')
         except Exception as inst:
             print(inst)
@@ -292,7 +295,7 @@ class MamiRoot():
         It returns the data from all dynamic features
         Every feature has a key with its own properties
         "features": [{
-            "id": "nl_03503",
+            "id": "03503",
             "geometry": {
                 "type": "Point",
                 "coordinates": [
@@ -508,7 +511,7 @@ class MamiRoot():
             # every time when info is asked (e.g. every 24 hours)
             ratio_from_db = ""
             if body.get('info') != None:
-                uuid = body.get('info').get('key')
+                #uuid = body.get('info').get('key')
                 version = body.get('info').get('v')
                 # but first set some debug info in the database
                 # start write debug info
@@ -647,24 +650,6 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
-    '''
-    @cherrypy.expose
-    def authenticate_sender(self, mac_address="", key="", previous_key=""):
-        """
-        Authenticates the sender devices using their MAC address
-        "00:00:00:00:00:00": {
-            "key": "88888888-4444-4444-4444-121212121212 (uuid)",
-            "previous_key": "88888888-4444-4444-4444-121212121212 (uuid)",
-            "record_change_date": "yyyymmdd_hhmmss (utc)",
-            "ttl": "nr (days)",
-            "end_date": "yyyymmdd_hhmmss (utc)"
-        }
-        The key is renewed after calling this method and sent back
-        so the calling device can change this value in the devices' settings
-        """
-        sender = Sender(mac_address, key, previous_key)
-        return sender.response()
-    '''
 
 ####################################################################################### 
     @cherrypy.expose
@@ -681,8 +666,6 @@ class MamiRoot():
             #print(rawbody, cl)
             unicodebody = rawbody.decode(encoding="utf-8")
             body = json.loads(unicodebody)
-            uuid = body.get('data').get('key')        # deviceKey
-            version = body.get('data').get('v')       # firmwareVersion
             macAddress = body.get('data').get('mac')  # macAddress
             roleModel = body.get('data').get('rM')    # roleModel 
 
@@ -691,6 +674,41 @@ class MamiRoot():
             # TODO: the factory-setting of the device is the fallback if the authentication-chain is broken
             # TODO: authenticate here, and return the new generated authentication-uuid so the device can save the new value
             #print('receiver',macAddress)
+            if body.get('info') != None:
+                #uuid = body.get('info').get('key')
+                version = body.get('info').get('v')
+                # but first set some debug info in the database
+                # start write debug info
+                now = datetime.now()
+                '''
+                keys, used by body.get('info'):
+                
+                v      : firmwareVersion
+                key    : deviceKey
+                spr    : steps per revolution, depends on motor properties
+                ms     : maximum speed, depends om motor properties
+                d      : direction, depends on motor properties
+                mit    : motor interface type, depends on motor type, used by AccellStepper
+                apssid : accespoint ssid, given by user
+                stssid : station ssid, given by user
+                cid    : ESP.getFlashChipId
+                crs    : ESP.getFlashChipRealSize
+                csi    : ESP.getFlashChipSize
+                csp    : ESP.getFlashChipSpeed
+                cm     : ESP.getFlashChipMode
+                '''
+                info = "version: %s, motor: %s|%s|%s|%s, WiFiSSID: %s" % \
+                        (version,
+                         body.get('info').get('spr'), 
+                         body.get('info').get('ms'), 
+                         body.get('info').get('d'), 
+                         body.get('info').get('mit'), 
+                         body.get('info').get('stssid'))
+                debug_data = Debug()
+                debug_data.write_model_debug_data(mac_address=macAddress,
+                                                  change_date=now,
+                                                  info=info)
+
 
             if roleModel:
                 # put roleModel_id and macAddress of model in dictionary
@@ -710,8 +728,11 @@ class MamiRoot():
                     storage_mac_address_model = mac_address_model.get(macAddress)
 
                 eat_update_time = storage_mac_address_model.get("eat_update_time")
+                eat_info_time =  storage_mac_address_model.get("eat_info_time")
                 delta_update = None
+                delta_info = None
                 model_update_flag = False
+                model_info_flag = False
                 try:
                     if eat_update_time != None:
                         delta_update = timedelta(hours = self.max_eat_delta_update_hours)
@@ -720,21 +741,50 @@ class MamiRoot():
                         delta_update = timedelta(seconds = randrange(1, 60))
                         eat_update_time = datetime.now() + delta_update
                         storage_mac_address_model.update({"eat_update_time": eat_update_time})
+                    if eat_info_time != None:
+                        delta_info = timedelta(hours = self.max_eat_delta_info_hours)
+                    else:
+                        # First time after starting the server, so spread the load
+                        delta_info = timedelta(seconds = randrange(1, 60))
+                        eat_info_time = datetime.now() + delta_info
+                        storage_mac_address_model.update({"eat_info_time": eat_info_time})
 
                     if result.get("rph") and result.get("rph") == "0" or roleModel in ("None", "independent"):
                         # backwards compatibility for version < 0.1.5: roleModel "None"
                         # with version => 0.1.5 roleModel == "independent" is used
                         if datetime.now() > eat_update_time:
+                            try:
+                                database = Database()
+                                motor_properties_as_json = database.get_motor_properties_as_json(mac_address=macAddress)
+                                motor_properties = json.loads(motor_properties_as_json)
+                                if motor_properties[0].get(macAddress) != {}:
+                                    result.update({"spr": motor_properties[0].get(macAddress).get("steps_per_revolution") or "",
+                                                   "ms": motor_properties[0].get(macAddress).get("max_speed") or  "",
+                                                   "d": motor_properties[0].get(macAddress).get("direction") or "",
+                                                   "mit": motor_properties[0].get(macAddress).get("motor_interface_type") or ""})
+                            except Exception as inst:
+                                pass
                             model_update_flag = True
                             eat_update_time += delta_update
                             storage_mac_address_model.update({"eat_update_time": eat_update_time})
+
+                        if datetime.now() > eat_info_time:
+                            model_info_flag = True
+                            eat_info_time += delta_info
+                            storage_mac_address_model.update({"eat_info_time": eat_info_time})
+
                 except:
                     pass
 
                 # overwrite the response uuid and macAddress with model values
-                result.update({"pKey": uuid,  # TODO: change this 
-                               "pFv" : model_update_flag and "latest" or ""
+                result.update({"pFv" : model_update_flag and "latest" or "",
+                               "i"   : model_info_flag and "info" or ""
                                })
+                if body.get("info"):
+                    uuid = body.get("info").get("key")
+                    result.update({"pKey": uuid or "",  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)
+                                })
+
                 #print('model data:', result)
                 result_string = json.dumps(result)
                 cherrypy.response.headers["Content-Length"] = len(result_string)

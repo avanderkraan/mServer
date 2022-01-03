@@ -15,7 +15,7 @@
                 "city": "Delft",
                 "mac_address": "A0:20:A6:29:18:13"
             },
-            "id": "nl_03503"
+            "id": "03503"
         },
         {
             "geometry": {
@@ -31,7 +31,7 @@
                 "city": "Leidschendam",
                 "mac_address": "A0:20:A6:14:85:06"
             },
-            "id": "nl_12549"
+            "id": "12549"
         },
         {
             "geometry": {
@@ -47,7 +47,7 @@
                 "city": "Zevenhuizen",
                 "mac_address": "84:CC:A8:A3:09:11"
             },
-            "id": "nl_00935"
+            "id": "00935"
         },
         {
             "geometry": {
@@ -63,7 +63,7 @@
                 "city": "Zoetermeer",
                 "mac_address": "84:CC:A8:A0:FE:2D"
             },
-            "id": "nl_00937"
+            "id": "00937"
         },
         {
             "geometry": {
@@ -79,7 +79,7 @@
                 "city": "",
                 "mac_address": "84:CC:A8:A2:D1:84"
             },
-            "id": "nl_0"
+            "id": "0"
         }
     ]
 }

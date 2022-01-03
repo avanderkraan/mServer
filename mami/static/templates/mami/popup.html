@@ -88,9 +88,8 @@
             var coordinate = feature.values_.geometry.flatCoordinates;
             millInfo.setPosition(coordinate);
             var popupTitle = "";
-            var numberStart = selectedId.indexOf("_");
-            if (numberStart > -1) {
-                var tenbruggencatenummer = selectedId.substring(numberStart + 1);
+            var tenbruggencatenummer = selectedId;
+            if (tenbruggencatenummer > 1) {  // 0 is test
                 popupTitle = "${molendatabase}";
                 popupTitle += "<div id=\"popup_" + selectedId + "\" >";
                 popupTitle += "<form target=\"_blank\"";
@@ -116,6 +115,10 @@
                         /* create a text as content for a popup
                         */
                         var popupText = "<ul style=\"list-style-type:square\">";
+                        popupText += "<li>";
+                        popupText += "${tenbruggecate_code}";
+                        popupText += tenbruggencatenummer;
+                        popupText + "</li>";
                         $.each(data, function(key, val) {
                             // data: name, bpm, nr_blades
                             
