@@ -193,6 +193,8 @@ class MamiRoot():
             code_screenshot_1 = text.get(section, 'code_screenshot_1')
             code_screenshot_2 = text.get(section, 'code_screenshot_2')
             code_screenshot_3 = text.get(section, 'code_screenshot_3')
+            code_screenshot_4 = text.get(section, 'code_screenshot_4')
+            menu = text.get(section, 'menu' )
             get_ip_number = text.get(section, 'get_ip_number')
             spin_settings_code = text.get(section, 'spin_settings_code')
             spin_settings_independent = text.get(section, 'spin_settings_independent')
@@ -255,6 +257,8 @@ class MamiRoot():
                                            code_screenshot_1 = code_screenshot_1,
                                            code_screenshot_2 = code_screenshot_2,
                                            code_screenshot_3 = code_screenshot_3,
+                                           code_screenshot_4 = code_screenshot_4,
+                                           menu = menu,
                                            get_ip_number = get_ip_number,
                                            spin_settings_independent = spin_settings_independent,
                                            spin_settings_code = spin_settings_code,
@@ -716,11 +720,10 @@ class MamiRoot():
 
                 # put all known information about the rolemodel in the response
                 result = deepcopy(self._get_data().get(roleModel) or {})
-                #print('roleModel data:', result)
-
+                # print('roleModel data:', result)
                 # set a zero value if rolemodel doesn't give any data (about the speed)
                 if result.get("rph") == None and roleModel != "independent":
-                    result.update({"rph": " 0"})
+                    result.update({"rph": "0"})
 
                 storage_mac_address_model = mac_address_model.get(macAddress)
                 if storage_mac_address_model == None:

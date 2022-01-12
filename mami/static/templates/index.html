@@ -37,9 +37,11 @@
           <li class="nav-item">
             <a class="nav-link" id="pills-map-tab" data-toggle="pill" href="#pills-map" role="tab" aria-controls="pills-map" aria-selected="false">${mill_map_tab}</a>
           </li>
+          <!--
           <li class="nav-item">
             <a class="nav-link" id="pills-table-tab" data-toggle="pill" href="#pills-table" role="tab" aria-controls="pills-table" aria-selected="false">${mill_table_map}</a>
           </li>
+          -->
           <li class="nav-item">
             <a class="nav-link" id="pills-link-tab" data-toggle="pill" href="#pills-link" role="tab" aria-controls="pills-link" aria-selected="false">${link_model_tab}</a>
           </li>
@@ -89,6 +91,7 @@
         </div>
       </div>
 
+      <!--
       <div class="tab-pane fade active" id="pills-table" role="tabpanel" aria-labelledby="pills-table-tab">
         <div class="row loffset6 roffset6">
           <div class="col-xs-12">
@@ -96,7 +99,7 @@
           </div>
         </div>
       </div>
-
+      -->
       <div class="tab-pane fade" id="pills-link" role="tabpanel" aria-labelledby="pills-link-tab">
         <div class="row loffset6 roffset6">
           <div class="col-xs-12">
@@ -141,13 +144,17 @@
                 <br>
                 ${code_screenshot_1}
                 <br>
-                <img class="code_image" src="/static/images/${get_ip_number}" id="get_ip_number"></img>
+                <img class="code_image" src="/static/images/${menu}" id="menu"></img>
                 <br><br>
                 ${code_screenshot_2}
                 <br>
-                <img class="code_image" src="/static/images/${spin_settings_code}" id="spin_settings_code"></img>
+                <img class="code_image" src="/static/images/${get_ip_number}" id="get_ip_number"></img>
                 <br><br>
                 ${code_screenshot_3}
+                <br>
+                <img class="code_image" src="/static/images/${spin_settings_code}" id="spin_settings_code"></img>
+                <br><br>
+                ${code_screenshot_4}
                 <br>
                 <img class="code_image" src="/static/images/${spin_settings_independent}" id="spin_settings_independent"></img>
               </div>
@@ -232,7 +239,6 @@
 
     // start show tab-map
     selectTab('#pills-map-tab');
-    //selectTab('#pills-table-tab');
     // end show tab-map
 
     // start get data
