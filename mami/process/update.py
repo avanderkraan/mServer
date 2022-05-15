@@ -46,17 +46,16 @@ class UpdateFirmware:
         '''
         redirects all not-defined URLs to root.index
         '''
-        # perform obsolete update for molen with version 0.1.2 or less
-        # TODO: remove when all molen devices have a version of 0.1.3 or higher
-        device = 'device' in kwargs.keys() and kwargs.get('device')
-        version = 'version' in kwargs.keys() and kwargs.get('version')
-        newUrl = '%s/updateFirmware/?device=%s&version=%s' % (cherrypy.request.script_name,
-                                                              device,
-                                                              version)
-        raise cherrypy.HTTPRedirect(newUrl)
+        # 20220515 removed:
+        # device = 'device' in kwargs.keys() and kwargs.get('device')
+        # version = 'version' in kwargs.keys() and kwargs.get('version')
+        #newUrl = '%s/updateFirmware/?device=%s&version=%s' % (cherrypy.request.script_name,
+        #                                                      device,
+        #                                                      version)
+        #raise cherrypy.HTTPRedirect(newUrl)
+        # end 20220515 removed
 
-
-        #pass
+        pass
         #newUrl = '%s%s' % (cherrypy.request.script_name, '/updateFirmware')
         #raise cherrypy.HTTPRedirect(newUrl)
 
@@ -103,8 +102,18 @@ class Update:
         self.device_function = device_function
         self.requested_version = requested_version
         self.device_user_agent = cherrypy.request.headers.get('User-Agent')
-        self.device_firmware_version = cherrypy.request.headers.get('X-Esp8266-Version')
-        self.device_station_mac_address = cherrypy.request.headers.get('X-Esp8266-Sta-Mac')
+
+        self.device_firmware_version = ""
+        self.device_station_mac_address = ""
+
+        if self.device_user_agent == "ESP8266-http-Update":
+            self.device_firmware_version = cherrypy.request.headers.get('X-Esp8266-Version')
+            self.device_station_mac_address = cherrypy.request.headers.get('X-Esp8266-Sta-Mac')
+
+        if self.device_user_agent == "ESP32-http-Update":
+            self.device_firmware_version = cherrypy.request.headers.get('X-Esp32-Version')
+            self.device_station_mac_address = cherrypy.request.headers.get('X-Esp32-Sta-Mac')
+
         if self.device_user_agent:
             user_agent_parts = self.device_user_agent.split('-')
             if requested_version == "latest":
@@ -253,21 +262,34 @@ class Update:
         """
         Checks if the User Agent has the required (=expected) value
         """
-        if not self._check_header('User-Agent', 'ESP8266-http-Update'):
+        if not self.device_user_agent in ('ESP8266-http-Update', 'ESP32-http-Update'):
             return False
         return True
 
     def _check_headers(self):
         """
         Checks the existense of given headers
+        Implicit check of User-Agent
         """
-        if not self._check_header('X-Esp8266-Sta-Mac') \
-        or not self._check_header('X-Esp8266-Ap-Mac') \
-        or not self._check_header('X-Esp8266-Free-Space') \
-        or not self._check_header('X-Esp8266-Sketch-Size') \
-        or not self._check_header('X-Esp8266-Sketch-Md5') \
-        or not self._check_header('X-Esp8266-Chip-Size') \
-        or not self._check_header('X-Esp8266-Sdk-Version'):
+        if self.device_user_agent == 'ESP8266-http-Update':
+            if not self._check_header('X-Esp8266-Sta-Mac') \
+            or not self._check_header('X-Esp8266-Ap-Mac') \
+            or not self._check_header('X-Esp8266-Free-Space') \
+            or not self._check_header('X-Esp8266-Sketch-Size') \
+            or not self._check_header('X-Esp8266-Sketch-Md5') \
+            or not self._check_header('X-Esp8266-Chip-Size') \
+            or not self._check_header('X-Esp8266-Sdk-Version'):
+                return False
+        elif self.device_user_agent == 'ESP32-http-Update':
+            if not self._check_header('X-Esp32-Sta-Mac') \
+            or not self._check_header('X-Esp32-Ap-Mac') \
+            or not self._check_header('X-Esp32-Free-Space') \
+            or not self._check_header('X-Esp32-Sketch-Size') \
+            or not self._check_header('X-Esp32-Sketch-Md5') \
+            or not self._check_header('X-Esp32-Chip-Size') \
+            or not self._check_header('X-Esp32-Sdk-Version'):
+                return False
+        else:
             return False
         return True
 
