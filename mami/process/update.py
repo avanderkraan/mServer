@@ -97,6 +97,7 @@ class Update:
         @param device_function: is model or sender and corresponds with the filename
                                 in db/authentication/sender|model
         '''
+        #print(cherrypy.request.headers)
         self.firmware_path = os.path.join(current_dir, firmware_path, device_function)
         self.firmware_pattern = firmware_pattern
         self.device_function = device_function
@@ -107,10 +108,12 @@ class Update:
         self.device_station_mac_address = ""
 
         if self.device_user_agent == "ESP8266-http-Update":
+            self.firmware_pattern = r'^(esp8266)_([0-9]+)\.([0-9]+)\.([0-9]+)\.bin'
             self.device_firmware_version = cherrypy.request.headers.get('X-Esp8266-Version')
             self.device_station_mac_address = cherrypy.request.headers.get('X-Esp8266-Sta-Mac')
 
         if self.device_user_agent == "ESP32-http-Update":
+            self.firmware_pattern = r'^(esp32)_([0-9]+)\.([0-9]+)\.([0-9]+)\.bin'
             self.device_firmware_version = cherrypy.request.headers.get('X-Esp32-Version')
             self.device_station_mac_address = cherrypy.request.headers.get('X-Esp32-Sta-Mac')
 
@@ -136,11 +139,9 @@ class Update:
                      minor(3 positions, max 2^8)
                      patch(5 positions, max 2^16)
         """
-        match = re.search(self.firmware_pattern, value)
+        match = re.search(self.firmware_pattern, value, re.IGNORECASE)
         try:
             if match:
-                # value = 'esp8266_0.0.6.bin'
-                # firmware_pattern = r'^(.*?)_([0-9]+)\.([0-9]+)\.([0-9]+)\.bin'
                 major = match.group(2).zfill(3)
                 minor = match.group(3).zfill(3)
                 patch = match.group(4).zfill(5)
@@ -224,7 +225,7 @@ class Update:
         Check if the detected firmware is the last one in the list.
           if so, the detected version is also the latest
 
-        Note: call this nethod only if self._check_current_device_version_available == True
+        Note: call this method only if self._check_current_device_version_available == True
         """
         try:
             if self.firmware_file_list.index(self.detected_firmware_version) + 1 == len(self.firmware_file_list):
@@ -238,7 +239,7 @@ class Update:
     def _check_current_device_version_available(self):
         """
         Uses self.detected_firmware_version that gives the current firmware version
-        self.firmware_file_list gives an ordered. filtered list of firmware that is
+        self.firmware_file_list gives an ordered, filtered list of firmware that is
         known on the filesystem
         Check if the detected current firmware is present in the list.
         """
@@ -301,10 +302,15 @@ class Update:
         try:
             database = Database()
             if self.device_function == 'model':
-                return database.validate_model(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
+                if self.device_user_agent == "ESP8266-http-Update":
+                    return database.validate_model(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
+                if self.device_user_agent == "ESP32-http-Update":
+                    return database.validate_model(cherrypy.request.headers['X-Esp32-Sta-Mac'])
             if self.device_function == 'sender':
-                return database.validate_sender(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
-
+                if self.device_user_agent == "ESP8266-http-Update":
+                    return database.validate_sender(cherrypy.request.headers['X-Esp8266-Sta-Mac'])
+                if self.device_user_agent == "ESP32-http-Update":
+                    return database.validate_sender(cherrypy.request.headers['X-Esp32-Sta-Mac'])
             #for item in self.get_device_db():
             #    if item.get(cherrypy.request.headers['X-Esp8266-Sta-Mac']):
             #        return True
@@ -330,8 +336,11 @@ class Update:
             cherrypy.response.headers["Content-Type"] = "application/octet-stream"
             cherrypy.response.headers["Content-Disposition"] = "attachment; filename=%s" % self.requested_firmware
             cherrypy.response.headers["Content-Length"] = os.path.getsize(self.filename)
-            cherrypy.response.headers["X-Esp8266-Sketch-Md5"] = self.md5(self.filename)
-
+            if self.device_user_agent == "ESP8266-http-Update":
+                cherrypy.response.headers["X-Esp8266-Sketch-Md5"] = self.md5(self.filename)
+            if self.device_user_agent == "ESP32-http-Update":
+                cherrypy.response.headers["X-Esp32-Sketch-Md5"] = self.md5(self.filename)
+            #print(self.filename)
             with open(self.filename, mode='rb') as file_handler:
                 # read contents of the file
                 file_content = file_handler.read()  # read whole file at once, should not give a memory problem
