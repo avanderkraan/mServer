@@ -194,8 +194,10 @@ class MamiRoot():
             code_screenshot_2 = text.get(section, 'code_screenshot_2')
             code_screenshot_3 = text.get(section, 'code_screenshot_3')
             code_screenshot_4 = text.get(section, 'code_screenshot_4')
+            code_screenshot_5 = text.get(section, 'code_screenshot_5')
             menu = text.get(section, 'menu' )
             get_ip_number = text.get(section, 'get_ip_number')
+            connect_wifi = text.get(section, 'connect_wifi')
             spin_settings_code = text.get(section, 'spin_settings_code')
             spin_settings_independent = text.get(section, 'spin_settings_independent')
             off = text.get(section, 'off')
@@ -258,8 +260,10 @@ class MamiRoot():
                                            code_screenshot_2 = code_screenshot_2,
                                            code_screenshot_3 = code_screenshot_3,
                                            code_screenshot_4 = code_screenshot_4,
+                                           code_screenshot_5 = code_screenshot_5,
                                            menu = menu,
                                            get_ip_number = get_ip_number,
+                                           connect_wifi = connect_wifi,
                                            spin_settings_independent = spin_settings_independent,
                                            spin_settings_code = spin_settings_code,
                                            off = off,
