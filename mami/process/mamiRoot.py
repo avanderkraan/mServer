@@ -56,6 +56,8 @@ class MamiRoot():
         self.max_eat_delta_update_hours = 1    # check after 1 hour or more if an update is nessecary
         self.max_eat_delta_info_hours = 1      # check every 24 hours or more if for new info
 
+        self._model_request_interval = "5"     # request interval of models, for future dynamic use depending on the server load
+        self._sender_request_interval = "5"    # request interval of senders, for future dynamic use depending on the server load
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
@@ -661,7 +663,7 @@ class MamiRoot():
                 # TODO: if server is too busy, this interval should increase
                 #       if server is relaxed, this interval should decrease
                 #       take 5 seconds as minimum, because this influences data traffic
-                sender_request_interval = "5"  # interval of models is set to 5 seconds
+                sender_request_interval = self._sender_request_interval  # interval of senders is set to 5 seconds
                 storage_mac_address_sender.update({"request_interval": sender_request_interval})
                 result.update({"t": sender_request_interval})
             if body.get("info"):
@@ -669,7 +671,7 @@ class MamiRoot():
                 result.update({"pKey": uuid or "",  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)
                               })
             result_string = json.dumps(result)
-            print(result_string, len(result_string))
+            #print(result_string, len(result_string))
             cherrypy.response.headers["Content-Length"] = len(result_string)
             return result_string.encode('utf-8', 'replace')
 
@@ -811,7 +813,7 @@ class MamiRoot():
                     # set model_request_interval to a certain value
                     # TODO: if server is too busy, this interval should increase
                     #       if server is relaxed, this interval should decrease
-                    model_request_interval = "5"  # interval of models is set to 5 seconds
+                    model_request_interval = self._model_request_interval  # interval of models is set to 5 seconds
                     storage_mac_address_model.update({"request_interval": model_request_interval})
                     result.update({"t": model_request_interval})
                 if body.get("info"):
