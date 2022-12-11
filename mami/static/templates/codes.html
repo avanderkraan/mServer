@@ -30,6 +30,8 @@
 
     <div class="row loffset6 roffset6">
       <div class="col-xs-12">
+        ${code_number_guide}
+        <br>
         <div id="codes"></div>
       </div>
     </div>
@@ -80,38 +82,40 @@ function showCodes() {
   
   $.each(allCodes, function(key, value) {
     var selectable = '';
-    codeTable += '  <tr';
-    codeTable += '>';
+    if (value[0] != -1) {  // testcode
+      codeTable += '  <tr';
+      codeTable += '>';
 
-    codeTable += '    <td>';
-    codeTable += '<div id="code_';
-    codeTable += value[0];
-    codeTable += '" class="';
-    //codeTable += selectable;
-    codeTable += '">';
-    codeTable += value[0];
-    codeTable += '</div>';
-    codeTable += '    </td>';
-    
-    codeTable += '    <td>';
-    codeTable += '<div id="name_';
-    codeTable += value[0];
-    codeTable += '" class="';
-    codeTable += '">';
-    codeTable += value[1];
-    codeTable += '</div>';
-    codeTable += '    </td>';
+      codeTable += '    <td>';
+      codeTable += '<div id="code_';
+      codeTable += value[0];
+      codeTable += '" class="';
+      //codeTable += selectable;
+      codeTable += '">';
+      codeTable += value[0];
+      codeTable += '</div>';
+      codeTable += '    </td>';
+      
+      codeTable += '    <td>';
+      codeTable += '<div id="name_';
+      codeTable += value[0];
+      codeTable += '" class="';
+      codeTable += '">';
+      codeTable += value[1];
+      codeTable += '</div>';
+      codeTable += '    </td>';
 
-    codeTable += '    <td>';
-    codeTable += '<div id="city_';
-    codeTable += value[0];
-    codeTable += '" class="';
-    codeTable += '">';
-    codeTable += value[2];
-    codeTable += '</div>';
-    codeTable += '    </td>';
+      codeTable += '    <td>';
+      codeTable += '<div id="city_';
+      codeTable += value[0];
+      codeTable += '" class="';
+      codeTable += '">';
+      codeTable += value[2];
+      codeTable += '</div>';
+      codeTable += '    </td>';
 
-    codeTable += '  </tr>';
+      codeTable += '  </tr>';
+    }
   });
   codeTable += '  </tbody>';
   codeTable += '</table>';

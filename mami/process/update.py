@@ -71,7 +71,7 @@ class UpdateFirmware:
             result = {}
             update = Update(firmware_path=firmware_dir, firmware_pattern=firmware_pattern, device_function=device, requested_version=version)
             update_allowed, message_list = update.check_go()
-            #print(update_allowed, message_list)
+            print(update_allowed, message_list)
             if update_allowed:
                 #print("geen update met bestand", update.filename)
                 #return json.dumps({"nu": "niets"}).encode('utf-8', 'replace')
@@ -97,7 +97,7 @@ class Update:
         @param device_function: is model or sender and corresponds with the filename
                                 in db/authentication/sender|model
         '''
-        #print(cherrypy.request.headers)
+        print(cherrypy.request.headers)
         self.firmware_path = os.path.join(current_dir, firmware_path, device_function)
         self.firmware_pattern = firmware_pattern
         self.device_function = device_function
@@ -340,7 +340,7 @@ class Update:
                 cherrypy.response.headers["X-Esp8266-Sketch-Md5"] = self.md5(self.filename)
             if self.device_user_agent == "ESP32-http-Update":
                 cherrypy.response.headers["X-Esp32-Sketch-Md5"] = self.md5(self.filename)
-            #print(self.filename)
+            print(self.filename)
             with open(self.filename, mode='rb') as file_handler:
                 # read contents of the file
                 file_content = file_handler.read()  # read whole file at once, should not give a memory problem

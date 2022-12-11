@@ -187,14 +187,19 @@ class MamiRoot():
             link_step_code_button = text.get(section, 'link_step_code_button')
             link_step_mdns = text.get(section, 'link_step_mdns')
             link_step_mdns_explanation = text.get(section, 'link_step_mdns_explanation')
-            link_step_code = text.get(section, 'link_step_code')
-            link_step_code_explanation = text.get(section, 'link_step_code_explanation')
-            enter_code_guide = text.get(section, 'enter_code_guide')
-            code_screenshot_1 = text.get(section, 'code_screenshot_1')
-            code_screenshot_2 = text.get(section, 'code_screenshot_2')
-            code_screenshot_3 = text.get(section, 'code_screenshot_3')
-            code_screenshot_4 = text.get(section, 'code_screenshot_4')
-            code_screenshot_5 = text.get(section, 'code_screenshot_5')
+            code_guide_header = text.get(section, 'code_guide_header')
+            code_guide = text.get(section, 'code_guide')
+            code_guide_a_header = text.get(section, 'code_guide_a_header')
+            code_guide_a = text.get(section, 'code_guide_a')
+            code_guide_b_header = text.get(section, 'code_guide_b_header')
+            code_guide_b = text.get(section, 'code_guide_b')
+            code_guide_b1_header = text.get(section, 'code_guide_b1_header')
+            code_guide_b1 = text.get(section, 'code_guide_b1')
+            code_guide_b2_header = text.get(section, 'code_guide_b2_header')
+            code_guide_b2 = text.get(section, 'code_guide_b2')
+            figure_1 = text.get(section, 'figure_1')
+            figure_2 = text.get(section, 'figure_2')
+            figure_3 = text.get(section, 'figure_3')
             menu = text.get(section, 'menu' )
             get_ip_number = text.get(section, 'get_ip_number')
             connect_wifi = text.get(section, 'connect_wifi')
@@ -253,14 +258,19 @@ class MamiRoot():
                                            link_step_code_button = link_step_code_button,
                                            link_step_mdns = link_step_mdns,
                                            link_step_mdns_explanation = link_step_mdns_explanation,
-                                           link_step_code = link_step_code,
-                                           link_step_code_explanation = link_step_code_explanation,
-                                           enter_code_guide = enter_code_guide,
-                                           code_screenshot_1 = code_screenshot_1,
-                                           code_screenshot_2 = code_screenshot_2,
-                                           code_screenshot_3 = code_screenshot_3,
-                                           code_screenshot_4 = code_screenshot_4,
-                                           code_screenshot_5 = code_screenshot_5,
+                                           code_guide_header = code_guide_header,
+                                           code_guide = code_guide,
+                                           code_guide_a_header = code_guide_a_header,
+                                           code_guide_a = code_guide_a,
+                                           code_guide_b_header = code_guide_b_header,
+                                           code_guide_b = code_guide_b,
+                                           code_guide_b1_header = code_guide_b1_header,
+                                           code_guide_b1 = code_guide_b1,
+                                           code_guide_b2_header = code_guide_b2_header,
+                                           code_guide_b2 = code_guide_b2,
+                                           figure_1 = figure_1,
+                                           figure_2 = figure_2,
+                                           figure_3 = figure_3,
                                            menu = menu,
                                            get_ip_number = get_ip_number,
                                            connect_wifi = connect_wifi,
@@ -485,7 +495,7 @@ class MamiRoot():
             cherrypy.response.headers["Content-Type"] = "application/json"
             cl = cherrypy.request.headers['Content-Length']
             rawbody = cherrypy.request.body.read(int(cl))
-            #print(rawbody)
+            #print(rawbody, cl)
             unicodebody = ""
             try:
                 unicodebody = rawbody.decode(encoding="utf-8",errors="strict")
@@ -596,6 +606,7 @@ class MamiRoot():
             delta_info = None
             sender_update_flag = False
             sender_info_flag = False
+            sender_request_interval = storage_mac_address_sender.get("request_interval") 
             try:
                 if feed_update_time != None:
                     delta_update = timedelta(hours = self.max_feed_delta_update_hours)
@@ -645,12 +656,20 @@ class MamiRoot():
                            "pR"  : ratio_from_db,
                            "i"   : sender_info_flag and "info" or ""
                           })
+            if sender_request_interval == None:
+                # set sender_request_interval to a certain value
+                # TODO: if server is too busy, this interval should increase
+                #       if server is relaxed, this interval should decrease
+                #       take 5 seconds as minimum, because this influences data traffic
+                sender_request_interval = "5"  # interval of models is set to 5 seconds
+                storage_mac_address_sender.update({"request_interval": sender_request_interval})
+                result.update({"t": sender_request_interval})
             if body.get("info"):
                 uuid = body.get("info").get("key")
                 result.update({"pKey": uuid or "",  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)
                               })
             result_string = json.dumps(result)
-            #print(result_string, feed_counter)
+            print(result_string, len(result_string))
             cherrypy.response.headers["Content-Length"] = len(result_string)
             return result_string.encode('utf-8', 'replace')
 
@@ -740,6 +759,7 @@ class MamiRoot():
                 delta_info = None
                 model_update_flag = False
                 model_info_flag = False
+                model_request_interval = storage_mac_address_model.get("request_interval") 
                 try:
                     if eat_update_time != None:
                         delta_update = timedelta(hours = self.max_eat_delta_update_hours)
@@ -787,13 +807,20 @@ class MamiRoot():
                 result.update({"pFv" : model_update_flag and "latest" or "",
                                "i"   : model_info_flag and "info" or ""
                                })
+                if model_request_interval == None:
+                    # set model_request_interval to a certain value
+                    # TODO: if server is too busy, this interval should increase
+                    #       if server is relaxed, this interval should decrease
+                    model_request_interval = "5"  # interval of models is set to 5 seconds
+                    storage_mac_address_model.update({"request_interval": model_request_interval})
+                    result.update({"t": model_request_interval})
                 if body.get("info"):
                     uuid = body.get("info").get("key")
                     result.update({"pKey": uuid or "",  # proposedUUID ->TODO: change this value when needed as safety measurement (authentication of the sender)
                                 })
 
-                #print('model data:', result)
                 result_string = json.dumps(result)
+                #print('model data:', result, len(result_string))
                 cherrypy.response.headers["Content-Length"] = len(result_string)
                 return result_string.encode('utf-8', 'replace')
             else:
@@ -855,6 +882,7 @@ class MamiRoot():
             homepage_message = message.get(language, 'homepage_message')
 
             code = text.get(section, 'code')
+            code_number_guide = text.get(section, 'code_number_guide')
             name = text.get(section, 'name')
             city = text.get(section, 'city')
             cpright = text.get(section, 'copyright')
@@ -865,6 +893,7 @@ class MamiRoot():
                                            homepage_message = homepage_message,
                                            all_codes = active_sender_codes,
                                            code = code,
+                                           code_number_guide = code_number_guide,
                                            name = name,
                                            city = city,
                                            cpright = cpright,
