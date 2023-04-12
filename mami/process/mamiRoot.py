@@ -50,7 +50,7 @@ class MamiRoot():
         # to protect features from being exposed too easily
         self.get_features_code = str(uuid.uuid4())
 
-        self.max_delta = 60             # max difference of rph to prevent a sudden 0
+        # self.max_delta = 600                   # max difference of rph to prevent a sudden 0, 600 is 10 rpm, is 40 bpm (with 4 blades)
         self.max_feed_delta_update_hours = 1   # check after 1 hour or more if an update is nessecary
         self.max_feed_delta_info_hours = 1     # check every 24 hours or more if for new info
         self.max_eat_delta_update_hours = 1    # check after 1 hour or more if an update is nessecary
@@ -595,14 +595,25 @@ class MamiRoot():
             # TODO: with "pushFirmware=esp8266_0.0.9.bin" to push this version
             # TODO:      "pushFirmware=latest to push the latest
 
-            try:
-                previous_rph = storage_mac_address_sender.get("stored_rph")
-                # slowly lower rph value when it is suddenly 0
-                if (int(rph) == 0) and (previous_rph > self.max_delta):
-                    rph = str(int(previous_rph - self.max_delta))
-            except:
-                if rph != None:
-                    storage_mac_address_sender.update({"stored_rph":int(rph)})
+            '''
+            # start this goes wrong because in mSender there is already a way to solve the 0 value
+            previous_rph = storage_mac_address_sender.get("stored_rph") or 0
+
+            # slowly lower bpm value when it is suddenly 0 is done in mSender with steps of -8
+            # self.max_delta is used to prevent extreme value changes
+            #if (int(rph) == 0) and (previous_rph > self.max_delta):
+            print(storage_mac_address_sender.get("stored_rph"), int(rph), previous_rph)
+            if int(rph) - previous_rph > self.max_delta:
+                rph = str(previous_rph + self.max_delta)
+            if previous_rph - int(rph) > self.max_delta:
+                rph = str(previous_rph - self.max_delta)
+
+            if int(rph) < 0:
+                rph = "0"
+
+            storage_mac_address_sender.update({"stored_rph":int(rph)})
+            # end this goes wrong because in mSender there is already a way to solve the 0 value
+            '''
 
             feed_update_time = storage_mac_address_sender.get("feed_update_time")
             feed_info_time =  storage_mac_address_sender.get("feed_info_time")
