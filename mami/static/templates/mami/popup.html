@@ -92,23 +92,15 @@
             if (tenbruggencatenummer > 1) {  // -1 is test/demo
                 popupTitle = "${molendatabase}";
                 popupTitle += "<div id=\"popup_" + selectedId + "\" >";
-                popupTitle += "<form target=\"_blank\"";
-                popupTitle += " id=\"molendatabase_" + selectedId + "\"";
-                popupTitle += " onclick=\"submitForm('" + selectedId + "');\"";
-                popupTitle += " action=\"https://molendatabase.nl/nederland/molen.php\"";
-                popupTitle += " method=\"post\"";
-                popupTitle += " enctype=\"application/x-www-form-urlencoded\"";
-                popupTitle += ">";
-                popupTitle += "<input type=\"hidden\" name=\"tenbruggencatenummer\" value=\"" + tenbruggencatenummer + "\">\n";
+                popupTitle += "<a href=\"https://www.molendatabase.nl/molens/ten-bruggencate-nr-" + tenbruggencatenummer + "\" target=\"_blank\">\n";
                 popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\">";
                 popupTitle += "<strong>";
                 popupTitle += feature.values_.name;
-                popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\"</div>";
+                popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\">";
                 popupTitle += "</strong>";
-                popupTitle += "</span>\n";
-                popupTitle += "</form>\n";
+                popupTitle += "</a>";
+                popupTitle += "</div>";
             }
-
             if (selectedId != undefined) {
                 $.getJSON("get_data_as_json/?feature_id=" + selectedId)
                     .done(function(data) {
