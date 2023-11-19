@@ -109,18 +109,26 @@
                         var popupText = "<ul style=\"list-style-type:square\">";
                         popupText += "<li>";
                         popupText += "${tenbruggecate_code}";
+                        popupText += " ";
                         popupText += tenbruggencatenummer;
                         popupText + "</li>";
+
+                        popupText += "<li>";
+                        popupText += "${revolutions}";
                         $.each(data, function(key, val) {
                             // data: name, bpm, nr_blades
-                            
-                            popupText += "<li>";
                             if (key == "day_counter") {
                                 key = "${day_counter}";
                             }
-                            popupText += key + " " + val;
-                            popupText += "</li>"
+                            if (key == "month_counter") {
+                                key = "${month_counter}";
+                            }
+                            if (key == "year_counter") {
+                                key = "${year_counter}";
+                            }
+                            popupText += "<br>" + key + " " + val;
                         });
+                        popupText += "</li>"
 
                         popupText += "</ul>";
 

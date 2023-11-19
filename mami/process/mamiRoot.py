@@ -10,6 +10,7 @@ import cherrypy
 import os
 import json
 from datetime import datetime, timedelta
+import calendar
 from random import randrange
 from copy import deepcopy
 from mami.process.update import Update
@@ -231,7 +232,10 @@ class MamiRoot():
             hide_local_storage = text.get(section, 'hide_local_storage')
             clear_local_storage = text.get(section, 'clear_local_storage')
             molendatabase = text.get(section, 'molendatabase')
+            revolutions = text.get(section, 'revolutions')
             day_counter = text.get(section, 'day_counter')
+            month_counter = text.get(section, 'month_counter')
+            year_counter = text.get(section, 'year_counter')
             tenbruggecate_code = text.get(section, 'tenbruggecate_code')
             return template.render_unicode(language_options = language_options,
                                            millis = millis,
@@ -303,7 +307,10 @@ class MamiRoot():
                                            hide_local_storage = hide_local_storage,
                                            clear_local_storage = clear_local_storage,
                                            molendatabase = molendatabase,
+                                           revolutions = revolutions,
                                            day_counter = day_counter,
+                                           month_counter = month_counter,
+                                           year_counter = year_counter,
                                            tenbruggecate_code = tenbruggecate_code
                                            ).encode('utf-8', 'replace')
         except Exception as inst:
@@ -360,17 +367,48 @@ class MamiRoot():
             # result = self._get_data().get(feature_id)
             result = {}
             now = datetime.now().strftime('%Y-%m-%d')
+            month_range = calendar.monthrange(datetime.now().year, datetime.now().month)
+            month_first_day = datetime.now().replace(day=1).strftime('%Y-%m-%d')
+            month_last_day = datetime.now().replace(day=month_range[1]).strftime('%Y-%m-%d')
+            year_first_day = datetime.now().replace(month=1).replace(day=1).strftime('%Y-%m-%d')
+            year_last_day = datetime.now().replace(month=12).replace(day=31).strftime('%Y-%m-%d')
             statistics = Statistics()
-            stats = statistics.get_sender_statistics(id=feature_id,
-                                                     from_date=now,
-                                                     last_date=now)
-            if len(stats) > 0:
-                day_counter = 0
-                try:
-                    day_counter = stats[-1][3] #statistics[-1][3] - statistics[0][3]
-                    result.update({'day_counter': '%s' % day_counter})
-                except:
-                    pass
+            stats_day = statistics.get_sender_statistics(id=feature_id,
+                                                         from_date=now,
+                                                         last_date=now)
+            statistics = Statistics()
+            stats_month = statistics.get_sender_statistics(id=feature_id,
+                                                           from_date=month_first_day,
+                                                           last_date=month_last_day)
+            statistics = Statistics()
+            stats_year = statistics.get_sender_statistics(id=feature_id,
+                                                          from_date=year_first_day,
+                                                          last_date=year_last_day)
+            day_counter = 0
+            try:
+                result.update({'day_counter': '%s' % day_counter})
+                day_counter = stats_day[-1][3] #statistics[-1][3] - statistics[0][3]
+                result.update({'day_counter': '%s' % day_counter})
+            except:
+                pass
+            month_counter = 0
+            try:
+                result.update({'month_counter': '%s' % month_counter})
+                for i in range(0, len(stats_month)):
+                    element = stats_month[i]
+                    month_counter += element[3]
+                    result.update({'month_counter': '%s' % month_counter})
+            except:
+                pass
+            year_counter = 0
+            try:
+                result.update({'year_counter': '%s' % year_counter})
+                for i in range(0, len(stats_year)):
+                    element = stats_year[i]
+                    year_counter += element[3]
+                    result.update({'year_counter': '%s' % year_counter})
+            except:
+                pass
             return json.dumps(result).encode('utf-8', 'replace')
         return json.dumps(self._get_data()).encode('utf-8', 'replace')
 
