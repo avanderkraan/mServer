@@ -1,10 +1,10 @@
 from pathlib import Path
-import json
+#import json
 from mami.data import database
 
 def validate_role_model(realm='role_model', key=None, value=None):
     '''
-    Basic authentication does not accept colo characters, so they are replaced
+    Basic authentication does not accept colon characters, so they are replaced
     by an underscore, but the database contains a colon as part of the
     mac_address (=key)
     the value contains the uuid of the corresponding device, identified
@@ -18,7 +18,7 @@ def validate_role_model(realm='role_model', key=None, value=None):
 
 def validate_model(realm='model', key=None, value=None):
     '''
-    Basic authentication does not accept colo characters, so they are replaced
+    Basic authentication does not accept colon characters, so they are replaced
     by an underscore, but the database contains a colon as part of the
     mac_address (=key)
     the value contains the uuid of the corresponding device, identified
@@ -30,4 +30,9 @@ def validate_model(realm='model', key=None, value=None):
     db = database.Database()
     return db.validate_model(key, value)
 
-
+def validate_viewer(realm='viewer', key=None, value=None):
+    '''
+    Basic authentication does not accept colon characters
+    '''
+    db = database.Database()
+    return db.validate_viewer(key, value)

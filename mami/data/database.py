@@ -360,17 +360,19 @@ class Database():
     def validate_viewer(self, id, value=None):
         '''
         id contains the mac address
-        value contains the uuid which is not used at this moment
-              for the Update process the value will be None
+        value contains the uuid as given to the user who programms the viewing device/code
         '''
         my_query = "SELECT \
                     mami_identification.authorisation.authorisation_key \
                     FROM mami_identification.authorisation, \
+                        mami_identification.authentication, \
                         mami_role.viewer \
                     WHERE mami_role.viewer.active = 1 \
                     AND mami_identification.authorisation.authorisation_key = '%s' \
-                    AND mami_identification.authorisation.id = mami_role.viewer.authorisation_key;" \
-                    % id
+                    AND mami_identification.authorisation.id = mami_role.viewer.authorisation_key \
+                    AND mami_identification.authentication.id = mami_role.viewer.authentication_key \
+                    AND mami_identification.authentication.key = '%s';" \
+                    % (id, value)
 
         result = self._get_result(my_query)
         for item in result:

@@ -4,17 +4,17 @@ Created on Jan 11, 2018
 @author: andre
 '''
 
-from re import I
+#from re import I
 import uuid
 import cherrypy
-import os
+#import os
 import json
 from datetime import datetime, timedelta
 import calendar
 from random import randrange
 from copy import deepcopy
-from mami.process.update import Update
-from mami.process.validate import validate_model, validate_role_model
+#from mami.process.update import Update
+from mami.process.validate import validate_model, validate_role_model, validate_viewer
 #from mako import exceptions
 from mami import current_dir
 from mami import module_dir
@@ -23,6 +23,7 @@ from mami import sse_timeout
 from mami.data.database import Database
 from mami.data.statistics import Statistics
 from mami.data.debug import Debug
+from mami.process.api import Api
 
 
 from mami.locale.properties import LocaleHandle
@@ -37,10 +38,11 @@ mylookup = TemplateLookup(directories=['%s%s' % (current_dir, '/static/templates
                 module_directory=module_dir, collection_size=500,
                 output_encoding='utf-8', encoding_errors='replace')
 
-dynamic = {}  # holds bpm(blades per minute) data per feature_id with a datetime when the value was set
+dynamic = {}  # holds data per feature_id with a datetime when the value was set
 model_inventory = {}  # holds model mac address as key and rolemodel_id as value
 mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_bpm
 mac_address_model = {}   # holds data from model wih mac_address as key
+viewer = {}              # holds data from viewer with headers["Authorization"] as key
 
 #    print(section, locale_handle.text.options(section))
 #print (locale_handle.text.get('nl.base', 'title'))
@@ -49,6 +51,8 @@ class MamiRoot():
     def __init__(self):
         print ('entered MamiRoot')
         # to protect features from being exposed too easily
+        # uuid here must correspond with the uuid in the /get_features_from_data?f=<uuid>
+        # on the browsers index page 
         self.get_features_code = str(uuid.uuid4())
 
         # self.max_delta = 600                   # max difference of rph to prevent a sudden 0, 600 is 10 rpm, is 40 bpm (with 4 blades)
@@ -57,8 +61,10 @@ class MamiRoot():
         self.max_eat_delta_update_hours = 1    # check after 1 hour or more if an update is nessecary
         self.max_eat_delta_info_hours = 1      # check every 24 hours or more if for new info
 
-        self._model_request_interval = "5"     # request interval of models, for future dynamic use depending on the server load
-        self._sender_request_interval = "5"    # request interval of senders, for future dynamic use depending on the server load
+        self._model_request_interval = "5"     # request interval of models in seconds, for future dynamic use depending on the server load
+        self._sender_request_interval = "5"    # request interval of senders in seconds, for future dynamic use depending on the server load
+        self._viewer_request_interval = "15"   # request interval of viewers in seconds, for future dynamic use depending on the server load
+
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
@@ -83,7 +89,7 @@ class MamiRoot():
         cherrypy.request.headers['Pragma'] = 'no-cache'
         cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
 
-        now = datetime.now() 
+        now = datetime.now().astimezone()      # local server timezone 
         delta = timedelta(minutes=cache_delay)
         remove_objects = []
         for key in dynamic.keys():
@@ -107,7 +113,10 @@ class MamiRoot():
             mac_address_model.clear()  # just empty, it will fill up itself
         # end mac_address_model dictionary
 
-        # TODO clean model_inventory?
+        # start viewer dictionary
+        if len(viewer) > 1500:
+            viewer.clear()  # just empty, it will fill up itself
+        # end viewer dictionary
 
 ####################################################################################### 
     @cherrypy.expose
@@ -353,25 +362,21 @@ class MamiRoot():
     @cherrypy.expose
     def get_data_as_json(self, feature_id=None):
         """
-        This method returns data in JSON format, called from popup.html
+        This method returns data in JSON format, called from popup.html and the API class
         Every feature has a key with its own properties
-        @see _get_data(self)
         """
         cherrypy.response.headers["Content-Type"] = "application/json"
         cherrypy.response.headers["Cache-Control"] = "no-cache"
         cherrypy.response.headers["Connection"] = "keep-alive"
         cherrypy.response.headers["Pragma"] = "no-cache"
         if feature_id:
-            # TODO: do something eith the feature data in the popup?
-            # for now: not using these values
-            # result = self._get_data().get(feature_id)
             result = {}
-            now = datetime.now().strftime('%Y-%m-%d')
-            month_range = calendar.monthrange(datetime.now().year, datetime.now().month)
-            month_first_day = datetime.now().replace(day=1).strftime('%Y-%m-%d')
-            month_last_day = datetime.now().replace(day=month_range[1]).strftime('%Y-%m-%d')
-            year_first_day = datetime.now().replace(month=1).replace(day=1).strftime('%Y-%m-%d')
-            year_last_day = datetime.now().replace(month=12).replace(day=31).strftime('%Y-%m-%d')
+            now = datetime.now().astimezone().strftime('%Y-%m-%d')
+            month_range = calendar.monthrange(datetime.now().astimezone().year, datetime.now().astimezone().month)
+            month_first_day = datetime.now().astimezone().replace(day=1).strftime('%Y-%m-%d')
+            month_last_day = datetime.now().astimezone().replace(day=month_range[1]).strftime('%Y-%m-%d')
+            year_first_day = datetime.now().astimezone().replace(month=1).replace(day=1).strftime('%Y-%m-%d')
+            year_last_day = datetime.now().astimezone().replace(month=12).replace(day=31).strftime('%Y-%m-%d')
             statistics = Statistics()
             stats_day = statistics.get_sender_statistics(id=feature_id,
                                                          from_date=now,
@@ -409,8 +414,9 @@ class MamiRoot():
                     result.update({'year_counter': '%s' % year_counter})
             except:
                 pass
+        
             return json.dumps(result).encode('utf-8', 'replace')
-        return json.dumps(self._get_data()).encode('utf-8', 'replace')
+        return json.dumps({}).encode('utf-8', 'replace')
 
     @cherrypy.expose
     def get_data_via_sse(self):
@@ -460,7 +466,7 @@ class MamiRoot():
             database = Database()
             feature = database.get_feature_from_mac_address(mac_address=mac_address)
             #feature = feature_data.get_feature(feature_id)
-            now = datetime.now()
+            now = datetime.now().astimezone()
             feature_id = feature['id']
             #if feature and 'id' in feature.keys() and feature['id'] == feature_id:
             name = feature['properties']['name']
@@ -479,7 +485,7 @@ class MamiRoot():
                                    }
             try:
                 if (int(rph) > 0):  # write only when there is movement
-                    now = datetime.now().strftime('%Y-%m-%d')
+                    now = datetime.now().astimezone().strftime('%Y-%m-%d')
                     statistics = Statistics()
                     statistics.write_sender_statistics(id=feature_id,
                                                        change_date = now,
@@ -578,11 +584,11 @@ class MamiRoot():
                 database = Database()
                 feature = database.get_feature_from_mac_address(mac_address=macAddress)
                 #feature = feature_data.get_feature(feature_id)
-                now = datetime.now()
+                now = datetime.now().astimezone()
                 feature_id = feature['id']
-                #now = datetime.now().strftime('%Y-%m-%d')
+                #now = datetime.now().astimezone().strftime('%Y-%m-%d')
 
-                #print(datetime.now().strftime('%Y-%m-%d:%H:%M:%S'))
+                #print(datetime.now().astimezone().strftime('%Y-%m-%d:%H:%M:%S'))
 
                 '''
                 keys, used by body.get('info'):
@@ -666,25 +672,25 @@ class MamiRoot():
                 else:
                     # First time after starting the server, so spread the load
                     delta_update = timedelta(seconds = randrange(1, 60))
-                    feed_update_time = datetime.now() + delta_update
+                    feed_update_time = datetime.now().astimezone() + delta_update
                     storage_mac_address_sender.update({"feed_update_time": feed_update_time})
                 if feed_info_time != None:
                     delta_info = timedelta(hours = self.max_feed_delta_info_hours)
                 else:
                     # First time after starting the server, so spread the load
                     delta_info = timedelta(seconds = randrange(1, 60))
-                    feed_info_time = datetime.now() + delta_info
+                    feed_info_time = datetime.now().astimezone() + delta_info
                     storage_mac_address_sender.update({"feed_info_time": feed_info_time})
 
                 # push Update only when bpm (alias rph) == 0
                 # do this because an update call blocks the device (shortly)
                 
                 if rph and rph == "0":
-                    if datetime.now() > feed_update_time:
+                    if datetime.now().astimezone() > feed_update_time:
                         sender_update_flag = True
                         feed_update_time += delta_update
                         storage_mac_address_sender.update({"feed_update_time": feed_update_time})
-                    if datetime.now() > feed_info_time:
+                    if datetime.now().astimezone() > feed_info_time:
                         sender_info_flag = True
                         feed_info_time += delta_info
                         storage_mac_address_sender.update({"feed_info_time": feed_info_time})
@@ -759,7 +765,7 @@ class MamiRoot():
                 version = body.get('info').get('v')
                 # but first set some debug info in the database
                 # start write debug info
-                now = datetime.now()
+                now = datetime.now().astimezone()
                 '''
                 keys, used by body.get('info'):
                 
@@ -819,20 +825,20 @@ class MamiRoot():
                     else:
                         # First time after starting the server, so spread the load
                         delta_update = timedelta(seconds = randrange(1, 60))
-                        eat_update_time = datetime.now() + delta_update
+                        eat_update_time = datetime.now().astimezone() + delta_update
                         storage_mac_address_model.update({"eat_update_time": eat_update_time})
                     if eat_info_time != None:
                         delta_info = timedelta(hours = self.max_eat_delta_info_hours)
                     else:
                         # First time after starting the server, so spread the load
                         delta_info = timedelta(seconds = randrange(1, 60))
-                        eat_info_time = datetime.now() + delta_info
+                        eat_info_time = datetime.now().astimezone() + delta_info
                         storage_mac_address_model.update({"eat_info_time": eat_info_time})
 
                     if result.get("rph") and result.get("rph") == "0" or roleModel in ("None", "independent"):
                         # backwards compatibility for version < 0.1.5: roleModel "None"
                         # with version => 0.1.5 roleModel == "independent" is used
-                        if datetime.now() > eat_update_time:
+                        if datetime.now().astimezone() > eat_update_time:
                             try:
                                 database = Database()
                                 motor_properties_as_json = database.get_motor_properties_as_json(mac_address=macAddress)
@@ -848,7 +854,7 @@ class MamiRoot():
                             eat_update_time += delta_update
                             storage_mac_address_model.update({"eat_update_time": eat_update_time})
 
-                        if datetime.now() > eat_info_time:
+                        if datetime.now().astimezone() > eat_info_time:
                             model_info_flag = True
                             eat_info_time += delta_info
                             storage_mac_address_model.update({"eat_info_time": eat_info_time})
@@ -885,6 +891,73 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
+
+#######################################################################################
+    @cherrypy.expose
+    def api(self):
+        """
+        Only POST feeds will be handled
+        return: a response in json format to the feeding device
+        """
+
+        cherrypy.response.headers["Content-Type"] = "application/json"
+        result_string = '{}'
+
+        if cherrypy.request.method == 'POST':
+            cl = cherrypy.request.headers['Content-Length']
+            if cherrypy.request.headers.get("Authorization"):
+                storage_viewer = viewer.get(cherrypy.request.headers.get("Authorization"))
+                if storage_viewer == None:
+                    viewer.update({cherrypy.request.headers.get("Authorization"):{}})
+                    storage_viewer = viewer.get(cherrypy.request.headers.get("Authorization"))
+
+                request_interval = storage_viewer.get("request_interval")
+                last_request_time = storage_viewer.get("last_request_time")
+                try:
+                    if request_interval == None:
+                        request_interval = self._viewer_request_interval
+                        storage_viewer.update({"request_interval": request_interval})
+                    if last_request_time == None:
+                        last_request_time = datetime.now().astimezone() - timedelta(seconds=float(request_interval))  # so first time start without waiting
+                        storage_viewer.update({"last_request_time": last_request_time})
+                    
+                    valid_request_time = storage_viewer.get("last_request_time")
+                    valid_request_time += timedelta(seconds= float(request_interval))
+
+                    if valid_request_time < datetime.now().astimezone():
+                        # new request is allowed
+                        storage_viewer["last_request_time"] = datetime.now().astimezone()
+                        rawbody = cherrypy.request.body.read(int(cl))
+                        unicodebody = ""
+                        try:
+                            unicodebody = rawbody.decode(encoding="utf-8",errors="strict")
+                        except:
+                            # workaround of decode problem
+                            unicodebody = str(rawbody)[2:-1].replace("\\x","-")
+                        try:
+                            body = json.loads(unicodebody)
+                            api = Api(body, dynamic, self.get_data_as_json)
+                            result_string = api.result()
+                        except:
+                            result_string = '{"Error": "invalid JSON"}'
+                    else:
+                        result_string = '{"Warning": "Request interval should be longer than %s seconds, wait for %s seconds"}' % (request_interval, (valid_request_time - datetime.now().astimezone()).seconds)
+    
+                except Exception as e:
+                    result_string = '{"Error": "Server failure: %s"}' % e
+ 
+            else:
+                result_string = '{"Error": "Authorization failed, no authorization header present"}'
+
+        else:
+            result_string = '{"Error": "Request method should be POST"}'
+
+        cherrypy.response.headers["Content-Length"] = len(result_string)
+        return result_string.encode('utf-8', 'replace')
+
+
+
+####################################################################################### 
     @cherrypy.expose
     def codes(self, *args, **kwargs):
         """
@@ -958,8 +1031,12 @@ class MamiRoot():
             cherrypy.log('exception', traceback=True)
             return 
 
+    # _cp_config is normally global but this is a way to activate it with a method
     feed._cp_config = {"request.methods_with_bodies": ("POST")}
     get_data_via_sse._cp_config = {'response.stream': True, 'tools.encode.encoding':'utf-8'}     
+    # Set a custom response for 401 errors for the api method
+    api._cp_config = {'error_page.401':
+                  '%s%s%s' % (current_dir, '/static/templates/', 'api401.html')}
     
 if __name__ == '__main__':
     try:
