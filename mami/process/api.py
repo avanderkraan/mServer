@@ -11,8 +11,6 @@ class Api:
         self.body = body                        # api request
         self.dynamic = dynamic_data             # dynamic mill data on this server
 
-        self.dynamic = {'03503': {'mac_address': '84:CC:A8:A2:D1:84', 'now': datetime.datetime.now().astimezone(), 'name': 'Demo', 'rph': '555', 'blades': '4', 'revolutions': '6'}}
-
         self.get_data_as_json = get_data_as_json# method that gives coin-data as json
         self.requested_mills = None             # None or contains a list of mill-ids
         self.result_string = '{"Error": "Api request failed during processing"}'
@@ -73,15 +71,15 @@ class Api:
                     else:
                         self._confirm_choice("action", "data_by_id")
                         #format
-                        indent = self.body.get("indent") or "-"     # no indent defined
-                        try:
-                            indent = int(indent)
-                            if indent < 1 or indent > 4:
-                                self._confirm_choice("action", "help")
-                            else:
-                                self.format = indent
-                        except:
+                    indent = self.body.get("indent") or "-"     # no indent defined
+                    try:
+                        indent = int(indent)
+                        if indent < 1 or indent > 4:
                             self._confirm_choice("action", "help")
+                        else:
+                            self.format = indent
+                    except:
+                        self._confirm_choice("action", "help")
 
 
 
