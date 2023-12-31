@@ -73,13 +73,16 @@ class Api:
                         #format
                     indent = self.body.get("indent") or "-"     # no indent defined
                     try:
-                        indent = int(indent)
-                        if indent < 1 or indent > 4:
-                            self._confirm_choice("action", "help")
+                        if indent == "-":
+                            self.format = None
                         else:
-                            self.format = indent
+                            indent = int(indent)
+                            if indent < 1 or indent > 4:
+                                self._confirm_choice("action", "help")
+                            else:
+                                self.format = indent
                     except:
-                        self._confirm_choice("action", "help")
+                         self._confirm_choice("action", "help")
 
 
 
