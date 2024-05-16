@@ -6,6 +6,7 @@ firmware_dir = os.path.join(current_dir, 'db', 'firmware')
 #authentication_dir = os.path.join(current_dir, 'db', 'authentication')
 
 db_credentials_file = os.path.join(current_dir, 'db' , 'credentials.json')
+import_credentials_file = os.path.join(current_dir, 'db', 'import_credentials.json')
 
 # value = 'esp8266_0.0.6.bin'
 firmware_pattern = r'^(.*?)_([0-9]+)\.([0-9]+)\.([0-9]+)\.bin'

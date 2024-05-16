@@ -24,6 +24,7 @@ from mami.data.database import Database
 from mami.data.statistics import Statistics
 from mami.data.debug import Debug
 from mami.process.api import Api
+from mami.process.importData import ImportData
 
 
 from mami.locale.properties import LocaleHandle
@@ -68,8 +69,14 @@ class MamiRoot():
     def _get_section(self, template, locale='en'):
         return '%s.%s' % (locale, template.module_id.split('_')[0])
 
+
     @cherrypy.expose
     def get_features_from_data(self, f=None):
+        '''
+        get features from the database and
+        get external features (not implemented yet)
+        is called from index.html
+        '''
         cherrypy.request.headers['Pragma'] = 'no-cache'
         cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
         if f == self.get_features_code:
@@ -936,9 +943,11 @@ class MamiRoot():
                             unicodebody = str(rawbody)[2:-1].replace("\\x","-")
                         try:
                             body = json.loads(unicodebody)
+
                             api = Api(body, dynamic, self.get_data_as_json)
                             result_string = api.result()
                         except:
+                            print(unicodebody)
                             result_string = '{"Error": "invalid JSON"}'
                     else:
                         result_string = '{"Warning": "Request interval should be longer than %s seconds, wait for %s seconds"}' % (request_interval, (valid_request_time - datetime.now().astimezone()).seconds)
@@ -956,7 +965,14 @@ class MamiRoot():
         return result_string.encode('utf-8', 'replace')
 
 
-
+    @cherrypy.expose
+    def get_api_data(self, source_id="source_id", source_key="source_key"):
+        '''
+        Gets API data from external websites defines in the file import_credentials.json
+        This method is intended to be used in a cronjob
+        '''
+        import_data = ImportData(source_id, source_key)
+        
 ####################################################################################### 
     @cherrypy.expose
     def codes(self, *args, **kwargs):

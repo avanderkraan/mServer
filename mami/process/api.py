@@ -114,6 +114,7 @@ class Api:
         if self.action == "data_by_id":
             mill_id_list = self.body.get("mills") or []
 
+        result_items = []                           # array of items in json format
         for id in mill_id_list:
             try:
                 item = {}                           # contains all item data
@@ -147,10 +148,11 @@ class Api:
                 if db_data.get("year_counter"):
                     item.update({"year_counter": db_data.get("year_counter")})
 
-                result.update({id: item})
+                result_items.append(item)
 
             except Exception as e:
                 pass
+        result.update({"mills": result_items})
         return result
 
 
