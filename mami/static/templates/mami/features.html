@@ -1,13 +1,38 @@
 <script>
 
 function getValue(feature) {
-	var value = Math.round(parseInt(feature.get('rph') * parseInt(feature.get('blades')) / 60));
-	if (unit == 'rpm') {
-	var value = Math.round(parseInt(feature.get('rph')) / 60);
+	var value = '-';
+	if (feature.values_.source_id == undefined)
+	{
+		/* start value from draaiendemolens */
+		value = Math.round(parseInt(feature.get('rph') * parseInt(feature.get('blades')) / 60));
+		if (unit == 'rpm') {
+			value = Math.round(parseInt(feature.get('rph')) / 60);
+		}
+		value = value.toString();
+		if (isNaN(value)) {
+			value="-";
+		}
+		/* end value from draaiendemolens */
 	}
-	value = value.toString();
-	if (isNaN(value)) {
-		value="-";
+	else
+	{
+		/* start value from external sources, imported within mamiRoot */
+		if (feature.values_.rpm != "")
+		{
+			value = feature.values_.rpm;
+			if (unit != 'rpm') {
+				value = value * 4;  // assuming every imported mill has 4 blades
+			}
+			value = Math.round(parseInt(value)).toString();
+		}
+		// show rotation speed if available else show cap orientation if available
+		if ((feature.values_.cap_orientation && (value == "0" || value == "-")))
+		{
+			feature.values_.cap_orientation;
+			value = feature.values_.cap_orientation;
+		}
+		/* end value from external sources, imported within mamiRoot */
 	}
 	return value;
 }
@@ -150,7 +175,7 @@ function styleFunction(feature, resolution) {
 			color: 'rgba(255, 255, 0, 0.6)'
 		}),
         padding: [0,5,0,5],
-		text: '-',
+		text: getValue(feature),
 		offsetX: 0,
 		offsetY: 20
 	});

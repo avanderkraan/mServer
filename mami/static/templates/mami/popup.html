@@ -88,52 +88,93 @@
             var coordinate = feature.values_.geometry.flatCoordinates;
             millInfo.setPosition(coordinate);
             var popupTitle = "";
-            var tenbruggencatenummer = selectedId;
-            if (tenbruggencatenummer > 1) {  // -1 is test/demo
-                popupTitle = "${molendatabase}";
-                popupTitle += "<div id=\"popup_" + selectedId + "\" >";
-                popupTitle += "<a href=\"https://www.molendatabase.nl/molens/ten-bruggencate-nr-" + tenbruggencatenummer + "\" target=\"_blank\">\n";
-                popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\">";
-                popupTitle += "<strong>";
-                popupTitle += feature.values_.name;
-                popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\">";
-                popupTitle += "</strong>";
-                popupTitle += "</a>";
-                popupTitle += "</div>";
-            }
             if (selectedId != undefined) {
-                $.getJSON("get_data_as_json/?feature_id=" + selectedId)
-                    .done(function(data) {
-                        /* create a text as content for a popup
-                        */
-                        var popupText = "<ul style=\"list-style-type:square\">";
-                        popupText += "<li>";
-                        popupText += "${tenbruggecate_code}";
-                        popupText += " ";
-                        popupText += tenbruggencatenummer;
-                        popupText + "</li>";
+                if (! feature.values_.source_id)  // draaiendemolens-data, no external import-data
+                {
+                    if (selectedId > 1) {  // -1 is test/demo
+                        popupTitle = "${molendatabase}";
+                        popupTitle += "<div id=\"popup_" + selectedId + "\" >";
+                        popupTitle += "<a href=\"https://www.molendatabase.nl/molens/ten-bruggencate-nr-" + selectedId + "\" target=\"_blank\">\n";
+                        popupTitle += "<span title=\"Click for molendatabase.nl\" style=\"cursor: pointer\">";
+                        popupTitle += "<strong>";
+                        popupTitle += feature.values_.name;
+                        popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\">";
+                        popupTitle += "</strong>";
+                        popupTitle += "</a>";
+                        popupTitle += "</div>";
+                    }
+                    $.getJSON("get_data_as_json/?feature_id=" + selectedId)
+                        .done(function(data) {
+                            /* create a text as content for a popup
+                            */
+                            var popupText = "<ul style=\"list-style-type:square\">";
+                            popupText += "<li>";
+                            popupText += "${tenbruggecate_code}";
+                            popupText += " ";
+                            popupText += selectedId;
+                            popupText + "</li>";
 
+                            popupText += "<li>";
+                            popupText += "${revolutions}";
+                            $.each(data, function(key, val) {
+                                // data: name, bpm, nr_blades
+                                if (key == "day_counter") {
+                                    key = "${day_counter}";
+                                }
+                                if (key == "month_counter") {
+                                    key = "${month_counter}";
+                                }
+                                if (key == "year_counter") {
+                                    key = "${year_counter}";
+                                }
+                                popupText += "<br>" + key + " " + val;
+                            });
+                            popupText += "</li>"
+
+                            popupText += "</ul>";
+
+                            content.innerHTML = popupTitle + popupText;
+                        })
+                }
+                if (feature.values_.source_id == "smartmolen_molenList")
+                {
+                    popupTitle = '${source_smartmolen}';
+                    popupTitle += "<div id=\"popup_" + selectedId + "\" >";
+                    popupTitle += "<a href=\"https://www.smartmolen.com/" + selectedId + "\" target=\"_blank\">\n";
+                    popupTitle += "<span title=\"Click for website\" style=\"cursor: pointer\">";
+                    popupTitle += "<strong>";
+                    popupTitle += feature.values_.name;
+                    popupTitle += " <img src=\"static/images/external-link-icon_7.png\" height=\"10px\">";
+                    popupTitle += "</strong>";
+                    popupTitle += "</a>";
+                    popupTitle += "</div>";
+
+                    var popupText = "<ul style=\"list-style-type:square\">";
+                    popupText += "<li>";
+                    popupText += "${tenbruggecate_code}";
+                    popupText += " ";
+                    popupText += selectedId;
+                    popupText + "</li>";
+                    if (feature.values_.day_counter > -1)   // -1 is there is no spin-sensor 
+                    {
                         popupText += "<li>";
                         popupText += "${revolutions}";
-                        $.each(data, function(key, val) {
-                            // data: name, bpm, nr_blades
-                            if (key == "day_counter") {
-                                key = "${day_counter}";
-                            }
-                            if (key == "month_counter") {
-                                key = "${month_counter}";
-                            }
-                            if (key == "year_counter") {
-                                key = "${year_counter}";
-                            }
-                            popupText += "<br>" + key + " " + val;
-                        });
+                        popupText += "<br>" + "${day_counter}" + " " + JSON.stringify(feature.values_.day_counter);
+                        popupText += "<br>" + "${year_counter}" + " " + JSON.stringify(feature.values_.year_counter);
+                        popupText += "</li>"
+                    }
+                    if (! feature.values_.cap_orientation == "")
+                        popupText += "<li>";
+                        popupText += "${cap_orientation}" + " ";
+                        popupText += JSON.stringify(feature.values_.cap_orientation).replaceAll('"', '');
                         popupText += "</li>"
 
-                        popupText += "</ul>";
 
-                        content.innerHTML = popupTitle + popupText;
-                    })
+                    popupText += "</ul>";
+
+                    content.innerHTML = popupTitle + popupText;
+                }
+
             };
         }
     }

@@ -44,6 +44,7 @@ model_inventory = {}  # holds model mac address as key and rolemodel_id as value
 mac_address_sender = {}  # holds data from sender wih mac_address as key, like previous_bpm
 mac_address_model = {}   # holds data from model wih mac_address as key
 viewer = {}              # holds data from viewer with headers["Authorization"] as key
+external = {}            # holds feature-data of external system(s) as value with the source_id as key (see importData)
 
 #    print(section, locale_handle.text.options(section))
 #print (locale_handle.text.get('nl.base', 'title'))
@@ -81,8 +82,18 @@ class MamiRoot():
         cherrypy.request.headers['Cache-Control'] = 'no-cache, must-revalidate'
         if f == self.get_features_code:
             database = Database()
-            #features_as_json = json.loads(database.get_features_as_json())
-            return database.get_features_as_json().encode('utf-8', 'replace')
+            features_as_json = database.get_features_as_json()
+            # start adding external features
+            # import is done in a cron job or manual
+            if hasattr(MamiRoot, "external"):
+                if MamiRoot.external:
+                    features_as_dict = json.loads(features_as_json)
+                    for external_key in MamiRoot.external.keys():
+                        for external_object in MamiRoot.external.get(external_key):
+                            features_as_dict.get("features").append(external_object)
+                    features_as_json = json.dumps(features_as_dict)
+                    #print(features_as_json)
+            return features_as_json.encode('utf-8', 'replace')
         else:
             return '{"Availability": "None"}'.encode('utf-8', 'replace')
 
@@ -253,6 +264,8 @@ class MamiRoot():
             month_counter = text.get(section, 'month_counter')
             year_counter = text.get(section, 'year_counter')
             tenbruggecate_code = text.get(section, 'tenbruggecate_code')
+            source_smartmolen = text.get(section, 'source_smartmolen')
+            cap_orientation = text.get(section, 'cap_orientation')
             return template.render_unicode(language_options = language_options,
                                            millis = millis,
                                            get_features_code = self.get_features_code,
@@ -327,7 +340,9 @@ class MamiRoot():
                                            day_counter = day_counter,
                                            month_counter = month_counter,
                                            year_counter = year_counter,
-                                           tenbruggecate_code = tenbruggecate_code
+                                           tenbruggecate_code = tenbruggecate_code,
+                                           source_smartmolen = source_smartmolen,
+                                           cap_orientation = cap_orientation
                                            ).encode('utf-8', 'replace')
         except Exception as inst:
             print(inst)
@@ -462,6 +477,7 @@ class MamiRoot():
             #isOpen=False,
             #showData=False,
             #message=''
+            orientation=None
             ):
         """
         This method is called to feed the dynamic features with data
@@ -485,10 +501,11 @@ class MamiRoot():
                                    #'bpm':bpm,
                                    'rph':rph,
                                    'blades':blades,
-                                   'revolutions':revolutions
+                                   'revolutions':revolutions,
                                    #'isOpen':isOpen,
                                    #'showData':showData,
                                    #'message':message
+                                   'orientation': orientation
                                    }
             try:
                 if (int(rph) > 0):  # write only when there is movement
@@ -947,7 +964,6 @@ class MamiRoot():
                             api = Api(body, dynamic, self.get_data_as_json)
                             result_string = api.result()
                         except:
-                            print(unicodebody)
                             result_string = '{"Error": "invalid JSON"}'
                     else:
                         result_string = '{"Warning": "Request interval should be longer than %s seconds, wait for %s seconds"}' % (request_interval, (valid_request_time - datetime.now().astimezone()).seconds)
@@ -966,12 +982,22 @@ class MamiRoot():
 
 
     @cherrypy.expose
-    def get_api_data(self, source_id="source_id", source_key="source_key"):
+    def import_data(self, source_id="", source_key=""):
         '''
         Gets API data from external websites defines in the file import_credentials.json
         This method is intended to be used in a cronjob
         '''
-        import_data = ImportData(source_id, source_key)
+        cherrypy.response.headers["Content-Type"] = "application/json"
+        result_string = '{"Error": "Import failed for source_id: %s"}', source_id
+        try:
+            import_data = ImportData(source_id, source_key)
+            result_string = import_data.status
+            MamiRoot.external = import_data.data
+        except Exception as e:
+            result_string = '{"Error": "Exception %s occurred while importing data"}' % e
+        cherrypy.response.headers["Content-Length"] = len(result_string)
+        return result_string.encode('utf-8', 'replace')
+
         
 ####################################################################################### 
     @cherrypy.expose

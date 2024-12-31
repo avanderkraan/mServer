@@ -1,5 +1,6 @@
 import requests
 import json
+from copy import deepcopy
 from mami import import_credentials_file
 
 class ImportData():
@@ -7,17 +8,21 @@ class ImportData():
     imports data from external sources
     returns features and dynamic data in json format
     '''
-    def __init__(self, source_id=None, source_key=None):
+    def __init__(self, source_id="", source_key=""):
+        self.data = {}                 # contains requested data from self.url, converted and per source_id
+        self.status = '{"Message": "Valid import from %s"}' % source_id
         self.credentials = self._get_credentials(source_id)
         if self.credentials.get('draaiendemolens_key') == source_key:
             self.url = '%s%s%s%s%s' % (self.credentials.get('protocol') or "",
-                                       self.credentials.get('host') or "",
-                                       self.credentials.get('port') and ":%s" % self.credentials.get('port') or "",
-                                       self.credentials.get("path") or "",
-                                       self.credentials.get("query"))
-            self.process_import()
+                                    self.credentials.get('host') or "",
+                                    self.credentials.get('port') and ":%s" % self.credentials.get('port') or "",
+                                    self.credentials.get("path") or "",
+                                    self.credentials.get("query"))
+            self._get_data(source_id)
+            self.status = self._process_import(source_id)
+         
         else:
-            return {}
+            self.status = '{"Error": "Invalid credentials for data import from source: %s"}' % source_id
 
         '''
 
@@ -35,9 +40,7 @@ class ImportData():
         if self.url and self.source_id:
             self.get_data()
         '''
-
     def _get_credentials(self, name=None):
-        print(name)
         try:
             with open(import_credentials_file) as f:
                 read_credentials = f.read()
@@ -45,27 +48,67 @@ class ImportData():
                 for items in all_credentials:
                     credentials = items.get(name)
                     if credentials:
-                        print (credentials)
                         return credentials
-            return {}
         except Exception as inst:
-            print(inst)
-        return {}
+            self.status = '{"Error": "Cannot find valid credentials"}'
         
-    def get_data(self):
-        if self.method.upper() == 'GET':
-            self.result = requests.get(url=self.url)
-        if self.method.upper() == 'POST':
-            body_dict = self.body or {}
-            headers = self.headers
-            self.result = requests.post(url=self.url, data=json.dumps(body_dict), headers=headers)
+    def _get_data(self, source_id):
+        if self.credentials.get("method").upper() == 'GET':
+            result = requests.get(url=self.url)
+            self.data[source_id] = result.content
+        if self.credentials.get("method").upper() == 'POST':
+            body_str = self.credentials.get("body") or ""
+            #import base64
+            #b64Val = base64.b64encode("%s:%s") % (self.credentials.get("user") or "", self.credentials.get("password") or "")
+            #headers={"Authorization": "Basic %s" % b64Val}
 
-    def process_import(self):
+            headers = json.loads(self.credentials.get("headers")) or {}
+
+            result = requests.post(self.url, data=body_str, headers=headers)
+            self.data[source_id] = result.content
+
+    def _process_import(self, source_id):
         '''
-        returns a subset of features as json and a subset of corresponding dynamic data
+        returns a subset of external features as python-object, converted for this program
         '''
-        result = {}
-        result["features"] = {}
+        result = []                    # list of dictionaries
+        # conversion may be different per external source
+        if source_id == "smartmolen_molenList":
+            try:
+                default_feature = {"geometry": {"type": "Point", "coordinates": []},
+                                   "type": "Feature", 
+                                   "properties": {"name": "", "city": "", "mac_address": "",
+                                                  "source_id": "", 
+                                                  "rpm": "",
+                                                  "day_counter": "", 
+                                                  "year_counter": "",
+                                                  "cap_orientation": ""}, 
+                                   "id": ""}
+
+                external_mills = json.loads(self.data.get(source_id))
+
+                for mill in external_mills:
+                    converted_item = deepcopy(default_feature)
+                    converted_item.get("geometry")["coordinates"] = [mill.get("location").get("longitude"), mill.get("location").get("latitude")] 
+                    converted_item.get("properties")["name"] = mill.get("name")
+                    converted_item.get("properties")["source_id"] = source_id
+                    if mill.get("latestSailRotationReading"):
+                        converted_item.get("properties")["rpm"] = mill.get("latestSailRotationReading").get("currentSpeedRPM") or 0
+                        converted_item.get("properties")["day_counter"] = mill.get("latestSailRotationReading").get("revCountToday") or 0
+                        converted_item.get("properties")["year_counter"] = mill.get("latestSailRotationReading").get("revCountThisYear") or 0
+                    else:
+                        converted_item.get("properties")["day_counter"] = -1   # no spin-sensor available
+                        converted_item.get("properties")["year_counter"] = -1  # no spin-sensor available
+                    if mill.get("latestOrientationSensorReading"):
+                        converted_item.get("properties")["cap_orientation"] = mill.get("latestOrientationSensorReading").get("compassPoint") or ""
+                    converted_item["id"] = mill.get("shortName")
+                    result.append(converted_item)
+                self.data[source_id] = result
+            except Exception as e:
+                print (e)
+
+        return '{"Message": "Valid import of data from source: %s"}' % source_id
+
 
         '''
     @cherrypy.expose

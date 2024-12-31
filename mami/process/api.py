@@ -27,7 +27,7 @@ class Api:
 
     def result(self):
         '''
-        returns a json-like string
+        returns a json-like string with information about the process
         '''
         return self.result_string 
            
