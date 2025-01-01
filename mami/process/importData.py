@@ -93,7 +93,7 @@ class ImportData():
                     converted_item.get("properties")["name"] = mill.get("name")
                     converted_item.get("properties")["source_id"] = source_id
                     if mill.get("latestSailRotationReading"):
-                        converted_item.get("properties")["rpm"] = mill.get("latestSailRotationReading").get("currentSpeedRPM") or 0
+                        converted_item.get("properties")["rpm"] = mill.get("latestSailRotationReading").get("currentSpeedRpm") or mill.get("latestSailRotationReading").get("currentSpeedRPM") or 0
                         converted_item.get("properties")["day_counter"] = mill.get("latestSailRotationReading").get("revCountToday") or 0
                         converted_item.get("properties")["year_counter"] = mill.get("latestSailRotationReading").get("revCountThisYear") or 0
                     else:
