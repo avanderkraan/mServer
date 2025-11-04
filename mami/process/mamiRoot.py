@@ -938,6 +938,7 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
+
 #######################################################################################
     @cherrypy.expose
     def api(self):
@@ -1010,22 +1011,22 @@ class MamiRoot():
         if source_id in ("smartmolen_molenList", "smartmolen_testinvoer"):
             try:
                 for item in MamiRoot.external.get(source_id):
-                    # put feeded data in the dynamic features
+                    # put feeded data in the dynamic features if there is a valid rpm value
                     rph = 0
                     if item.get('properties')['rpm'] not in ('', None):
                         rph=str(int(item.get('properties')['rpm']) * 60), 
-                    self.set(mac_address=item.get('properties')['mac_address'],
-                            #uuid=uuid,
-                            #rawCounter=rawCounter,
-                            #bpm=bpm,
-                            rph=rph, 
-                            blades="4",
-                            revolutions=item.get('properties')['day_counter'],
-                            #isOpen=isOpen,
-                            #showData=showData,
-                            #message=message
-                            external_features=item
-                            )
+                        self.set(mac_address=item.get('properties')['mac_address'],
+                                #uuid=uuid,
+                                #rawCounter=rawCounter,
+                                #bpm=bpm,
+                                rph=rph, 
+                                blades="4",
+                                revolutions=item.get('properties')['day_counter'],
+                                #isOpen=isOpen,
+                                #showData=showData,
+                                #message=message
+                                external_features=item
+                                )
             except Exception as e:
                 pass
 
