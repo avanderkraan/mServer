@@ -1013,7 +1013,7 @@ class MamiRoot():
                 for item in MamiRoot.external.get(source_id):
                     # put feeded data in the dynamic features if there is a valid rpm value
                     rph = 0
-                    if item.get('properties')['rpm'] not in ('', None):
+                    if item.get('properties')['rpm'] not in ('', None, '0'):
                         rph=str(int(item.get('properties')['rpm']) * 60), 
                         self.set(mac_address=item.get('properties')['mac_address'],
                                 #uuid=uuid,
