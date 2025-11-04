@@ -73,7 +73,7 @@ class ImportData():
         '''
         result = []                    # list of dictionaries
         # conversion may be different per external source
-        if source_id == "smartmolen_molenList":
+        if source_id in ("smartmolen_molenList", "smartmolen_testinvoer"):
             try:
                 default_feature = {"geometry": {"type": "Point", "coordinates": []},
                                    "type": "Feature", 
@@ -91,6 +91,8 @@ class ImportData():
                     converted_item = deepcopy(default_feature)
                     converted_item.get("geometry")["coordinates"] = [mill.get("location").get("longitude"), mill.get("location").get("latitude")] 
                     converted_item.get("properties")["name"] = mill.get("name")
+                    converted_item.get("properties")["city"] = mill.get("name")            # no city available in the smartmolen data yet
+                    converted_item.get("properties")["mac_address"] = mill.get("molenId")  # not really a MAC address but good enough for the dynamic dictionary in mamiRoot
                     converted_item.get("properties")["source_id"] = source_id
                     if mill.get("latestSailRotationReading"):
                         converted_item.get("properties")["rpm"] = mill.get("latestSailRotationReading").get("currentSpeedRpm") or mill.get("latestSailRotationReading").get("currentSpeedRPM") or 0

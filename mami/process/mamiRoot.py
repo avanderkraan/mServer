@@ -477,7 +477,7 @@ class MamiRoot():
             #isOpen=False,
             #showData=False,
             #message=''
-            orientation=None
+            external_features=None      # for external data
             ):
         """
         This method is called to feed the dynamic features with data
@@ -486,38 +486,61 @@ class MamiRoot():
         try:
             # deprecated by using data. feature_data = Data()
             # deprecated by using data. feature = feature_data.get_feature_from_mac_address(mac_address=mac_address)
-            database = Database()
-            feature = database.get_feature_from_mac_address(mac_address=mac_address)
-            #feature = feature_data.get_feature(feature_id)
-            now = datetime.now().astimezone()
-            feature_id = feature['id']
-            #if feature and 'id' in feature.keys() and feature['id'] == feature_id:
-            name = feature['properties']['name']
-            dynamic[feature_id] = {'mac_address':mac_address,
-                                   #'uuid':uuid,
-                                   'now':now,
-                                   'name':name,
-                                   #'rawCounter':rawCounter,
-                                   #'bpm':bpm,
-                                   'rph':rph,
-                                   'blades':blades,
-                                   'revolutions':revolutions,
-                                   #'isOpen':isOpen,
-                                   #'showData':showData,
-                                   #'message':message
-                                   'orientation': orientation
-                                   }
-            try:
-                if (int(rph) > 0):  # write only when there is movement
-                    now = datetime.now().astimezone().strftime('%Y-%m-%d')
-                    statistics = Statistics()
-                    statistics.write_sender_statistics(id=feature_id,
-                                                       change_date = now,
-                                                       revolutions=revolutions)
+            if external_features:
+                now = datetime.now().astimezone()
+                feature_id = external_features.get('id')
+                mac_address = external_features.get('properties')['mac_address']
+                name = external_features.get('properties')['name']
+                rph = 0
+                if external_features.get('properties')['rpm'] not in ('', None):
+                    rph = str(int(external_features.get('properties')['rpm']) * 60)
+                blades = 4    # for now because it is not in the external data yet
+                revolutions = external_features.get('properties')['day_counter']
+                orientation = external_features.get('properties')['cap_orientation']
+                dynamic[feature_id] = {'mac_address':mac_address,
+                                    #'uuid':uuid,
+                                    'now':now,
+                                    'name':name,
+                                    #'rawCounter':rawCounter,
+                                    #'bpm':bpm,
+                                    'rph':rph,
+                                    'blades':blades,
+                                    'revolutions':revolutions,
+                                    #'isOpen':isOpen,
+                                    #'showData':showData,
+                                    #'message':message
+                                    'orientation': orientation
+                                    }
+            else:
+                database = Database()
+                feature = database.get_feature_from_mac_address(mac_address=mac_address)
+                now = datetime.now().astimezone()
+                feature_id = feature['id']
+                name = feature['properties']['name']
+                dynamic[feature_id] = {'mac_address':mac_address,
+                                    #'uuid':uuid,
+                                    'now':now,
+                                    'name':name,
+                                    #'rawCounter':rawCounter,
+                                    #'bpm':bpm,
+                                    'rph':rph,
+                                    'blades':blades,
+                                    'revolutions':revolutions,
+                                    #'isOpen':isOpen,
+                                    #'showData':showData,
+                                    #'message':message
+                                    }
+                try:
+                    if (int(rph) > 0):  # write only when there is movement
+                        now = datetime.now().astimezone().strftime('%Y-%m-%d')
+                        statistics = Statistics()
+                        statistics.write_sender_statistics(id=feature_id,
+                                                        change_date = now,
+                                                        revolutions=revolutions)
 
 
-            except:
-                pass  # error while writing to the database
+                except:
+                    pass  # error while writing to the database
 
         except Exception as inst:
 
@@ -915,7 +938,6 @@ class MamiRoot():
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
-
 #######################################################################################
     @cherrypy.expose
     def api(self):
@@ -981,6 +1003,32 @@ class MamiRoot():
         return result_string.encode('utf-8', 'replace')
 
 
+    def transfer_external_data(self, source_id):
+        '''
+        transfers the imported data to the dynamic dictionary for a specific external source
+        '''
+        if source_id in ("smartmolen_molenList", "smartmolen_testinvoer"):
+            try:
+                for item in MamiRoot.external.get(source_id):
+                    # put feeded data in the dynamic features
+                    rph = 0
+                    if item.get('properties')['rpm'] not in ('', None):
+                        rph=str(int(item.get('properties')['rpm']) * 60), 
+                    self.set(mac_address=item.get('properties')['mac_address'],
+                            #uuid=uuid,
+                            #rawCounter=rawCounter,
+                            #bpm=bpm,
+                            rph=rph, 
+                            blades="4",
+                            revolutions=item.get('properties')['day_counter'],
+                            #isOpen=isOpen,
+                            #showData=showData,
+                            #message=message
+                            external_features=item
+                            )
+            except Exception as e:
+                pass
+
     @cherrypy.expose
     def import_data(self, source_id="", source_key=""):
         '''
@@ -993,13 +1041,38 @@ class MamiRoot():
             import_data = ImportData(source_id, source_key)
             result_string = import_data.status
             MamiRoot.external = import_data.data
+            self.transfer_external_data(source_id)
         except Exception as e:
             result_string = '{"Error": "Exception %s occurred while importing data"}' % e
         cherrypy.response.headers["Content-Length"] = len(result_string)
         return result_string.encode('utf-8', 'replace')
 
-        
+
 ####################################################################################### 
+    def external_codes(self):
+        try:
+            result = []
+            source_keys = MamiRoot.external.keys()
+            for source in source_keys:
+                if source in ("smartmolen_molenList", "smartmolen_testinvoer"):
+                     # take the desired data
+                    source_data_list = MamiRoot.external.get(source)
+                    source_result = []
+                    for source_data in source_data_list:
+                        source_result = []
+                        id = source_data.get('id')
+                        name = source_data.get('properties').get('name')
+                        city = source_data.get('properties').get('city')
+                        longitude = source_data.get('geometry').get('coordinates')[0]
+                        latitude = source_data.get('geometry').get('coordinates')[1]
+                        source_result.extend([id, name, city, longitude, latitude])
+                        result.append(source_result)
+                # if source in ("something else"):
+            return result
+        except Exception as e:
+            print(e)
+        return None
+
     @cherrypy.expose
     def codes(self, *args, **kwargs):
         """
@@ -1045,8 +1118,16 @@ class MamiRoot():
 
         try:
             database = Database()
-            active_sender_codes = json.dumps(database.get_active_sender_data())
-
+            active_sender_codes_as_list = database.get_active_sender_data()
+            
+            # start external data
+            external_codes = self.external_codes()
+            if type(external_codes) == list:
+                active_sender_codes_as_list.extend(external_codes)
+            # end external data
+            
+            active_sender_codes = json.dumps(active_sender_codes_as_list)
+            
             homepage_message = message.get(language, 'homepage_message')
 
             code = text.get(section, 'code')
