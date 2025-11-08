@@ -67,6 +67,19 @@ class ImportData():
             result = requests.post(self.url, data=body_str, headers=headers)
             self.data[source_id] = result.content
 
+    def _convert_during_transition(self, smartmolen_code):
+        mills_code_translation = {}
+        mills_code_translation["tweemanspolder3"] = "00935"
+        mills_code_translation["deroos"] = "03503"
+        mills_code_translation["upminster"] = "89"
+        #mills_code_translation["desalamander"] = "12549"
+        #mills_code_translation["dehoop"] = "00937"
+        #mills_code_translation["dehaas"] = "01938"
+        #mills_code_translation["debernissemolen"] = "01911"
+        #mills_code_translation["deoudemolen"] = "01865"
+        #mills_code_translation["dester"] = "12234"
+        return mills_code_translation.get(smartmolen_code) or smartmolen_code
+        
     def _process_import(self, source_id):
         '''
         returns a subset of external features as python-object, converted for this program
@@ -103,7 +116,7 @@ class ImportData():
                         converted_item.get("properties")["year_counter"] = -1  # no spin-sensor available
                     if mill.get("latestOrientationSensorReading"):
                         converted_item.get("properties")["cap_orientation"] = mill.get("latestOrientationSensorReading").get("compassPoint") or ""
-                    converted_item["id"] = mill.get("shortName")
+                    converted_item["id"] = self._convert_during_transition(mill.get("shortName"))
                     result.append(converted_item)
                 self.data[source_id] = result
             except Exception as e:
