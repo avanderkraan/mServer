@@ -92,7 +92,14 @@ function showCodes() {
       codeTable += '" class="';
       //codeTable += selectable;
       codeTable += '">';
-      codeTable += value[0];
+      if (value[5] == undefined) 
+      {
+        codeTable += value[0];
+      }
+      else
+      {
+      codeTable += value[5];
+      }
       codeTable += '</div>';
       codeTable += '    </td>';
       

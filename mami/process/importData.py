@@ -71,13 +71,21 @@ class ImportData():
         mills_code_translation = {}
         mills_code_translation["tweemanspolder3"] = "00935"
         mills_code_translation["deroos"] = "03503"
-        mills_code_translation["upminster"] = "89"
+        #mills_code_translation["upminster"] = "89"
         #mills_code_translation["desalamander"] = "12549"
-        #mills_code_translation["dehoop"] = "00937"
+        mills_code_translation["dehoop"] = "00937"
         #mills_code_translation["dehaas"] = "01938"
         #mills_code_translation["debernissemolen"] = "01911"
         #mills_code_translation["deoudemolen"] = "01865"
         #mills_code_translation["dester"] = "12234"
+        mills_code_translation["aarlanderveen2"] = "00051"
+        mills_code_translation["cabauw"] = "01479"
+        mills_code_translation["penderechtsemolen"] = "10144"
+        mills_code_translation["windlust-wateringen"] = "01544"
+        mills_code_translation["mvsloten"] = "10072"
+        mills_code_translation["rijnenlek"] = "00084"
+        mills_code_translation["zuidpolder"] = "01156"
+
         return mills_code_translation.get(smartmolen_code) or smartmolen_code
         
     def _process_import(self, source_id):
@@ -90,12 +98,15 @@ class ImportData():
             try:
                 default_feature = {"geometry": {"type": "Point", "coordinates": []},
                                    "type": "Feature", 
-                                   "properties": {"name": "", "city": "", "mac_address": "",
+                                   "properties": {"name": "", 
+                                                  "city": "", 
+                                                  "mac_address": "",
                                                   "source_id": "", 
                                                   "rpm": "",
                                                   "day_counter": "", 
                                                   "year_counter": "",
-                                                  "cap_orientation": ""}, 
+                                                  "cap_orientation": "",
+                                                  "model_mill_code": ""}, 
                                    "id": ""}
 
                 external_mills = json.loads(self.data.get(source_id))
@@ -107,6 +118,7 @@ class ImportData():
                     converted_item.get("properties")["city"] = mill.get("name")            # no city available in the smartmolen data yet
                     converted_item.get("properties")["mac_address"] = mill.get("molenId")  # not really a MAC address but good enough for the dynamic dictionary in mamiRoot
                     converted_item.get("properties")["source_id"] = source_id
+                    converted_item.get("properties")["model_mill_code"] = self._convert_during_transition(mill.get("shortName"))
                     if mill.get("latestSailRotationReading"):
                         converted_item.get("properties")["rpm"] = mill.get("latestSailRotationReading").get("currentSpeedRpm") or mill.get("latestSailRotationReading").get("currentSpeedRPM") or 0
                         converted_item.get("properties")["day_counter"] = mill.get("latestSailRotationReading").get("revCountToday") or 0
@@ -116,7 +128,7 @@ class ImportData():
                         converted_item.get("properties")["year_counter"] = -1  # no spin-sensor available
                     if mill.get("latestOrientationSensorReading"):
                         converted_item.get("properties")["cap_orientation"] = mill.get("latestOrientationSensorReading").get("compassPoint") or ""
-                    converted_item["id"] = self._convert_during_transition(mill.get("shortName"))
+                    converted_item["id"] = mill.get("shortName")
                     result.append(converted_item)
                 self.data[source_id] = result
             except Exception as e:

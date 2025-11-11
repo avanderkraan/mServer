@@ -1066,7 +1066,8 @@ class MamiRoot():
                         city = source_data.get('properties').get('city')
                         longitude = source_data.get('geometry').get('coordinates')[0]
                         latitude = source_data.get('geometry').get('coordinates')[1]
-                        source_result.extend([id, name, city, longitude, latitude])
+                        model_mill_code = source_data.get('id')
+                        source_result.extend([id, name, city, longitude, latitude, model_mill_code])
                         result.append(source_result)
                 # if source in ("something else"):
             return result
